@@ -5,18 +5,13 @@ import path from 'path'
 import session from 'express-session'
 import cookieParser from 'cookie-parser'
 import passport from './app/modules/auth/passport.auth/config/passport'
-
 import router from './routes'
 import { Morgan } from './shared/morgan'
 import globalErrorHandler from './app/middleware/globalErrorHandler'
 import './task/scheduler'
 import handleStripeWebhook from './stripe/handleStripeWebhook'
 import config from './config'
-import { Socialintegration } from './app/modules/socialintegration/socialintegration.model'
-import axios from 'axios'
-import { User } from './app/modules/user/user.model'
-import { upsertTikTokAccounts } from './app/modules/socialintegration/socialintegration.service'
-import { getTiktokToken } from './helpers/tiktokAPIHelper'
+
 
 const app = express()
 
@@ -65,52 +60,6 @@ app.use(Morgan.errorHandler)
 app.use(express.static('uploads'))
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
 
-// routes/auth.ts
-// import express from 'express'
-// import passport from 'passport'
-
-// const router = express.Router()
-
-// common callback
-app.get(
-  '/facebook/callback',
-  passport.authenticate('facebook', { failureRedirect: '/auth/fail' }),
-  (req, res) => {
-    console.log('✅ OAuth successful, user:', req.user)
-    // send them back to frontend with a token or success msg
-    res.redirect(
-      `https://intensive-premiere-pope-threats.trycloudflare.com/privacy-policy`,
-    )
-  },
-)
-
-//
-
-app.get('/tiktok/callback', async (req, res) => {
-  console.log('🎯 TikTok callback hit')
-
-  const { code, state } = req.query
-  const userId = state
-
-  // Define success and failure redirect URLs
-  const successUrl = `https://intensive-premiere-pope-threats.trycloudflare.com/privacy-policy?connected=true`
-  const failureUrl = `https://intensive-premiere-pope-threats.trycloudflare.com/privacy-policy?connected=false`
-
-  try {
-    if (!code || !userId) {
-      console.error('Missing code or userId')
-      return res.redirect(failureUrl)
-    }
-
-    await upsertTikTokAccounts(code as string, userId as string)
-
-    console.log('✅ TikTok account linked successfully')
-    return res.redirect(successUrl)
-  } catch (error) {
-    console.error('❌ TikTok account linking failed:', error)
-    return res.redirect(failureUrl)
-  }
-})
 
 // -------------------- API Routes --------------------
 

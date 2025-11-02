@@ -6,3 +6,5 @@ node_modules
 *.ts~
 .vscode/
 .vercel
+
+firebase-service-account.json

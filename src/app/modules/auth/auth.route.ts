@@ -168,10 +168,10 @@ router.get('/tiktok', async (req, res) => {
   console.log('hitting tiktok')
   const clientKey = config.tikok.client_id
   const redirectUri =
-    'https://intensive-premiere-pope-threats.trycloudflare.com/tiktok/callback'
+    'https://mill-stopped-monroe-worldwide.trycloudflare.com/tiktok/callback'
   const scopes = 'user.info.basic,video.upload,video.publish'
   const state = '68b1fd9e3a485a0f4fc4b527'
-  // https://www.tiktok.com/v2/auth/authorize?client_key=sbaw91u1ke2gdjjxhi&scope=user.info.basic,video.upload&response_type=code&redirect_uri=https://intensive-premiere-pope-threats.trycloudflare.com/tiktok/callback&state=68b1fd9e3a485a0f4fc4b527
+  // https://www.tiktok.com/v2/auth/authorize?client_key=sbaw91u1ke2gdjjxhi&scope=user.info.basic,video.upload&response_type=code&redirect_uri=https://mill-stopped-monroe-worldwide.trycloudflare.com/tiktok/callback&state=68b1fd9e3a485a0f4fc4b527
 
   const url = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&scope=${scopes}&response_type=code&redirect_uri=${redirectUri}&state=${state}`
 
