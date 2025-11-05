@@ -9,8 +9,7 @@ import pick from '../../../shared/pick'
 import { paginationFields } from '../../../interfaces/pagination'
 import { JwtPayload } from 'jsonwebtoken'
 import ApiError from '../../../errors/ApiError'
-
-
+import { userFilterableFields } from './user.constants'
 
 const updateProfile = catchAsync(async (req: Request, res: Response) => {
   const { imageUrl, ...userData } = req.body
@@ -25,10 +24,10 @@ const updateProfile = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
-
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   const paginationOptions = pick(req.query, paginationFields)
-  const result = await UserServices.getAllUsers(paginationOptions)
+  const filterables = pick(req.query, userFilterableFields)
+  const result = await UserServices.getAllUsers(paginationOptions, filterables)
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
@@ -74,7 +73,7 @@ const getUserById = catchAsync(async (req: Request, res: Response) => {
     message: 'User retrieved successfully',
     data: result,
   })
-});
+})
 
 const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.params
@@ -87,7 +86,6 @@ const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
     data: result,
   })
 })
-
 
 const getProfile = catchAsync(async (req: Request, res: Response) => {
   const result = await UserServices.getProfile(req.user!)
@@ -106,5 +104,5 @@ export const UserController = {
   getUserById,
   updateUserStatus,
   getProfile,
-  deleteProfile
+  deleteProfile,
 }

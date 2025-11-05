@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes'
 import ApiError from '../../../errors/ApiError'
-import { IUser } from './user.interface'
+import { IUser, IUserFilterables } from './user.interface'
 import { User } from './user.model'
 
 import { USER_ROLES, USER_STATUS } from '../../../enum/user'
@@ -11,7 +11,7 @@ import { paginationHelper } from '../../../helpers/paginationHelper'
 import { IPaginationOptions } from '../../../interfaces/pagination'
 import { S3Helper } from '../../../helpers/image/s3helper'
 import config from '../../../config'
-
+import { userFilterableFields } from './user.constants'
 
 const updateProfile = async (user: JwtPayload, payload: Partial<IUser>) => {
   const isUserExist = await User.findOne({
@@ -77,18 +77,48 @@ const createAdmin = async (): Promise<Partial<IUser> | null> => {
   return result[0]
 }
 
-const getAllUsers = async (paginationOptions: IPaginationOptions) => {
-  const { page, limit, skip, sortBy, sortOrder } =
+const getAllUsers = async (
+  paginationOptions: IPaginationOptions,
+  filterables: IUserFilterables = {}, // safe default
+) => {
+  const { searchTerm, ...otherFilters } = filterables
+  const { page, skip, limit, sortBy, sortOrder } =
     paginationHelper.calculatePagination(paginationOptions)
 
+  const andConditions: any[] = []
+
+  // 🔍 Search functionality
+  if (searchTerm) {
+        andConditions.push({
+      $or: userFilterableFields.map(field => ({
+        [field]: { $regex: searchTerm, $options: 'i' },
+      })),
+    })
+  }
+
+  // 🎯 Dynamic filters (role, verified, etc.)
+  if (Object.keys(otherFilters).length) {
+    for (const [key, value] of Object.entries(otherFilters)) {
+      andConditions.push({ [key]: value })
+    }
+  }
+
+  // 🛑 Always exclude deleted users
+  andConditions.push({
+    status: { $nin: [USER_STATUS.DELETED, null] },
+  })
+
+  // 💡 Final query object
+  const whereConditions = andConditions.length ? { $and: andConditions } : {}
+
   const [result, total] = await Promise.all([
-    User.find({ status: { $nin: [USER_STATUS.DELETED] } })
+    User.find(whereConditions)
       .skip(skip)
       .limit(limit)
-      .sort({ [sortBy]: sortOrder }).select('-password -authentication -__v')
-      .exec(),
+      .sort(sortBy ? { [sortBy]: sortOrder } : { createdAt: -1 })
+      .select('-password -authentication -__v'),
 
-    User.countDocuments({ status: { $nin: [USER_STATUS.DELETED] } }),
+    User.countDocuments(whereConditions),
   ])
 
   return {
