@@ -78,6 +78,16 @@ router.post(
   validateRequest(createStaffSchema),
   UserController.createStaff,
 )
+router.get(
+  '/staff',
+  auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+  UserController.getAllStaff,
+)
+router.get(
+  '/staff/:userId',
+  auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+  UserController.getStaffById,
+)
 
 router
   .route('/:userId')

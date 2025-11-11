@@ -289,6 +289,79 @@ export const getProfile = async (user: JwtPayload) => {
   return isUserExist
 }
 
+const getAllStaff = async (
+  paginationOptions: IPaginationOptions,
+  filterables: IUserFilterables = {}, // safe default
+) => {
+  console.log('hit')
+  const { searchTerm, ...otherFilters } = filterables
+  const { page, skip, limit, sortBy, sortOrder } =
+    paginationHelper.calculatePagination(paginationOptions)
+
+  const andConditions: any[] = []
+
+  andConditions.push({ role: USER_ROLES.STAFF })
+
+  // 🔍 Search functionality
+  if (searchTerm) {
+    andConditions.push({
+      $or: userFilterableFields.map(field => ({
+        [field]: { $regex: searchTerm, $options: 'i' },
+      })),
+    })
+  }
+
+  // 🎯 Dynamic filters (role, verified, etc.)
+  if (Object.keys(otherFilters).length) {
+    for (const [key, value] of Object.entries(otherFilters)) {
+      andConditions.push({ [key]: value })
+    }
+  }
+
+  // 🛑 Always exclude deleted users
+  andConditions.push({
+    status: { $nin: [USER_STATUS.DELETED, null] },
+  })
+
+  // 💡 Final query object
+  const whereConditions = andConditions.length ? { $and: andConditions } : {}
+
+  const [result, total] = await Promise.all([
+    User.find(whereConditions)
+      .skip(skip)
+      .limit(limit)
+      .sort(sortBy ? { [sortBy]: sortOrder } : { createdAt: -1 })
+      .select('-password -authentication -__v'),
+
+    User.countDocuments(whereConditions),
+  ])
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+    data: result,
+  }
+}
+
+const getStaffById = async (userId: string): Promise<IUser | null> => {
+  const isUserExist = await User.findOne({
+    _id: userId,
+    status: { $nin: [USER_STATUS.DELETED] },
+  })
+  if (!isUserExist) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'User not found.')
+  }
+  const user = await User.findOne({
+    _id: userId,
+    status: { $nin: [USER_STATUS.DELETED] },
+  }).select('-password -authentication -__v')
+  return user
+}
+
 export const UserServices = {
   updateProfile,
   createAdmin,
@@ -299,4 +372,7 @@ export const UserServices = {
   updateUserStatus,
   getProfile,
   deleteProfile,
+
+  getAllStaff,
+  getStaffById,
 }

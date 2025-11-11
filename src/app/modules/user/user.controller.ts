@@ -47,6 +47,18 @@ const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
+const getAllStaff = catchAsync(async (req: Request, res: Response) => {
+  const paginationOptions = pick(req.query, paginationFields)
+  const filterables = pick(req.query, userFilterableFields)
+  const result = await UserServices.getAllStaff(paginationOptions, filterables)
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Staff retrieved successfully',
+    data: result,
+  })
+})
+
 const deleteUser = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.params
   const result = await UserServices.deleteUser(userId)
@@ -86,6 +98,17 @@ const getUserById = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
+const getStaffById = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.params
+  const result = await UserServices.getStaffById(userId)
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'User retrieved successfully',
+    data: result,
+  })
+})
+
 const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.params
   const { status } = req.body
@@ -117,4 +140,7 @@ export const UserController = {
   updateUserStatus,
   getProfile,
   deleteProfile,
+
+  getAllStaff,
+  getStaffById,
 }
