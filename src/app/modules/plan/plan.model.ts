@@ -11,6 +11,17 @@ const planSchema = new Schema<IPlan, PlanModel>(
       type: String,
       required: true,
     },
+    features: {
+      type: [String],
+      required: true,
+    },
+    limits: {
+      session: {
+        type: Number,
+        required: true,
+        default: 0,
+      },
+    },
     priceId: {
       type: String,
     },
@@ -20,26 +31,19 @@ const planSchema = new Schema<IPlan, PlanModel>(
     },
     duration: {
       type: String,
-      enum: ['1 month', '3 months', '6 months', '1 year'],
+      enum: ['1 month', '3 months', '6 months', '1 year', 'One Time'],
       required: true,
     },
     paymentType: {
       type: String,
-      enum: ['Monthly', 'Yearly'],
+      enum: ['Monthly', 'Yearly', 'One Time'],
       required: true,
     },
     productId: {
-      type: String
+      type: String,
     },
     paymentLink: {
-      type: String
-    },
-    limits: {
-      reelsPerWeek: { type: Number, default: 0 },
-      postsPerWeek: { type: Number, default: 0 },
-      storiesPerWeek: { type: Number, default: 0 },
-      businessesManageable: { type: Number, default: 1 },
-      carouselPerWeek: { type: Number, default: 1 },
+      type: String,
     },
     status: {
       type: String,
