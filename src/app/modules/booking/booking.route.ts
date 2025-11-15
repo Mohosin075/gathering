@@ -7,36 +7,55 @@ import { USER_ROLES } from '../../../enum/user'
 
 const router = express.Router()
 
+// Base route: /bookings
+router
+  .route('/')
+  .get(
+    auth(
+      USER_ROLES.SUPER_ADMIN,
+      USER_ROLES.ADMIN,
+      USER_ROLES.CLIENT,
+      USER_ROLES.STAFF,
+    ),
+    BookingController.getAllBookings,
+  )
+  .post(
+    auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.CLIENT),
+    validateRequest(BookingValidations.create),
+    BookingController.createBooking,
+  )
+
+// My services route: /bookings/my-services
 router.get(
-  '/',
-  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.CLIENT, USER_ROLES.STAFF),
-  BookingController.getAllBookings,
+  '/my-services',
+  auth(
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.ADMIN,
+    USER_ROLES.CLIENT,
+    USER_ROLES.STAFF,
+  ),
+  BookingController.myServices,
 )
 
-router.get(
-  '/:id',
-  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.CLIENT, USER_ROLES.STAFF),
-  BookingController.getSingleBooking,
-)
-
-router.post(
-  '/',
-  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.CLIENT),
-
-  validateRequest(BookingValidations.create),
-  BookingController.createBooking,
-)
-
-router.patch(
-  '/:id',
-  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
-  BookingController.updateBooking,
-)
-
-router.delete(
-  '/:id',
-  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
-  BookingController.deleteBooking,
-)
+// Single booking routes: /bookings/:id
+router
+  .route('/:id')
+  .get(
+    auth(
+      USER_ROLES.SUPER_ADMIN,
+      USER_ROLES.ADMIN,
+      USER_ROLES.CLIENT,
+      USER_ROLES.STAFF,
+    ),
+    BookingController.getSingleBooking,
+  )
+  .patch(
+    auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
+    BookingController.updateBooking,
+  )
+  .delete(
+    auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
+    BookingController.deleteBooking,
+  )
 
 export const BookingRoutes = router

@@ -9,11 +9,12 @@ export interface IBookingFilterables {
 }
 
 type BookingStatus =
-  | 'pending'
   | 'confirmed'
+  | 'inProgress'
   | 'completed'
   | 'cancelled'
-  | 'rejected'
+  | 'requested'
+  | 'scheduled'
 
 export interface IBooking {
   _id: Types.ObjectId
@@ -21,8 +22,8 @@ export interface IBooking {
   service: Types.ObjectId
   staff: Types.ObjectId
   date: Date
-  startTime?: Date
-  endTime?: Date
+  startTime?: string
+  endTime?: string
   address?: {
     address: string
     city?: string
@@ -33,7 +34,7 @@ export interface IBooking {
     title: string
     description: string
   }
-  fields: {
+  serviceDetails: {
     name: string
     value?: string | number | boolean
   }[]

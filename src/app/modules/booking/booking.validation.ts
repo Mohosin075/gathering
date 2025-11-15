@@ -2,11 +2,20 @@ import { z } from 'zod'
 
 const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ObjectId')
 
+// Preprocess to ensure date is valid
 const dateField = z.preprocess(val => {
   if (!val) return undefined
   const d = new Date(val as string)
-  return isNaN(d.getTime()) ? undefined : d
+  if (isNaN(d.getTime())) return undefined
+  // zero out time to store day only
+  d.setHours(0, 0, 0, 0)
+  return d
 }, z.date())
+
+// Validate time as HH:mm string
+const timeField = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format (HH:mm)')
 
 export const BookingValidations = {
   create: z.object({
@@ -16,8 +25,8 @@ export const BookingValidations = {
       staff: objectId.optional(),
 
       date: dateField, // required
-      startTime: dateField.optional(),
-      endTime: dateField.optional(),
+      startTime: timeField.optional(), // optional HH:mm
+      endTime: timeField.optional(), // optional HH:mm
 
       address: z
         .object({
@@ -33,7 +42,7 @@ export const BookingValidations = {
         description: z.string().optional(),
       }),
 
-      fields: z
+      serviceDetails: z
         .array(
           z.object({
             name: z.string(),
@@ -45,7 +54,14 @@ export const BookingValidations = {
       notes: z.string().optional(),
 
       status: z
-        .enum(['pending', 'confirmed', 'completed', 'cancelled', 'rejected'])
+        .enum([
+          'confirmed',
+          'inProgress',
+          'completed',
+          'cancelled',
+          'rejected',
+          'scheduled',
+        ])
         .optional(),
     }),
   }),

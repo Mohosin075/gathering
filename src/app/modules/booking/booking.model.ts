@@ -3,13 +3,13 @@ import { IBooking, BookingModel } from './booking.interface'
 
 const bookingSchema = new Schema<IBooking, BookingModel>(
   {
-    user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    user: { type: Schema.Types.ObjectId, ref: 'User' },
     service: { type: Schema.Types.ObjectId, ref: 'Service', required: true },
     staff: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 
     date: { type: Date, required: true },
-    startTime: { type: Date },
-    endTime: { type: Date },
+    startTime: { type: String },
+    endTime: { type: String },
 
     address: {
       address: { type: String },
@@ -23,7 +23,7 @@ const bookingSchema = new Schema<IBooking, BookingModel>(
       description: { type: String },
     },
 
-    fields: [
+    serviceDetails: [
       {
         name: { type: String, required: true },
         value: { type: Schema.Types.Mixed }, // can be string | number | boolean
@@ -34,8 +34,15 @@ const bookingSchema = new Schema<IBooking, BookingModel>(
 
     status: {
       type: String,
-      enum: ['pending', 'confirmed', 'completed', 'cancelled', 'rejected'],
-      default: 'pending',
+      enum: [
+        'confirmed',
+        'inProgress',
+        'completed',
+        'cancelled',
+        'requested',
+        'scheduled',
+      ],
+      default: 'requested',
     },
   },
   {

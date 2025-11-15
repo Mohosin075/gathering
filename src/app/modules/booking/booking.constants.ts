@@ -1,5 +1,5 @@
 // Filterable fields for Booking
-export const bookingFilterables = ['startTime', 'endTime', 'address', 'notes'];
+export const bookingFilterables = ['startTime', 'endTime', 'address', 'notes', 'status'];
 
 // Searchable fields for Booking
 export const bookingSearchableFields = ['startTime', 'endTime', 'address', 'notes'];
