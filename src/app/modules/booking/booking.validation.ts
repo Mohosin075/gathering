@@ -59,10 +59,23 @@ export const BookingValidations = {
           'inProgress',
           'completed',
           'cancelled',
-          'rejected',
+          'requested',
           'scheduled',
         ])
         .optional(),
+    }),
+  }),
+
+  updateBookingStatus: z.object({
+    body: z.object({
+      status: z.enum([
+        'confirmed',
+        'inProgress',
+        'completed',
+        'cancelled',
+        'requested',
+        'scheduled',
+      ]),
     }),
   }),
 }

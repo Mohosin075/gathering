@@ -51,6 +51,14 @@ router
     BookingController.getBookingsByDate,
   )
 
+// Update booking status route: /bookings/:id/status
+router
+  .route('/:id/status')
+  .patch(
+    auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.STAFF),
+    BookingController.updateBookingStatus,
+  )
+
 // Single booking routes: /bookings/:id
 router
   .route('/:id')

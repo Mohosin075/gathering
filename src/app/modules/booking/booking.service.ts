@@ -207,11 +207,8 @@ const myServices = async (
   }
 }
 
+// for staff to get bookings by date
 const getBookingsByDate = async (date: string): Promise<IBooking[]> => {
-
-  console.log(date, 'hit')
-
-
   const startOfDay = new Date(date)
   startOfDay.setHours(0, 0, 0, 0)
 
@@ -228,6 +225,35 @@ const getBookingsByDate = async (date: string): Promise<IBooking[]> => {
   return bookings
 }
 
+const updateBookingStatus = async (
+  id: string,
+  payload: Partial<IBooking>,
+): Promise<IBooking | null> => {
+  if (!Types.ObjectId.isValid(id)) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Booking ID')
+  }
+
+  console.log({ payload, id })
+
+  const result = await Booking.findByIdAndUpdate(
+    new Types.ObjectId(id),
+    { $set: { status: payload } },
+    {
+      new: true,
+      runValidators: true,
+    },
+  ).populate('user')
+
+  if (!result) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      'Requested booking not found, please try again with valid id',
+    )
+  }
+
+  return result
+}
+
 export const BookingServices = {
   createBooking,
   getAllBookings,
@@ -236,4 +262,5 @@ export const BookingServices = {
   deleteBooking,
   myServices,
   getBookingsByDate,
+  updateBookingStatus,
 }
