@@ -82,6 +82,17 @@ const myServices = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
+const getBookingsByDate = catchAsync(async (req: Request, res: Response) => {
+  const { date } = req.body as { date: string }
+  const result = await BookingServices.getBookingsByDate(date)
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Bookings retrieved successfully',
+    data: result,
+  })
+})
+
 const deleteBooking = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params
   const result = await BookingServices.deleteBooking(id)
@@ -101,4 +112,5 @@ export const BookingController = {
   getAllBookings,
   deleteBooking,
   myServices,
+  getBookingsByDate,
 }

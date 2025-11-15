@@ -18,6 +18,18 @@ const bookingSchema = new Schema<IBooking, BookingModel>(
       zipCode: { type: String },
     },
 
+    location: {
+      type: {
+        type: String,
+        enum: ['Point'],
+        default: 'Point',
+      },
+      coordinates: {
+        type: [Number],
+        default: [0, 0], // [longitude, latitude]
+      },
+    },
+
     serviceType: {
       title: { type: String, required: true },
       description: { type: String },

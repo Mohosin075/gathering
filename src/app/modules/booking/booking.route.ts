@@ -26,16 +26,30 @@ router
   )
 
 // My services route: /bookings/my-services
-router.get(
-  '/my-services',
-  auth(
-    USER_ROLES.SUPER_ADMIN,
-    USER_ROLES.ADMIN,
-    USER_ROLES.CLIENT,
-    USER_ROLES.STAFF,
-  ),
-  BookingController.myServices,
-)
+router
+  .route('/my-services')
+  .get(
+    auth(
+      USER_ROLES.SUPER_ADMIN,
+      USER_ROLES.ADMIN,
+      USER_ROLES.CLIENT,
+      USER_ROLES.STAFF,
+    ),
+    BookingController.myServices,
+  )
+
+// Scheduled bookings route: /bookings/scheduled
+router
+  .route('/scheduled')
+  .get(
+    auth(
+      USER_ROLES.SUPER_ADMIN,
+      USER_ROLES.ADMIN,
+      USER_ROLES.CLIENT,
+      USER_ROLES.STAFF,
+    ),
+    BookingController.getBookingsByDate,
+  )
 
 // Single booking routes: /bookings/:id
 router

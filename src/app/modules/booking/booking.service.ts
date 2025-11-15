@@ -149,6 +149,7 @@ const deleteBooking = async (id: string): Promise<IBooking> => {
   return result
 }
 
+// for staff to view their services
 const myServices = async (
   user: JwtPayload,
   filterables: IBookingFilterables,
@@ -206,6 +207,27 @@ const myServices = async (
   }
 }
 
+const getBookingsByDate = async (date: string): Promise<IBooking[]> => {
+
+  console.log(date, 'hit')
+
+
+  const startOfDay = new Date(date)
+  startOfDay.setHours(0, 0, 0, 0)
+
+  const endOfDay = new Date(date)
+  endOfDay.setHours(23, 59, 59, 999)
+
+  const bookings = await Booking.find({
+    date: {
+      $gte: startOfDay,
+      $lte: endOfDay,
+    },
+  })
+
+  return bookings
+}
+
 export const BookingServices = {
   createBooking,
   getAllBookings,
@@ -213,4 +235,5 @@ export const BookingServices = {
   updateBooking,
   deleteBooking,
   myServices,
+  getBookingsByDate,
 }

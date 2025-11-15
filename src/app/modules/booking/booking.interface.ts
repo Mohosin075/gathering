@@ -1,4 +1,5 @@
 import { Model, Types } from 'mongoose'
+import { Point } from '../user/user.interface'
 
 export interface IBookingFilterables {
   searchTerm?: string
@@ -24,6 +25,7 @@ export interface IBooking {
   date: Date
   startTime?: string
   endTime?: string
+  location: Point
   address?: {
     address: string
     city?: string
