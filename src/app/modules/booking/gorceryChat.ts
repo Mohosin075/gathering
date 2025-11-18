@@ -4,36 +4,39 @@ import { GroceryChat } from './booking.model'
 import { JwtPayload } from 'jsonwebtoken'
 import catchAsync from '../../../shared/catchAsync'
 import { itemExtractionSchema } from './booking.constants'
+import sendResponse from '../../../shared/sendResponse'
+import { StatusCodes } from 'http-status-codes'
 import config from '../../../config'
 
 const client = new OpenAI({ apiKey: config.openAi_api_key })
 
-// --- Grocery Bot Messaging ---
+// =====================
+// Grocery Bot Messaging
+// =====================
 export const sendMessageToGroceryBot = catchAsync(
   async (req: Request, res: Response) => {
     const { sessionId, message } = req.body
     const user = req.user as JwtPayload & { authId: string }
 
-    console.log('user', user)
-
-    console.log({ message})
-
-    // Fetch or create chat session
     let session = await GroceryChat.findById(sessionId)
     if (!session) {
       session = await GroceryChat.create({
         user: user.authId,
         items: [],
+        status: 'draft',
       })
     }
 
-    const aiResponse = await client.chat.completions.create({
+    // -----------------------
+    // AI: Extract Grocery Item
+    // -----------------------
+    const aiExtract = await client.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
           content:
-            'You are a helpful grocery assistant. Extract grocery items when mentioned.',
+            'You are a grocery assistant. Extract items strictly using function calls.',
         },
         { role: 'user', content: message },
       ],
@@ -41,71 +44,95 @@ export const sendMessageToGroceryBot = catchAsync(
       tool_choice: 'auto',
     })
 
-    const choice = aiResponse.choices[0]
-
+    const choice = aiExtract.choices[0]
     const toolCalls = choice.message.tool_calls
-    if (
-      choice.finish_reason === 'tool_calls' &&
-      toolCalls &&
-      toolCalls.length
-    ) {
+
+    // If item extraction happened
+    if (choice.finish_reason === 'tool_calls' && toolCalls?.length) {
       const firstToolCall = toolCalls[0] as any
-      if (
-        firstToolCall.type === 'function' &&
-        firstToolCall.function?.arguments
-      ) {
-        const extracted = JSON.parse(firstToolCall.function.arguments)
+      const extracted = JSON.parse(firstToolCall.function.arguments)
 
-        session.items.push({
-          name: extracted.name,
-          quantity: extracted.quantity,
-        })
+      // Save extracted data
+      session.items.push({
+        name: extracted.name,
+        quantity: extracted.quantity,
+      })
+      await session.save()
 
-        await session.save()
+      // AI Suggestion
+      const suggestionAI = await client.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Give a short recommendation about the grocery item. Keep it concise.',
+          },
+          {
+            role: 'user',
+            content: `Item: ${extracted.name}, Quantity: ${extracted.quantity}`,
+          },
+        ],
+      })
 
-        res.status(200).json({
-          success: true,
-          message: `Added to your list: ${extracted.name} (${extracted.quantity})`,
-          session,
-        })
-        return
-      }
+      const suggestion =
+        suggestionAI.choices[0].message.content ??
+        'Suggestion unavailable at the moment.'
+
+      return sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: `Item added successfully.`,
+        data: {
+          sessionId: session._id,
+          item: extracted,
+          suggestion,
+          items: session.items,
+        },
+      })
     }
 
-    const text = choice.message.content || ''
-    res.status(200).json({
+    // Fallback if AI gives normal text response
+    return sendResponse(res, {
+      statusCode: StatusCodes.OK,
       success: true,
-      message: text,
-      session,
+      message: choice.message.content || 'Noted.',
+      data: {
+        sessionId: session._id,
+        items: session.items,
+      },
     })
-    return
   },
 )
 
-// --- Confirm Grocery Order ---
+// ==========================
+// Confirm Grocery Order
+// ==========================
 export const confirmGroceryOrder = catchAsync(
   async (req: Request, res: Response) => {
     const { sessionId } = req.body
 
     const session = await GroceryChat.findById(sessionId)
     if (!session) {
-      res.status(404).json({
+      return sendResponse(res, {
+        statusCode: StatusCodes.NOT_FOUND,
         success: false,
         message: 'Session not found',
+        data: null,
       })
-      return
     }
 
-    // Mark session as confirmed
     session.status = 'confirmed'
     await session.save()
 
-    res.status(200).json({
+    return sendResponse(res, {
+      statusCode: StatusCodes.OK,
       success: true,
-      message:
-        'Your order is confirmed. Please provide delivery address & time.',
-      data: session,
+      message: 'Order confirmed. Please provide delivery address & time.',
+      data: {
+        sessionId: session._id,
+        items: session.items,
+      },
     })
-    return
   },
 )
