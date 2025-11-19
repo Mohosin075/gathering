@@ -13,7 +13,7 @@ const createAgreement = async (
   payload: IAgreement,
 ): Promise<IAgreement> => {
   try {
-    const result = await Agreement.create(payload)
+    const result = await Agreement.create({ ...payload, clientId: user.authId })
     if (!result) {
       throw new ApiError(
         StatusCodes.BAD_REQUEST,
