@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express'
+import { Request, Response } from 'express'
 
 import { StatusCodes } from 'http-status-codes'
 import catchAsync from '../../../shared/catchAsync'
@@ -9,8 +9,8 @@ import pick from '../../../shared/pick'
 import { paginationFields } from '../../../interfaces/pagination'
 import { JwtPayload } from 'jsonwebtoken'
 import ApiError from '../../../errors/ApiError'
-
-
+import { userFilterableFields } from './user.constants'
+import { IUser } from './user.interface'
 
 const updateProfile = catchAsync(async (req: Request, res: Response) => {
   const { imageUrl, ...userData } = req.body
@@ -25,14 +25,36 @@ const updateProfile = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
+const createStaff = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserServices.createStaff(req.user!, req.body)
+  sendResponse<Partial<IUser>>(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Staff created successfully',
+    data: result,
+  })
+})
 
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   const paginationOptions = pick(req.query, paginationFields)
-  const result = await UserServices.getAllUsers(paginationOptions)
+  const filterables = pick(req.query, userFilterableFields)
+  const result = await UserServices.getAllUsers(paginationOptions, filterables)
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
     message: 'Users retrieved successfully',
+    data: result,
+  })
+})
+
+const getAllStaff = catchAsync(async (req: Request, res: Response) => {
+  const paginationOptions = pick(req.query, paginationFields)
+  const filterables = pick(req.query, userFilterableFields)
+  const result = await UserServices.getAllStaff(paginationOptions, filterables)
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Staff retrieved successfully',
     data: result,
   })
 })
@@ -74,7 +96,18 @@ const getUserById = catchAsync(async (req: Request, res: Response) => {
     message: 'User retrieved successfully',
     data: result,
   })
-});
+})
+
+const getStaffById = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.params
+  const result = await UserServices.getStaffById(userId)
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'User retrieved successfully',
+    data: result,
+  })
+})
 
 const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.params
@@ -87,7 +120,6 @@ const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
     data: result,
   })
 })
-
 
 const getProfile = catchAsync(async (req: Request, res: Response) => {
   const result = await UserServices.getProfile(req.user!)
@@ -102,9 +134,13 @@ const getProfile = catchAsync(async (req: Request, res: Response) => {
 export const UserController = {
   updateProfile,
   getAllUsers,
+  createStaff,
   deleteUser,
   getUserById,
   updateUserStatus,
   getProfile,
-  deleteProfile
+  deleteProfile,
+
+  getAllStaff,
+  getStaffById,
 }

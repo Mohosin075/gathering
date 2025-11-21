@@ -12,6 +12,8 @@ const UserSchema = new Schema<IUser, UserModel>(
     businessName: { type: String },
     phone: { type: String },
     description: { type: String },
+    specialty: { type: String },
+    services: { type: [Schema.Types.ObjectId], ref: 'Service' },
 
     status: {
       type: String,
@@ -45,7 +47,7 @@ const UserSchema = new Schema<IUser, UserModel>(
     role: {
       type: String,
       enum: Object.values(USER_ROLES),
-      default: USER_ROLES.USER,
+      default: USER_ROLES.CLIENT,
     },
     appId: { type: String },
     provider: { type: String },

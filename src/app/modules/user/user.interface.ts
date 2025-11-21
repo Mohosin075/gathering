@@ -1,6 +1,14 @@
 import { Model, Types } from 'mongoose'
 import { USER_ROLES, USER_STATUS } from '../../../enum/user'
 
+export interface IUserFilterables {
+  searchTerm?: string
+  date?: Date
+  role?: USER_ROLES
+  name?: string
+  email?: string
+}
+
 // ------------------ SUB-TYPES ------------------
 export type IAuthentication = {
   restrictionLeftAt: Date | null
@@ -36,6 +44,8 @@ export interface IUser {
   businessName?: string
   phone?: string
   description?: string
+  specialty?: string
+  services: Types.ObjectId[]
 
   status: USER_STATUS // standardize statuses
   verified: boolean

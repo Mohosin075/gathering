@@ -8,7 +8,6 @@ import passport from './app/modules/auth/passport.auth/config/passport'
 import router from './routes'
 import { Morgan } from './shared/morgan'
 import globalErrorHandler from './app/middleware/globalErrorHandler'
-import './task/scheduler'
 import handleStripeWebhook from './stripe/handleStripeWebhook'
 import config from './config'
 
@@ -78,26 +77,47 @@ app.get('/', (req: Request, res: Response) => {
       justify-content: center;
       align-items: center;
       height: 100vh;
-      background: radial-gradient(circle at top left, #1e003e, #5e00a5);
-      color: #fff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #0e0525;
+      color: #ffffff;
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
       text-align: center;
-      padding: 2rem;
+      overflow: hidden;
     ">
-      <div>
-        <h1 style="font-size: 3rem; margin-bottom: 1rem;">🛑 Whoa there, hacker man.</h1>
-        <p style="font-size: 1.4rem; line-height: 1.6;">
-          You really just typed <code style="color:#ffd700;">'/'</code> in your browser and expected magic?<br><br>
-          This isn’t Hogwarts, and you’re not the chosen one. 🧙‍♂️<br><br>
-          Honestly, even my 404 page gets more action than this route. 💀
+      <div style="max-width: 700px; padding: 2rem;">
+        <h1 style="
+          font-size: 2.4rem;
+          margin-bottom: 1.2rem;
+          letter-spacing: 0.5px;
+          color: #00ffe0;
+        ">
+          🚀 Welcome to the API Server
+        </h1>
+        <p style="
+          font-size: 1.1rem;
+          line-height: 1.7;
+          color: #cfcff9;
+          opacity: 0.9;
+        ">
+          This server is up and running successfully. ✅<br><br>
+          To explore available endpoints, please refer to the API documentation.<br>
+          If you’re seeing this page, it means the base route <code style='color:#00ffe0;'>‘/’</code> is not intended for direct access.
         </p>
-        <p style="margin-top: 2rem; font-size: 1rem; opacity: 0.7;">
-          Now go back... and try something useful. Or not. I’m just a server.
+        <p style="
+          margin-top: 2rem;
+          font-size: 0.95rem;
+          opacity: 0.6;
+          color: #aaa;
+        ">
+          © ${new Date().getFullYear()} — All rights reserved.
         </p>
       </div>
     </div>
-  `)
-})
+  `);
+});
+
+
+
+
 
 // -------------------- Global Error Handler --------------------
 app.use(globalErrorHandler)

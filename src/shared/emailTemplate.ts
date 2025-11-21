@@ -1,72 +1,23 @@
 import { ICreateAccount, IResetPassword } from '../interfaces/emailTemplate'
 
 const createAccount = (values: ICreateAccount) => {
-  console.log(values, 'values')
-  const data = {
+  return {
     to: values.email,
     subject: `Verify your account, ${values.name}`,
-    html: `
-    <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
-      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.05);">
-        <tr>
-          <td align="center" style="padding: 40px 0;">
-            <img src="https://res.cloudinary.com/dmvht7o8m/image/upload/v1737711309/download_bjkj2g.png" alt="Logo" style="width: 150px; height: auto;">
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 20px 40px;">
-            <h1 style="color: #333333; font-size: 24px; margin-bottom: 20px;">Email Verification</h1>
-            <p style="color: #666666; font-size: 16px; line-height: 1.5;">Your verification code is:</p>
-            <div style="background-color: #f0f0f0; border-radius: 4px; padding: 15px; margin: 20px 0; text-align: center;">
-              <span style="font-size: 32px; font-weight: bold; color: #4a4a4a;">${values.otp}</span>
-            </div>
-            <p style="color: #666666; font-size: 16px; line-height: 1.5;">This code will expire in 5 minutes. If you didn't request this code, please ignore this email.</p>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 20px 40px; text-align: center; color: #999999; font-size: 14px;">
-            <p>&copy; 2024 Your Company. All rights reserved.</p>
-          </td>
-        </tr>
-      </table>
-    </body>
-  `,
+    html: `     <body style="margin:0; padding:0; background-color:#f4f5f7; font-family: Arial, sans-serif;">       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f5f7; padding: 20px 0;">         <tr>           <td align="center">             <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.08);">               <tr>                 <td style="padding: 30px; text-align:center;">                   <img src="https://i.ibb.co.com/rGPdVtt6/5d8f775a78faa88f5153bdc51e2dd60842f498d5.png" alt="Company Logo" style="width:140px; height:auto; display:block; margin:0 auto;">                 </td>               </tr>               <tr>                 <td style="padding: 40px; text-align:center;">                   <h1 style="color:#2c3e50; font-size:26px; margin:0 0 20px;">Verify Your Account</h1>                   <p style="color:#555555; font-size:16px; margin:0 0 30px;">Hi ${values.name}, please use the code below to verify your account.</p>                   <div style="display:inline-block; font-size:32px; font-weight:bold; color:#2980b9; background:#f1f3f6; padding:20px 40px; border-radius:8px; box-shadow: inset 0 3px 6px rgba(0,0,0,0.05); margin-bottom:30px;">${values.otp}</div>                   <p style="color:#777777; font-size:14px; margin:0;">This code expires in 5 minutes. If you did not request this, please ignore this email.</p>                 </td>               </tr>               <tr>                 <td style="background:#f9fafc; padding:20px; text-align:center; font-size:12px; color:#999999;">
+                                  </td>               </tr>             </table>           </td>         </tr>       </table>     </body>
+    `,
   }
-  return data
 }
 
 const resetPassword = (values: IResetPassword) => {
-  const data = {
+  return {
     to: values.email,
     subject: `Reset your password, ${values.name}`,
-    html: `
-    <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
-      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.05);">
-        <tr>
-          <td align="center" style="padding: 40px 0;">
-            <img src="https://res.cloudinary.com/dmvht7o8m/image/upload/v1737711309/download_bjkj2g.png" alt="Logo" style="width: 150px; height: auto;">
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 20px 40px;">
-            <h1 style="color: #333333; font-size: 24px; margin-bottom: 20px;">Password Reset</h1>
-            <p style="color: #666666; font-size: 16px; line-height: 1.5;">Your password reset code is:</p>
-            <div style="background-color: #f0f0f0; border-radius: 4px; padding: 15px; margin: 20px 0; text-align: center;">
-              <span style="font-size: 32px; font-weight: bold; color: #4a4a4a;">${values.otp}</span>
-            </div>
-            <p style="color: #666666; font-size: 16px; line-height: 1.5;">This code will expire in 5 minutes. If you didn't request this code, please ignore this email.</p>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 20px 40px; text-align: center; color: #999999; font-size: 14px;">
-            <p>&copy; 2024 Your Company. All rights reserved.</p>
-          </td>
-        </tr>
-      </table>
-    </body>
-  `,
+    html: `     <body style="margin:0; padding:0; background-color:#f4f5f7; font-family: Arial, sans-serif;">       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f5f7; padding: 20px 0;">         <tr>           <td align="center">             <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.08);">               <tr>                 <td style="padding: 30px; text-align:center;">                   <img src="https://i.ibb.co.com/rGPdVtt6/5d8f775a78faa88f5153bdc51e2dd60842f498d5.png" alt="Company Logo" style="width:140px; height:auto; display:block; margin:0 auto;">                 </td>               </tr>               <tr>                 <td style="padding: 40px; text-align:center;">                   <h1 style="color:#2c3e50; font-size:26px; margin:0 0 20px;">Reset Your Password</h1>                   <p style="color:#555555; font-size:16px; margin:0 0 30px;">Hi ${values.name}, please use the code below to reset your password.</p>                   <div style="display:inline-block; font-size:32px; font-weight:bold; color:#2980b9; background:#f1f3f6; padding:20px 40px; border-radius:8px; box-shadow: inset 0 3px 6px rgba(0,0,0,0.05); margin-bottom:30px;">${values.otp}</div>                   <p style="color:#777777; font-size:14px; margin:0;">This code expires in 5 minutes. If you did not request this, please ignore this email.</p>                 </td>               </tr>               <tr>                 <td style="background:#f9fafc; padding:20px; text-align:center; font-size:12px; color:#999999;">
+                                  </td>               </tr>             </table>           </td>         </tr>       </table>     </body>
+    `,
   }
-  return data
 }
 
 const resendOtp = (values: {
@@ -76,48 +27,64 @@ const resendOtp = (values: {
   type: 'resetPassword' | 'createAccount'
 }) => {
   const isReset = values.type === 'resetPassword'
-  const data = {
+  return {
     to: values.email,
     subject: `${isReset ? 'Password Reset' : 'Account Verification'} - New Code`,
+    html: `     <body style="margin:0; padding:0; background-color:#f4f5f7; font-family: Arial, sans-serif;">       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f5f7; padding: 20px 0;">         <tr>           <td align="center">             <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.08);">               <tr>                 <td style="padding: 30px; text-align:center;">                   <img src="https://i.ibb.co.com/rGPdVtt6/5d8f775a78faa88f5153bdc51e2dd60842f498d5.png" alt="Company Logo" style="width:140px; height:auto; display:block; margin:0 auto;">                 </td>               </tr>               <tr>                 <td style="padding: 40px; text-align:center;">                   <h1 style="color:#2c3e50; font-size:26px; margin:0 0 20px;">New ${isReset ? 'Password Reset' : 'Account Verification'} Code</h1>                   <p style="color:#555555; font-size:16px; margin:0 0 30px;">Hi ${values.name}, you requested a new ${isReset ? 'password reset' : 'verification'} code:</p>                   <div style="display:inline-block; font-size:32px; font-weight:bold; color:#2980b9; background:#f1f3f6; padding:20px 40px; border-radius:8px; box-shadow: inset 0 3px 6px rgba(0,0,0,0.05); margin-bottom:30px;">${values.otp}</div>                   <p style="color:#777777; font-size:14px; margin:0;">This code expires in 5 minutes. Please do not share it with anyone.</p>                 </td>               </tr>               <tr>                 <td style="background:#f9fafc; padding:20px; text-align:center; font-size:12px; color:#999999;">
+                                  </td>               </tr>             </table>           </td>         </tr>       </table>     </body>
+    `,
+  }
+}
+
+export interface IStaffCreateEmail {
+  name: string
+  email: string
+  role: string
+  otp: string
+}
+
+export const staffCreateTemplate = (values: IStaffCreateEmail) => {
+  return {
+    to: values.email,
+    subject: `Welcome to the Team, ${values.name}!`,
     html: `
-    <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
-      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.05);">
+    <body style="margin:0; padding:0; background-color:#f4f5f7; font-family: Arial, sans-serif;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f5f7; padding: 20px 0;">
         <tr>
-          <td align="center" style="padding: 40px 0;">
-            <img src="https://res.cloudinary.com/dmvht7o8m/image/upload/v1737711309/download_bjkj2g.png" alt="Logo" style="width: 150px; height: auto;">
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 20px 40px;">
-            <h1 style="color: #333333; font-size: 24px; margin-bottom: 20px;">New Verification Code</h1>
-            <p style="color: #666666; font-size: 16px; line-height: 1.5;">
-              Hello ${values.name},<br><br>
-              You requested a new ${isReset ? 'password reset' : 'verification'} code. Here's your new code:
-            </p>
-            <div style="background-color: #f0f0f0; border-radius: 4px; padding: 15px; margin: 20px 0; text-align: center;">
-              <span style="font-size: 32px; font-weight: bold; color: #4a4a4a;">${values.otp}</span>
-            </div>
-            <p style="color: #666666; font-size: 16px; line-height: 1.5;">
-              This code will expire in 5 minutes.<br>
-              If you didn't request this code, please ignore this email or contact support.
-            </p>
-            <div style="margin-top: 30px; padding: 15px; background-color: #fff8e1; border-radius: 4px; border-left: 4px solid #ffd54f;">
-              <p style="color: #666666; font-size: 14px; margin: 0;">
-                For security reasons, never share this code with anyone.
-              </p>
-            </div>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 20px 40px; text-align: center; color: #999999; font-size: 14px; border-top: 1px solid #eeeeee;">
-            <p>&copy; 2024 Your Company. All rights reserved.</p>
+          <td align="center">
+            <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+              <tr>
+                <td style="padding: 30px; text-align:center;">
+                  <img src="https://i.ibb.co/rGPdVtt6/5d8f775a78faa88f5153bdc51e2dd60842f498d5.png" alt="Company Logo" style="width:140px; height:auto; display:block; margin:0 auto;">
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 40px; text-align:center;">
+                  <h1 style="color:#2c3e50; font-size:26px; margin:0 0 20px;">Welcome, ${values.name}!</h1>
+                  <p style="color:#555555; font-size:16px; margin:0 0 30px;">
+                    You have been added as a <strong>${values.role}</strong> in our platform. Your account has been created successfully.
+                  </p>
+                  <p style="color:#555555; font-size:16px; margin:0 0 30px;">
+                    Your login email is: <strong>${values.email}</strong><br>
+                    Your Login temporary password is: <strong>${values.otp}</strong>
+                  </p>
+                  <p style="color:#777777; font-size:14px; margin:0;">
+                    Welcome aboard and happy working!.
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td style="background:#f9fafc; padding:20px; text-align:center; font-size:12px; color:#999999;">
+                  &copy; ${new Date().getFullYear()} Your Company. All rights reserved.
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
       </table>
     </body>
-  `,
+    `,
   }
-  return data
 }
 
 export const emailTemplate = {

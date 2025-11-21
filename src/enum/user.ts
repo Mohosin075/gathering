@@ -1,7 +1,13 @@
+// export enum USER_ROLES {
+//   ADMIN = 'admin',
+//   CREATOR = 'creator',
+//   USER = 'user'
+// }
 export enum USER_ROLES {
+  SUPER_ADMIN = 'super_admin',
   ADMIN = 'admin',
-  CREATOR = 'creator',
-  USER = 'user'
+  CLIENT = 'client', // HOME_OWNER
+  STAFF = 'staff'
 }
 
 export enum USER_STATUS {

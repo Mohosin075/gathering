@@ -6,7 +6,7 @@ import ApiError from '../errors/ApiError'
 
 export const createStripeProductCatalog = async (
   payload: Partial<IPlan>,
-): Promise<{ productId: string; paymentLink: string; priceId: string } | null> => {
+): Promise<{ productId: string; priceId: string } | null> => {
   // Create Product in Stripe
   const product = await stripe.products.create({
     name: payload.title as string,
@@ -55,27 +55,28 @@ export const createStripeProductCatalog = async (
   }
 
   // Create a Payment Link
-  const paymentLink = await stripe.paymentLinks.create({
-    line_items: [
-      {
-        price: price.id,
-        quantity: 1,
-      },
-    ],
-    after_completion: {
-      type: 'redirect',
-      redirect: {
-        url: `${config.stripe.paymentSuccess}`, // Redirect URL on successful payment
-      },
-    },
-    metadata: {
-      productId: product.id,
-    },
-  })
+  // const paymentLink = await stripe.paymentLinks.create({
+  //   line_items: [
+  //     {
+  //       price: price.id,
+  //       quantity: 1,
+  //     },
+  //   ],
+  //   after_completion: {
+  //     type: 'redirect',
+  //     redirect: {
+  //       url: `${config.stripe.paymentSuccess}`, // Redirect URL on successful payment
+  //     },
+  //   },
+    
+  //   metadata: {
+  //     productId: product.id,
+  //   },
+  // })
 
-  if (!paymentLink.url) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, 'Failed to create payment link')
-  }
+  // if (!paymentLink.url) {
+  //   throw new ApiError(StatusCodes.BAD_REQUEST, 'Failed to create payment link')
+  // }
 
-  return { productId: product.id, paymentLink: paymentLink.url , priceId: price.id }
+  return { productId: product.id, priceId: price.id }
 }

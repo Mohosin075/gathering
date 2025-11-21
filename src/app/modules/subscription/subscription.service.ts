@@ -5,6 +5,7 @@ import stripe from '../../../config/stripe'
 import { User } from '../user/user.model'
 import QueryBuilder from '../../builder/QueryBuilder'
 import { IPlan } from '../plan/plan.interface'
+import { createCheckoutSession } from '../../../stripe/checkOutSession'
 // import checkUsage from './checkSubscription'
 
 const subscriptionDetailsFromDB = async (

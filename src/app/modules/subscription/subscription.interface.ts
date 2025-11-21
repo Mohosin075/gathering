@@ -13,11 +13,7 @@ export type ISubscription = {
   currentPeriodEnd: string
 
   usage: {
-    reelsUsed: number
-    postsUsed: number
-    storiesUsed: number
-    businessesUsed: number
-    carouselUsed: number
+    session: number
   }
   lastReset: Date
 }

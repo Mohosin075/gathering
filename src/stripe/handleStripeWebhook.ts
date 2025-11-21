@@ -17,7 +17,11 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
 
   // Verify the event signature
   try {
-    event = stripe.webhooks.constructEvent(req.body, signature, webhookSecret)
+    event = stripe.webhooks.constructEvent(
+      req.body as Buffer,
+      signature,
+      webhookSecret,
+    )
   } catch (error) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,

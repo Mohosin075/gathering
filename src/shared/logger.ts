@@ -31,7 +31,7 @@ createLogDirs() // Ensure directories exist
 // Success logger
 const logger = createLogger({
   level: 'info',
-  format: combine(label({ label: 'EXPRESS-CRAFT 🚀' }), timestamp(), myFormat),
+  format: combine(label({ label: 'happyValley 🚀' }), timestamp(), myFormat),
   transports: [
     new transports.Console(),
     new DailyRotateFile({
@@ -53,7 +53,7 @@ const logger = createLogger({
 // Error logger
 const errorLogger = createLogger({
   level: 'error', // This ensures that only error-level messages are logged
-  format: combine(label({ label: 'EXPRESS-CRAFT 🐞' }), timestamp(), myFormat),
+  format: combine(label({ label: 'happyValley 🐞' }), timestamp(), myFormat),
   transports: [
     new transports.Console(),
     new DailyRotateFile({

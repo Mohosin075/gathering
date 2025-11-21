@@ -4,21 +4,10 @@ import { Strategy as LocalStrategy } from 'passport-local'
 import { USER_ROLES, USER_STATUS } from '../../../../../enum/user'
 
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
-const FacebookStrategy = require('passport-facebook').Strategy
 import config from '../../../../../config'
 import ApiError from '../../../../../errors/ApiError'
 import { StatusCodes } from 'http-status-codes'
-import { Socialintegration } from '../../../socialintegration/socialintegration.model'
-import { ISocialintegration } from '../../../socialintegration/socialintegration.interface'
-import {
-  exchangeForLongLivedToken,
-  getFacebookPages,
-} from '../../../../../helpers/graphAPIHelper'
-import { CustomAuthServices } from '../../custom.auth/custom.auth.service'
-import {
-  upsertFacebookPages,
-  upsertInstagramAccounts,
-} from '../../../socialintegration/socialintegration.service'
+
 
 passport.use(
   new LocalStrategy(
@@ -63,7 +52,7 @@ passport.use(
     },
     async (req, accessToken, refreshToken, profile, done) => {
       req.body.profile = profile
-      req.body.role = USER_ROLES.USER
+      req.body.role = USER_ROLES.CLIENT
 
       try {
         return done(null, req.body)
@@ -74,55 +63,7 @@ passport.use(
   ),
 )
 
-passport.use(
-  new FacebookStrategy(
-    {
-      clientID: config.facebook.app_id!,
-      clientSecret: config.facebook.app_secret!,
-      callbackURL: config.facebook.callback_url,
-      profileFields: ['id', 'emails', 'name', 'displayName', 'photos'],
-      passReqToCallback: true,
-    },
-    async (
-      req: any,
-      accessToken: string,
-      _refresh: string,
-      profile: any,
-      done: any,
-    ) => {
-      try {
-        // TODO : REMOVE USERiD
-        const userId = req.user?.authId || '68b1fd9e3a485a0f4fc4b527'
-        const user = await User.findOne({
-          _id: userId,
-        }).select('email name role')
 
-        console.log({user})
-
-        const flow = req.session.connectType // 'facebook' or 'instagram'
-        console.log({flow})
-        const longLiveToken = await exchangeForLongLivedToken(
-          accessToken,
-          config.facebook.app_id!,
-          config.facebook.app_secret!,
-        )
-        if (flow === 'facebook') {
-          await upsertFacebookPages(longLiveToken.accessToken, profile, user!)
-        } else if (flow === 'instagram') {
-          await upsertInstagramAccounts(
-            longLiveToken.accessToken,
-            profile,
-            user!,
-          )
-        }
-
-        done(null, { platform: flow, token: longLiveToken.accessToken, user })
-      } catch (err) {
-        done(err)
-      }
-    },
-  ),
-)
 
 // Serialize the user
 passport.serializeUser((data: any, done) => {
