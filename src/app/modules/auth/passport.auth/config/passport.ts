@@ -8,7 +8,6 @@ import config from '../../../../../config'
 import ApiError from '../../../../../errors/ApiError'
 import { StatusCodes } from 'http-status-codes'
 
-
 passport.use(
   new LocalStrategy(
     {
@@ -52,7 +51,7 @@ passport.use(
     },
     async (req, accessToken, refreshToken, profile, done) => {
       req.body.profile = profile
-      req.body.role = USER_ROLES.CLIENT
+      req.body.role = USER_ROLES.USER
 
       try {
         return done(null, req.body)
@@ -62,8 +61,6 @@ passport.use(
     },
   ),
 )
-
-
 
 // Serialize the user
 passport.serializeUser((data: any, done) => {
