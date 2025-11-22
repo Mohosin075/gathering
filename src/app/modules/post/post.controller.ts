@@ -89,6 +89,23 @@ const getAllPosts = catchAsync(async (req: Request, res: Response) => {
     data: result,
   })
 })
+const getMyPosts = catchAsync(async (req: Request, res: Response) => {
+  const filterables = pick(req.query, postFilterables)
+  const pagination = pick(req.query, paginationFields)
+
+  const result = await PostServices.getMyPosts(
+    req.user!,
+    filterables,
+    pagination,
+  )
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Posts retrieved successfully',
+    data: result,
+  })
+})
 
 const deletePost = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params
@@ -107,5 +124,6 @@ export const PostController = {
   updatePost,
   getSinglePost,
   getAllPosts,
+  getMyPosts,
   deletePost,
 }

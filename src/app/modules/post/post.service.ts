@@ -82,6 +82,59 @@ const getAllPosts = async (
     data: result,
   }
 }
+const getMyPosts = async (
+  user: JwtPayload,
+  filterables: IPostFilterables,
+  pagination: IPaginationOptions,
+) => {
+  const { searchTerm, ...filterData } = filterables
+  const { page, skip, limit, sortBy, sortOrder } =
+    paginationHelper.calculatePagination(pagination)
+
+  const andConditions = []
+
+  // Search functionality
+  if (searchTerm) {
+    andConditions.push({
+      $or: postSearchableFields.map(field => ({
+        [field]: {
+          $regex: searchTerm,
+          $options: 'i',
+        },
+      })),
+    })
+  }
+
+  // Filter functionality
+  if (Object.keys(filterData).length) {
+    andConditions.push({
+      $and: Object.entries(filterData).map(([key, value]) => ({
+        [key]: value,
+      })),
+    })
+  }
+
+  const whereConditions = andConditions.length ? { $and: andConditions } : {}
+
+  const [result, total] = await Promise.all([
+    Post.find({ ...whereConditions, userId: user.authId })
+      .skip(skip)
+      .limit(limit)
+      .sort({ [sortBy]: sortOrder })
+      .populate({ path: 'userId', select: '-password -authentication -__v' }),
+    Post.countDocuments(whereConditions),
+  ])
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+    data: result,
+  }
+}
 
 const getSinglePost = async (id: string): Promise<IPost> => {
   if (!Types.ObjectId.isValid(id)) {
@@ -148,6 +201,7 @@ const deletePost = async (id: string): Promise<IPost> => {
 export const PostServices = {
   createPost,
   getAllPosts,
+  getMyPosts,
   getSinglePost,
   updatePost,
   deletePost,

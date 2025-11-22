@@ -13,6 +13,11 @@ router.get(
   auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.USER),
   PostController.getAllPosts,
 )
+router.get(
+  '/my-post',
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.USER),
+  PostController.getMyPosts,
+)
 
 router.get(
   '/:id',
