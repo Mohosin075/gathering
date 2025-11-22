@@ -7,9 +7,8 @@ const MediaItemSchema = new Schema(
     url: { type: String, required: true },
     type: { type: String, enum: ['image', 'video'], required: true },
     thumbnail: { type: String },
-    width: { type: Number },
-    height: { type: Number },
     duration: { type: Number },
+    size: { type: Number },
     altText: { type: String },
   },
   { _id: false },
@@ -21,7 +20,7 @@ const PostSchema = new Schema<IPost>(
     userId: { type: Schema.Types.ObjectId, ref: 'User' },
     content: { type: String, required: true },
 
-    media: {
+    media_source: {
       type: [MediaItemSchema],
       default: [],
     },

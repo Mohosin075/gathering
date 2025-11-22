@@ -68,7 +68,7 @@ const getAllPosts = async (
       .skip(skip)
       .limit(limit)
       .sort({ [sortBy]: sortOrder })
-      .populate('userId'),
+      .populate({ path: 'userId', select: '-password -authentication -__v' }),
     Post.countDocuments(whereConditions),
   ])
 
@@ -88,7 +88,10 @@ const getSinglePost = async (id: string): Promise<IPost> => {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Post ID')
   }
 
-  const result = await Post.findById(id).populate('userId')
+  const result = await Post.findById(id).populate({
+    path: 'userId',
+    select: '-password -authentication -__v',
+  })
   if (!result) {
     throw new ApiError(
       StatusCodes.NOT_FOUND,
@@ -114,7 +117,7 @@ const updatePost = async (
       new: true,
       runValidators: true,
     },
-  ).populate('userId')
+  ).populate({ path: 'userId', select: '-password -authentication -__v' })
 
   if (!result) {
     throw new ApiError(

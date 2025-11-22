@@ -5,9 +5,8 @@ const mediaItemSchema = z.object({
   url: z.string(),
   type: z.enum(['image', 'video']),
   thumbnail: z.string().optional(),
-  width: z.number().optional(),
-  height: z.number().optional(),
   duration: z.number().optional(),
+  size: z.number().optional(),
   altText: z.string().optional(),
 })
 
@@ -24,7 +23,7 @@ export const PostValidations = {
     body: z.object({
       userId: z.string().optional(),
       content: z.string(),
-      media: z.array(mediaItemSchema).default([]),
+      media_source: z.array(mediaItemSchema).default([]),
       privacy: z.enum(['public', 'private']).default('public'),
       tags: z.array(z.string()).default([]),
       isEdited: z.boolean().default(false),
@@ -36,17 +35,13 @@ export const PostValidations = {
   }),
 
   update: z.object({
-    body: z.object({
-      userId: z.string().optional(),
-      content: z.string().optional(),
-      media: z.array(mediaItemSchema).optional(),
-      privacy: z.enum(['public', 'private']).optional(),
-      tags: z.array(z.string()).optional(),
-      isEdited: z.boolean().optional(),
-      editedAt: z.string().datetime().optional(),
-      metadata: metadataSchema.optional(),
-      createdAt: z.string().datetime().optional(),
-      updatedAt: z.string().datetime().optional(),
-    }),
+    body: z
+      .object({
+        content: z.string().optional(),
+        media: z.array(mediaItemSchema).optional(),
+        privacy: z.enum(['public', 'private']).optional(),
+        tags: z.array(z.string()).optional(),
+      })
+      .strict(),
   }),
 }
