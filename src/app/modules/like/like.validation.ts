@@ -1,19 +1,25 @@
-import { z } from 'zod';
+// validations/like.validation.ts
+import { z } from 'zod'
 
 export const LikeValidations = {
-  create: z.object({
-    userId: z.string(),
-    targetType: z.string(),
-    targetId: z.string(),
-    createdAt: z.string().datetime(),
-    updatedAt: z.string().datetime(),
+  toggle: z.object({
+    body: z.object({
+      targetId: z.string(),
+      targetType: z.enum(['post', 'comment']),
+    }),
   }),
 
-  update: z.object({
-    userId: z.string().optional(),
-    targetType: z.string().optional(),
-    targetId: z.string().optional(),
-    createdAt: z.string().datetime().optional(),
-    updatedAt: z.string().datetime().optional(),
+  getLikes: z.object({
+    params: z.object({
+      targetId: z.string(),
+      targetType: z.enum(['post', 'comment']),
+    }),
   }),
-};
+
+  checkStatus: z.object({
+    params: z.object({
+      targetId: z.string(),
+      targetType: z.enum(['post', 'comment']),
+    }),
+  }),
+}
