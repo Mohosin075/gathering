@@ -25,16 +25,6 @@ const updateProfile = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
-const createStaff = catchAsync(async (req: Request, res: Response) => {
-  const result = await UserServices.createStaff(req.user!, req.body)
-  sendResponse<Partial<IUser>>(res, {
-    statusCode: StatusCodes.OK,
-    success: true,
-    message: 'Staff created successfully',
-    data: result,
-  })
-})
-
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   const paginationOptions = pick(req.query, paginationFields)
   const filterables = pick(req.query, userFilterableFields)
@@ -43,18 +33,6 @@ const getAllUsers = catchAsync(async (req: Request, res: Response) => {
     statusCode: StatusCodes.OK,
     success: true,
     message: 'Users retrieved successfully',
-    data: result,
-  })
-})
-
-const getAllStaff = catchAsync(async (req: Request, res: Response) => {
-  const paginationOptions = pick(req.query, paginationFields)
-  const filterables = pick(req.query, userFilterableFields)
-  const result = await UserServices.getAllStaff(paginationOptions, filterables)
-  sendResponse(res, {
-    statusCode: StatusCodes.OK,
-    success: true,
-    message: 'Staff retrieved successfully',
     data: result,
   })
 })
@@ -98,17 +76,6 @@ const getUserById = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
-const getStaffById = catchAsync(async (req: Request, res: Response) => {
-  const { userId } = req.params
-  const result = await UserServices.getStaffById(userId)
-  sendResponse(res, {
-    statusCode: StatusCodes.OK,
-    success: true,
-    message: 'User retrieved successfully',
-    data: result,
-  })
-})
-
 const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.params
   const { status } = req.body
@@ -134,13 +101,9 @@ const getProfile = catchAsync(async (req: Request, res: Response) => {
 export const UserController = {
   updateProfile,
   getAllUsers,
-  createStaff,
   deleteUser,
   getUserById,
   updateUserStatus,
   getProfile,
   deleteProfile,
-
-  getAllStaff,
-  getStaffById,
 }

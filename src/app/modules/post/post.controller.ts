@@ -10,13 +10,21 @@ import { paginationFields } from '../../../interfaces/pagination'
 const createPost = catchAsync(async (req: Request, res: Response) => {
   const { images, media, ...postData } = req.body
 
+  const mediaItems: { url: string; type: 'image' | 'video' }[] = []
+
   if (images && images.length > 0) {
-    postData.images = images
+    mediaItems.push(...images.map((url: string) => ({ url, type: 'image' })))
   }
 
   if (media && media.length > 0) {
-    postData.media = media
+    mediaItems.push(...media.map((url: string) => ({ url, type: 'video' })))
   }
+
+  // Assign to postData.media
+  postData.media = mediaItems
+
+
+  console.log({postData : postData.media})
 
   const result = await PostServices.createPost(req.user!, postData)
 

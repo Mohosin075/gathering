@@ -18,7 +18,7 @@ const MediaItemSchema = new Schema(
 // Main Post Schema
 const PostSchema = new Schema<IPost>(
   {
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    userId: { type: Schema.Types.ObjectId, ref: 'User' },
     content: { type: String, required: true },
 
     media: {

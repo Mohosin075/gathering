@@ -22,7 +22,7 @@ const metadataSchema = z.object({
 export const PostValidations = {
   create: z.object({
     body: z.object({
-      userId: z.string(),
+      userId: z.string().optional(),
       content: z.string(),
       media: z.array(mediaItemSchema).default([]),
       privacy: z.enum(['public', 'private']).default('public'),

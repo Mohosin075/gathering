@@ -10,7 +10,7 @@ import { Types } from 'mongoose'
 
 const createPost = async (user: JwtPayload, payload: IPost): Promise<IPost> => {
   try {
-    const result = await Post.create(payload)
+    const result = await Post.create({ ...payload, userId: user.authId })
     if (!result) {
       // removeUploadedFiles(payload.images || payload.media);
       throw new ApiError(

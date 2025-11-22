@@ -13,13 +13,13 @@ const router = express.Router()
 
 router.get(
   '/profile',
-  auth(USER_ROLES.ADMIN, , USER_ROLES.USER),
+  auth(USER_ROLES.ADMIN, USER_ROLES.USER),
   UserController.getProfile,
 )
 
 router.patch(
   '/profile',
-  auth(USER_ROLES.ADMIN, , USER_ROLES.USER),
+  auth(USER_ROLES.ADMIN, USER_ROLES.USER),
 
   fileUploadHandler(),
 
@@ -61,7 +61,7 @@ router.patch(
 
 router.delete(
   '/profile',
-  auth(USER_ROLES.ADMIN, , USER_ROLES.USER),
+  auth(USER_ROLES.ADMIN, USER_ROLES.USER),
   UserController.deleteProfile,
 )
 
@@ -71,23 +71,6 @@ router
     auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
     UserController.getAllUsers,
   )
-
-router.post(
-  '/staff',
-  auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
-  validateRequest(createStaffSchema),
-  UserController.createStaff,
-)
-router.get(
-  '/staff',
-  auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
-  UserController.getAllStaff,
-)
-router.get(
-  '/staff/:userId',
-  auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
-  UserController.getStaffById,
-)
 
 router
   .route('/:userId')

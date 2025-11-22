@@ -62,21 +62,21 @@ router.post(
 
 router.post(
   '/resend-otp',
-  // tempAuth(USER_ROLES.ADMIN, , USER_ROLES.USER),
+  // tempAuth(USER_ROLES.ADMIN, USER_ROLES.USER),
   validateRequest(AuthValidations.resendOtpZodSchema),
   CustomAuthController.resendOtp,
 )
 
 router.post(
   '/change-password',
-  auth(USER_ROLES.ADMIN, , USER_ROLES.USER),
+  auth(USER_ROLES.ADMIN, USER_ROLES.USER),
   validateRequest(AuthValidations.changePasswordZodSchema),
   CustomAuthController.changePassword,
 )
 
 router.delete(
   '/delete-account',
-  auth(USER_ROLES.ADMIN, , USER_ROLES.USER),
+  auth(USER_ROLES.ADMIN, USER_ROLES.USER),
   validateRequest(AuthValidations.deleteAccount),
   CustomAuthController.deleteAccount,
 )
@@ -90,7 +90,7 @@ router.post(
 
 router.post(
   '/logout',
-  auth(USER_ROLES.ADMIN, , USER_ROLES.USER),
+  auth(USER_ROLES.ADMIN, USER_ROLES.USER),
   CustomAuthController.logout,
 )
 
