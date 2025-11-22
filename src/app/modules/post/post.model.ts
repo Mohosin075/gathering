@@ -57,5 +57,7 @@ const PostSchema = new Schema<IPost>(
   },
 )
 
+PostSchema.index({ createdAt: -1, userId: 1 })
+
 // Export Model
 export const Post = model<IPost, PostModel>('Post', PostSchema)

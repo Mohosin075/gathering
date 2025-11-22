@@ -5,6 +5,8 @@ import { NotificationRoutes } from '../app/modules/notifications/notifications.r
 import { PublicRoutes } from '../app/modules/public/public.route'
 import { SupportRoutes } from '../app/modules/support/support.route'
 import { PostRoutes } from '../app/modules/post/post.route'
+import { LikeRoutes } from '../app/modules/like/like.route'
+import { CommentRoutes } from '../app/modules/comment/comment.route'
 
 const router = express.Router()
 
@@ -14,7 +16,9 @@ const apiRoutes: { path: string; route: Router }[] = [
   { path: '/notifications', route: NotificationRoutes },
   { path: '/public', route: PublicRoutes },
   { path: '/support', route: SupportRoutes },
-  { path: '/post', route: PostRoutes }]
+  { path: '/post', route: PostRoutes },
+  { path: '/like', route: LikeRoutes },
+  { path: '/comment', route: CommentRoutes }]
 
 apiRoutes.forEach(route => {
   router.use(route.path, route.route)
