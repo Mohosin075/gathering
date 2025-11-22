@@ -13,13 +13,13 @@ const router = express.Router()
 
 router.get(
   '/profile',
-  auth(USER_ROLES.ADMIN, USER_ROLES.STAFF, USER_ROLES.CLIENT),
+  auth(USER_ROLES.ADMIN, , USER_ROLES.USER),
   UserController.getProfile,
 )
 
 router.patch(
   '/profile',
-  auth(USER_ROLES.ADMIN, USER_ROLES.STAFF, USER_ROLES.CLIENT),
+  auth(USER_ROLES.ADMIN, , USER_ROLES.USER),
 
   fileUploadHandler(),
 
@@ -61,7 +61,7 @@ router.patch(
 
 router.delete(
   '/profile',
-  auth(USER_ROLES.ADMIN, USER_ROLES.STAFF, USER_ROLES.CLIENT),
+  auth(USER_ROLES.ADMIN, , USER_ROLES.USER),
   UserController.deleteProfile,
 )
 

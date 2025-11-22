@@ -96,7 +96,7 @@ const createStaff = async (
       ...payload,
       password: tempPassword,
       verified: true,
-      role: USER_ROLES.STAFF,
+      role: ,
       createdBy: user.authId,
     })
 
@@ -112,7 +112,7 @@ const createStaff = async (
       const emailContent = staffCreateTemplate({
         email: result.email,
         name: result.name as string,
-        role: USER_ROLES.STAFF,
+        role: ,
         otp: tempPassword,
       })
 
@@ -301,7 +301,7 @@ const getAllStaff = async (
 
   const andConditions: any[] = []
 
-  andConditions.push({ role: USER_ROLES.STAFF })
+  andConditions.push({ role:  })
 
   // 🔍 Search functionality
   if (searchTerm) {

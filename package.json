@@ -7,7 +7,7 @@
     "routesFile": "src/routes/index.ts"
   },
   "license": "ISC",
-  "author": "Asaduzzaman",
+  "author": "Mohosin",
   "type": "commonjs",
   "main": "src/server.ts",
   "scripts": {
