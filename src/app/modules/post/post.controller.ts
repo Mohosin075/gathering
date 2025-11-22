@@ -6,25 +6,35 @@ import { StatusCodes } from 'http-status-codes'
 import pick from '../../../shared/pick'
 import { postFilterables } from './post.constants'
 import { paginationFields } from '../../../interfaces/pagination'
+import { MediaItem } from './post.interface'
 
 const createPost = catchAsync(async (req: Request, res: Response) => {
   const { images, media, ...postData } = req.body
 
-  const mediaItems: { url: string; type: 'image' | 'video' }[] = []
+  const mediaItems: MediaItem[] = []
 
-  if (images && images.length > 0) {
-    mediaItems.push(...images.map((url: string) => ({ url, type: 'image' })))
+  if (Array.isArray(images)) {
+    mediaItems.push(
+      ...images.map((file: any) => ({
+        url: file.url,
+        type: 'image' as 'image',
+        size: file.size,
+      })),
+    )
   }
 
-  if (media && media.length > 0) {
-    mediaItems.push(...media.map((url: string) => ({ url, type: 'video' })))
+  if (Array.isArray(media)) {
+    mediaItems.push(
+      ...media.map((file: any) => ({
+        url: file.url,
+        type: 'video' as 'video',
+        size: file.size,
+        duration: file.duration,
+      })),
+    )
   }
 
-  // Assign to postData.media
-  postData.media = mediaItems
-
-
-  console.log({postData : postData.media})
+  postData.media_source = mediaItems
 
   const result = await PostServices.createPost(req.user!, postData)
 

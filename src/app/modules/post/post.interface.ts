@@ -4,9 +4,8 @@ export interface MediaItem {
   url: string
   type: 'image' | 'video'
   thumbnail?: string
-  width?: number
-  height?: number
   duration?: number
+  size?: number
   altText?: string
 }
 
@@ -19,7 +18,7 @@ export interface IPost {
   _id: Types.ObjectId
   userId: Types.ObjectId
   content: string
-  media: MediaItem[]
+  media_source: MediaItem[]
   privacy: 'public' | 'private'
   tags: string[]
   isEdited: boolean

@@ -10,13 +10,13 @@ const router = express.Router()
 
 router.get(
   '/',
-  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.USER),
   PostController.getAllPosts,
 )
 
 router.get(
   '/:id',
-  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.USER),
   PostController.getSinglePost,
 )
 
@@ -30,7 +30,7 @@ router.post(
 
 router.patch(
   '/:id',
-  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.USER),
   fileAndBodyProcessorUsingDiskStorage(),
   validateRequest(PostValidations.update),
   PostController.updatePost,
@@ -38,7 +38,7 @@ router.patch(
 
 router.delete(
   '/:id',
-  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.USER),
   PostController.deletePost,
 )
 
