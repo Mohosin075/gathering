@@ -62,7 +62,7 @@ const updatePost = catchAsync(async (req: Request, res: Response) => {
 
 const getSinglePost = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params
-  const result = await PostServices.getSinglePost(id)
+  const result = await PostServices.getPostWithShares(id)
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,

@@ -45,10 +45,28 @@ const PostSchema = new Schema<IPost>(
       type: Date,
     },
 
+    // Share system fields
+    sharedPostId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Post',
+      default: null,
+    },
+
+    isShared: {
+      type: Boolean,
+      default: false,
+    },
+
+    shareCaption: {
+      type: String,
+      maxlength: 500,
+    },
+
     metadata: {
       likeCount: { type: Number, default: 0 },
       commentCount: { type: Number, default: 0 },
       viewCount: { type: Number, default: 0 },
+      shareCount: { type: Number, default: 0 },
     },
   },
   {
@@ -57,7 +75,21 @@ const PostSchema = new Schema<IPost>(
   },
 )
 
+// Indexes
 PostSchema.index({ createdAt: -1, userId: 1 })
+PostSchema.index({ sharedPostId: 1 })
+PostSchema.index({ isShared: 1 })
 
-// Export Model
+// Virtual for shared post
+PostSchema.virtual('sharedPost', {
+  ref: 'Post',
+  localField: 'sharedPostId',
+  foreignField: '_id',
+  justOne: true,
+})
+
+// Ensure virtuals are included in toJSON and toObject
+PostSchema.set('toJSON', { virtuals: true })
+PostSchema.set('toObject', { virtuals: true })
+
 export const Post = model<IPost, PostModel>('Post', PostSchema)

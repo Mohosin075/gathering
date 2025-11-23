@@ -23,13 +23,30 @@ export interface IPost {
   tags: string[]
   isEdited: boolean
   editedAt?: Date
+
+  // Share specific fields
+  sharedPostId?: Types.ObjectId // Reference to original post
+  isShared: boolean
+  shareCaption?: string
+
   metadata: {
     likeCount: number
     commentCount: number
     viewCount: number
+    shareCount: number
   }
   createdAt?: Date
   updatedAt?: Date
+}
+export interface IPostPopulated extends Omit<IPost, 'userId' | 'sharedPostId'> {
+  userId: {
+    _id: Types.ObjectId
+    firstName: string
+    lastName: string
+    avatar?: string
+  }
+  sharedPost?: IPostPopulated // Populated shared post
+  hasLiked?: boolean
 }
 
 export type PostModel = Model<IPost, {}, {}>
