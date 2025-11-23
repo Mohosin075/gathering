@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes'
 import ApiError from '../../../errors/ApiError'
-import { IPostFilterables, IPost } from './post.interface'
+import { IPostFilterables, IPost, IPostPopulated } from './post.interface'
 import { Post } from './post.model'
 import { JwtPayload } from 'jsonwebtoken'
 import { IPaginationOptions } from '../../../interfaces/pagination'
@@ -198,6 +198,35 @@ const deletePost = async (id: string): Promise<IPost> => {
   return result
 }
 
+const getPostWithShares = async (postId: string): Promise<IPostPopulated> => {
+  if (!Types.ObjectId.isValid(postId)) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Post ID')
+  }
+
+  // Find post with initial population
+  const post = await Post.findById(postId)
+    .populate('userId', 'firstName lastName avatar')
+    .populate('sharedPostId')
+    .lean()
+
+  if (!post) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Post not found')
+  }
+
+  // If it's a shared post, populate the original post's author
+  if (post.sharedPostId && typeof post.sharedPostId === 'object') {
+    const sharedPost = await Post.findById((post.sharedPostId as any)._id)
+      .populate('userId', 'firstName lastName avatar')
+      .lean()
+
+    if (sharedPost) {
+      ;(post as any).sharedPostId = sharedPost
+    }
+  }
+
+  return post as unknown as IPostPopulated
+}
+
 export const PostServices = {
   createPost,
   getAllPosts,
@@ -205,4 +234,5 @@ export const PostServices = {
   getSinglePost,
   updatePost,
   deletePost,
+  getPostWithShares,
 }
