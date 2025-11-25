@@ -5,7 +5,6 @@ import { StatusCodes } from 'http-status-codes'
 import path from 'path'
 import fs from 'fs'
 import sharp from 'sharp'
-import { getVideoDurationInSeconds } from 'get-video-duration'
 
 type IFolderName = 'images' | 'media' | 'documents'
 interface ProcessedFiles {
@@ -121,15 +120,8 @@ export const fileAndBodyProcessorUsingDiskStorage = () => {
                 }
               }
 
-              // Handle video duration
+              // Handle video duration (disabled to avoid ffprobe dependency in serverless)
               let duration: number | undefined = undefined
-              if (file.mimetype.startsWith('video/')) {
-                try {
-                  duration = await getVideoDurationInSeconds(file.path)
-                } catch (err) {
-                  console.error('Video duration extraction failed:', err)
-                }
-              }
 
               // File info with extracted duration for videos
               const fileInfo = {

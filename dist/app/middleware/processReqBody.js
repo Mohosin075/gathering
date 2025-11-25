@@ -10,7 +10,6 @@ const http_status_codes_1 = require("http-status-codes");
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const sharp_1 = __importDefault(require("sharp"));
-const get_video_duration_1 = require("get-video-duration");
 // Define upload configuration with maxCount
 const uploadFields = [
     { name: 'images', maxCount: 5 },
@@ -92,16 +91,8 @@ const fileAndBodyProcessorUsingDiskStorage = () => {
                                     console.error('Image optimization failed:', err);
                                 }
                             }
-                            // Handle video duration
+                            // Handle video duration (disabled to avoid ffprobe dependency in serverless)
                             let duration = undefined;
-                            if (file.mimetype.startsWith('video/')) {
-                                try {
-                                    duration = await (0, get_video_duration_1.getVideoDurationInSeconds)(file.path);
-                                }
-                                catch (err) {
-                                    console.error('Video duration extraction failed:', err);
-                                }
-                            }
                             // File info with extracted duration for videos
                             const fileInfo = {
                                 url: filePath,
