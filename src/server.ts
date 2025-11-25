@@ -1,24 +1,15 @@
 import colors from 'colors'
 import mongoose from 'mongoose'
-import { Server } from 'socket.io'
 import app from './app'
 import config from './config'
+import multer from 'multer'
+import path from 'path'
+import fs from 'fs'
 
+// Check if running on Vercel serverless
 const isServerless = !!process.env.VERCEL
-import { socketHelper } from './helpers/socketHelper'
-import { UserServices } from './app/modules/user/user.service'
-// import { redisClient } from './helpers/redis'
-// import { createAdapter } from "@socket.io/redis-adapter";
-// import { emailWorker, notificationWorker } from './helpers/bull-mq-worker'
-//uncaught exception
-process.on('uncaughtException', error => {
-  console.error('UnhandledException Detected', error)
-  process.exit(1)
-})
 
-export const onlineUsers = new Map()
-let server: any
-
+// --- Database Connection ---
 let isDbConnected = false
 async function connectDb() {
   if (!isDbConnected) {
@@ -28,6 +19,8 @@ async function connectDb() {
   }
 }
 
+// --- Main function for local server ---
+let server: any
 async function main() {
   try {
     await connectDb()
@@ -36,53 +29,38 @@ async function main() {
       typeof config.port === 'number' ? config.port : Number(config.port)
 
     server = app.listen(port, () => {
-      console.log(colors.yellow(`♻️  Application listening on port:${config.port}`))
+      console.log(colors.yellow(`♻️  Server running on port: ${config.port}`))
     })
-
-    const io = new Server(server, {
-      pingTimeout: 60000,
-      cors: {
-        origin: '*',
-      },
-    })
-
-    await UserServices.createAdmin()
-
-    console.log(colors.green('🍁 Redis connected successfully'))
-
-    socketHelper.socket(io)
-    //@ts-ignore
-    global.io = io
   } catch (error) {
     console.error(colors.red('🤢 Failed to connect Database'))
-    config.node_env === 'development' && console.log(error)
+    if (config.node_env === 'development') console.log(error)
   }
 
+  // Handle unhandled promises
   process.on('unhandledRejection', error => {
-    if (server) {
-      server.close(() => {
-        console.error('UnhandledRejection Detected', error)
-        process.exit(1)
-      })
-    } else {
-      process.exit(1)
-    }
+    console.error('UnhandledRejection Detected', error)
+    if (server) server.close(() => process.exit(1))
+    else process.exit(1)
+  })
+
+  // Handle uncaught exceptions
+  process.on('uncaughtException', error => {
+    console.error('UnhandledException Detected', error)
+    process.exit(1)
+  })
+
+  // Graceful shutdown
+  process.on('SIGTERM', async () => {
+    console.log('SIGTERM received')
+    if (server) server.close()
   })
 }
 
-if (!isServerless) {
-  main()
-}
+// --- Run main only if not serverless ---
+if (!isServerless) main()
 
-//SIGTERM
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM IS RECEIVE')
-  if (server) {
-    server.close()
-  }
-})
-
+// --- Export handler for Vercel serverless ---
 export default async (req: any, res: any) => {
   await connectDb()
-  return (app as any)(req, res)
+  return app(req, res)
 }

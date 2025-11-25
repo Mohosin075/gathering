@@ -6,35 +6,9 @@ import { StatusCodes } from 'http-status-codes'
 import pick from '../../../shared/pick'
 import { postFilterables } from './post.constants'
 import { paginationFields } from '../../../interfaces/pagination'
-import { MediaItem } from './post.interface'
 
 const createPost = catchAsync(async (req: Request, res: Response) => {
-  const { images, media, ...postData } = req.body
-
-  const mediaItems: MediaItem[] = []
-
-  if (Array.isArray(images)) {
-    mediaItems.push(
-      ...images.map((file: any) => ({
-        url: file.url,
-        type: 'image' as 'image',
-        size: file.size,
-      })),
-    )
-  }
-
-  if (Array.isArray(media)) {
-    mediaItems.push(
-      ...media.map((file: any) => ({
-        url: file.url,
-        type: 'video' as 'video',
-        size: file.size,
-        duration: file.duration,
-      })),
-    )
-  }
-
-  postData.media_source = mediaItems
+  const postData = req.body
 
   const result = await PostServices.createPost(req.user!, postData)
 
