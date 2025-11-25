@@ -4,7 +4,7 @@ import { Server } from 'socket.io'
 import app from './app'
 import config from './config'
 
- 
+const isServerless = !!process.env.VERCEL
 import { socketHelper } from './helpers/socketHelper'
 import { UserServices } from './app/modules/user/user.service'
 // import { redisClient } from './helpers/redis'
@@ -18,10 +18,19 @@ process.on('uncaughtException', error => {
 
 export const onlineUsers = new Map()
 let server: any
+
+let isDbConnected = false
+async function connectDb() {
+  if (!isDbConnected) {
+    await mongoose.connect(config.database_url as string)
+    isDbConnected = true
+    console.log(colors.green('🚀 Database connected successfully'))
+  }
+}
+
 async function main() {
   try {
-    mongoose.connect(config.database_url as string)
-    console.log(colors.green('🚀 Database connected successfully'))
+    await connectDb()
 
     const port =
       typeof config.port === 'number' ? config.port : Number(config.port)
@@ -30,7 +39,6 @@ async function main() {
       console.log(colors.yellow(`♻️  Application listening on port:${config.port}`))
     })
 
-    //socket
     const io = new Server(server, {
       pingTimeout: 60000,
       cors: {
@@ -38,19 +46,10 @@ async function main() {
       },
     })
 
-    //create admin user
     await UserServices.createAdmin()
-
-    //bull mq notification worker!!!!!
-    // notificationWorker
-    // emailWorker
-
-    // const pubClient = redisClient
-    // const subClient = pubClient.duplicate()
 
     console.log(colors.green('🍁 Redis connected successfully'))
 
-    // io.adapter(createAdapter(pubClient, subClient))
     socketHelper.socket(io)
     //@ts-ignore
     global.io = io
@@ -59,7 +58,6 @@ async function main() {
     config.node_env === 'development' && console.log(error)
   }
 
-  //handle unhandleRejection
   process.on('unhandledRejection', error => {
     if (server) {
       server.close(() => {
@@ -72,14 +70,19 @@ async function main() {
   })
 }
 
-main()
+if (!isServerless) {
+  main()
+}
 
 //SIGTERM
 process.on('SIGTERM', async () => {
-  // await notificationWorker.close();
-  // await emailWorker.close();
   console.log('SIGTERM IS RECEIVE')
   if (server) {
     server.close()
   }
 })
+
+export default async (req: any, res: any) => {
+  await connectDb()
+  return (app as any)(req, res)
+}
