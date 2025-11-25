@@ -31,12 +31,10 @@ const googleAuthCallback = catchAsync(async (req: Request, res: Response) => {
     req.user as IUser & { profile: any },
   )
   const { status, message, accessToken, refreshToken, role } = result
-  sendResponse(res, {
-    statusCode: status,
-    success: true,
-    message: message,
-    data: { accessToken, refreshToken, role },
-  })
+
+  return res.redirect(
+    `http://localhost:5173/auth/login?accessToken=${accessToken}&refreshToken=${refreshToken}&role=user`,
+  )
 })
 
 export const PassportAuthController = {
