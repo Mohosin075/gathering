@@ -33,7 +33,7 @@ const googleAuthCallback = catchAsync(async (req: Request, res: Response) => {
   const { status, message, accessToken, refreshToken, role } = result
 
   return res.redirect(
-    `http://localhost:5173/auth/login?accessToken=${accessToken}&refreshToken=${refreshToken}&role=user`,
+    `https://buddi-script.vercel.app/auth/login?accessToken=${accessToken}&refreshToken=${refreshToken}&role=user`,
   )
 })
 
