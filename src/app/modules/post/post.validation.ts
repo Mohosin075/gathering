@@ -22,7 +22,7 @@ export const PostValidations = {
   create: z.object({
     body: z.object({
       userId: z.string().optional(),
-      content: z.string(),
+      content: z.string().optional(),
       media_source: z.array(mediaItemSchema).default([]),
       privacy: z.enum(['public', 'private']).default('public'),
       tags: z.array(z.string()).default([]),

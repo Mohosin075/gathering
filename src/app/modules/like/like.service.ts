@@ -67,7 +67,10 @@ const getLikes = async (
     targetId: new Types.ObjectId(targetId),
     targetType,
   })
-    .populate('userId', 'firstName lastName avatar')
+    .populate({
+      path: 'userId',
+      select: 'profile', // add whatever fields you need
+    })
     .sort({ createdAt: -1 })
 
   const total = await Like.getLikesCount(

@@ -64,7 +64,7 @@ const getAllPosts = async (
   const whereConditions = andConditions.length ? { $and: andConditions } : {}
 
   const [result, total] = await Promise.all([
-    Post.find(whereConditions)
+    Post.find({ ...whereConditions, privacy: 'public' })
       .skip(skip)
       .limit(limit)
       .sort({ [sortBy]: sortOrder })
