@@ -7,7 +7,7 @@ const eventSchema = new Schema<IEvent, EventModel>(
     description: { type: String, required: true },
     category: { type: String, required: true },
     tags: { type: [String], default: [] },
-    organizerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    organizerId: { type: Schema.Types.ObjectId, ref: 'User'},
     status: {
       type: String,
       enum: ['draft', 'published', 'cancelled', 'archived'],
@@ -20,7 +20,7 @@ const eventSchema = new Schema<IEvent, EventModel>(
     },
     startDate: { type: String, required: true },
     startTime: { type: String, required: true },
-    timezone: { type: String, required: true },
+    timezone: { type: String },
     locationType: {
       type: String,
       enum: ['physical', 'online'],
@@ -42,14 +42,33 @@ const eventSchema = new Schema<IEvent, EventModel>(
     capacity: { type: Number, required: true },
     ticketsSold: { type: Number, default: 0 },
     ticketPrice: { type: Number, required: true },
-    bannerImage: { type: String },
+    images: { type: [String], default: [] },
     gallery: { type: [String], default: [] },
     views: { type: Number, default: 0 },
     favorites: { type: Number, default: 0 },
   },
   {
+    toJSON: { virtuals: true, transform: sanitizeOrganizer },
+    toObject: { virtuals: true, transform: sanitizeOrganizer },
     timestamps: true,
   },
 )
+
+// Transform function to sanitize populated organizer fields
+
+function sanitizeOrganizer(doc: any, ret: any) {
+  if (ret.organizerId && typeof ret.organizerId === 'object') {
+    // Keep only safe fields
+    ret.organizerId = {
+      _id: ret.organizerId._id,
+      name: ret.organizerId.name,
+      email: ret.organizerId.email,
+      role: ret.organizerId.role,
+      timezone: ret.organizerId.timezone,
+      profile: ret.organizerId.profile,
+    }
+  }
+  return ret
+}
 
 export const Event = model<IEvent, EventModel>('Event', eventSchema)

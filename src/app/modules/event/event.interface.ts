@@ -13,7 +13,7 @@ export interface IEventFilterables {
   timezone?: string
   meetingLink?: string
   currency?: string
-  bannerImage?: string
+  images?: string
 }
 
 export interface IEvent {
@@ -36,7 +36,7 @@ export interface IEvent {
   capacity: number
   ticketsSold?: number
   ticketPrice: number
-  bannerImage?: string
+  images?: string[]
   gallery: string[]
   views?: number
   favorites?: number

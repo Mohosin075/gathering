@@ -4,6 +4,7 @@ import { EventValidations } from './event.validation'
 import validateRequest from '../../middleware/validateRequest'
 import auth from '../../middleware/auth'
 import { USER_ROLES } from '../../../enum/user'
+import { fileAndBodyProcessorUsingDiskStorage } from '../../middleware/processReqBody'
 
 const router = express.Router()
 
@@ -23,6 +24,8 @@ router.post(
   '/',
   auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER),
 
+  fileAndBodyProcessorUsingDiskStorage(),
+
   validateRequest(EventValidations.create),
   EventController.createEvent,
 )
@@ -30,6 +33,8 @@ router.post(
 router.patch(
   '/:id',
   auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER),
+
+  fileAndBodyProcessorUsingDiskStorage(),
 
   validateRequest(EventValidations.update),
   EventController.updateEvent,

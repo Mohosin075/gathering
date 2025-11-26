@@ -1,58 +1,60 @@
-import { StatusCodes } from 'http-status-codes';
-import ApiError from '../../../errors/ApiError';
-import { IEventFilterables, IEvent } from './event.interface';
-import { Event } from './event.model';
-import { JwtPayload } from 'jsonwebtoken';
-import { IPaginationOptions } from '../../../interfaces/pagination';
-import { paginationHelper } from '../../../helpers/paginationHelper';
-import { eventSearchableFields } from './event.constants';
-import { Types } from 'mongoose';
-
+import { StatusCodes } from 'http-status-codes'
+import ApiError from '../../../errors/ApiError'
+import { IEventFilterables, IEvent } from './event.interface'
+import { Event } from './event.model'
+import { JwtPayload } from 'jsonwebtoken'
+import { IPaginationOptions } from '../../../interfaces/pagination'
+import { paginationHelper } from '../../../helpers/paginationHelper'
+import { eventSearchableFields } from './event.constants'
+import { Types } from 'mongoose'
 
 const createEvent = async (
   user: JwtPayload,
-  payload: IEvent
+  payload: IEvent,
 ): Promise<IEvent> => {
   try {
-    const result = await Event.create(payload);
+    const result = await Event.create({
+      ...payload,
+      organizerId: user.authId, // always use the logged-in user
+    })
+
     if (!result) {
-      
       throw new ApiError(
         StatusCodes.BAD_REQUEST,
-        'Failed to create Event, please try again with valid data.'
-      );
+        'Failed to create Event, please try again with valid data.',
+      )
     }
 
-    return result;
+    return result
   } catch (error: any) {
-    
     if (error.code === 11000) {
-      throw new ApiError(StatusCodes.CONFLICT, 'Duplicate entry found');
+      throw new ApiError(StatusCodes.CONFLICT, 'Duplicate entry found')
     }
-    throw error;
+    throw error
   }
-};
+}
 
 const getAllEvents = async (
   user: JwtPayload,
   filterables: IEventFilterables,
-  pagination: IPaginationOptions
+  pagination: IPaginationOptions,
 ) => {
-  const { searchTerm, ...filterData } = filterables;
-  const { page, skip, limit, sortBy, sortOrder } = paginationHelper.calculatePagination(pagination);
+  const { searchTerm, ...filterData } = filterables
+  const { page, skip, limit, sortBy, sortOrder } =
+    paginationHelper.calculatePagination(pagination)
 
-  const andConditions = [];
+  const andConditions = []
 
   // Search functionality
   if (searchTerm) {
     andConditions.push({
-      $or: eventSearchableFields.map((field) => ({
+      $or: eventSearchableFields.map(field => ({
         [field]: {
           $regex: searchTerm,
           $options: 'i',
         },
       })),
-    });
+    })
   }
 
   // Filter functionality
@@ -61,19 +63,19 @@ const getAllEvents = async (
       $and: Object.entries(filterData).map(([key, value]) => ({
         [key]: value,
       })),
-    });
+    })
   }
 
-  const whereConditions = andConditions.length ? { $and: andConditions } : {};
+  const whereConditions = andConditions.length ? { $and: andConditions } : {}
 
   const [result, total] = await Promise.all([
-    Event
-      .find(whereConditions)
+    Event.find(whereConditions)
       .skip(skip)
       .limit(limit)
-      .sort({ [sortBy]: sortOrder }).populate('organizerId'),
+      .sort({ [sortBy]: sortOrder })
+      .populate('organizerId'),
     Event.countDocuments(whereConditions),
-  ]);
+  ])
 
   return {
     meta: {
@@ -83,31 +85,31 @@ const getAllEvents = async (
       totalPages: Math.ceil(total / limit),
     },
     data: result,
-  };
-};
+  }
+}
 
 const getSingleEvent = async (id: string): Promise<IEvent> => {
   if (!Types.ObjectId.isValid(id)) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Event ID');
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Event ID')
   }
 
-  const result = await Event.findById(id).populate('organizerId');
+  const result = await Event.findById(id).populate('organizerId')
   if (!result) {
     throw new ApiError(
       StatusCodes.NOT_FOUND,
-      'Requested event not found, please try again with valid id'
-    );
+      'Requested event not found, please try again with valid id',
+    )
   }
 
-  return result;
-};
+  return result
+}
 
 const updateEvent = async (
   id: string,
-  payload: Partial<IEvent>
+  payload: Partial<IEvent>,
 ): Promise<IEvent | null> => {
   if (!Types.ObjectId.isValid(id)) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Event ID');
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Event ID')
   }
 
   const result = await Event.findByIdAndUpdate(
@@ -116,34 +118,39 @@ const updateEvent = async (
     {
       new: true,
       runValidators: true,
-    }
-  ).populate('organizerId');
+    },
+  ).populate('organizerId')
 
   if (!result) {
     throw new ApiError(
       StatusCodes.NOT_FOUND,
-      'Requested event not found, please try again with valid id'
-    );
+      'Requested event not found, please try again with valid id',
+    )
   }
 
-  return result;
-};
+  return result
+}
 
 const deleteEvent = async (id: string): Promise<IEvent> => {
   if (!Types.ObjectId.isValid(id)) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Event ID');
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Event ID')
   }
 
-  const result = await Event.findByIdAndDelete(id);
+  const result = await Event.findByIdAndUpdate(
+    id,
+    { status: 'archived' }, // soft-delete
+    { new: true, runValidators: true },
+  ).populate('organizerId')
+
   if (!result) {
     throw new ApiError(
       StatusCodes.NOT_FOUND,
-      'Something went wrong while deleting event, please try again with valid id.'
-    );
+      'Event not found or could not be archived, please try again with a valid ID.',
+    )
   }
 
-  return result;
-};
+  return result
+}
 
 export const EventServices = {
   createEvent,
@@ -151,4 +158,4 @@ export const EventServices = {
   getSingleEvent,
   updateEvent,
   deleteEvent,
-};
+}

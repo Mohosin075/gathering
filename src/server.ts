@@ -1,66 +1,78 @@
 import colors from 'colors'
 import mongoose from 'mongoose'
+import { Server } from 'socket.io'
 import app from './app'
 import config from './config'
-import multer from 'multer'
-import path from 'path'
-import fs from 'fs'
 
-// Check if running on Vercel serverless
-const isServerless = !!process.env.VERCEL
+import { socketHelper } from './helpers/socketHelper'
+import { UserServices } from './app/modules/user/user.service'
 
-// --- Database Connection ---
-let isDbConnected = false
-async function connectDb() {
-  if (!isDbConnected) {
-    await mongoose.connect(config.database_url as string)
-    isDbConnected = true
-    console.log(colors.green('🚀 Database connected successfully'))
-  }
-}
+// Uncaught exceptions
+process.on('uncaughtException', error => {
+  console.error('🔥 UncaughtException Detected:', error)
+  process.exit(1)
+})
 
-// --- Main function for local server ---
+export const onlineUsers = new Map()
 let server: any
+
 async function main() {
   try {
-    await connectDb()
+    await mongoose.connect(config.database_url as string)
+    console.log(colors.green('🚀 Database connected successfully'))
 
     const port =
       typeof config.port === 'number' ? config.port : Number(config.port)
 
-    server = app.listen(port, () => {
-      console.log(colors.yellow(`♻️  Server running on port: ${config.port}`))
+    server = app.listen(port, config.ip_address as string, () => {
+      console.log(
+        colors.yellow(`♻️ Application listening on port: ${config.port}`),
+      )
     })
+
+    // Socket.IO setup
+    const io = new Server(server, {
+      pingTimeout: 60000,
+      cors: { origin: '*' },
+    })
+
+    // Create admin user
+    await UserServices.createAdmin()
+
+    // Socket helper
+    socketHelper.socket(io)
+    //@ts-ignore
+    global.io = io
+
+    console.log(colors.green('🍁 Socket.IO initialized successfully'))
   } catch (error) {
-    console.error(colors.red('🤢 Failed to connect Database'))
-    if (config.node_env === 'development') console.log(error)
+    console.error(
+      colors.red('🤢 Failed to start the server or connect to DB'),
+      error,
+    )
   }
 
-  // Handle unhandled promises
+  // Handle unhandled promise rejections
   process.on('unhandledRejection', error => {
-    console.error('UnhandledRejection Detected', error)
-    if (server) server.close(() => process.exit(1))
-    else process.exit(1)
-  })
-
-  // Handle uncaught exceptions
-  process.on('uncaughtException', error => {
-    console.error('UnhandledException Detected', error)
-    process.exit(1)
-  })
-
-  // Graceful shutdown
-  process.on('SIGTERM', async () => {
-    console.log('SIGTERM received')
-    if (server) server.close()
+    if (server) {
+      server.close(() => {
+        console.error('🔥 UnhandledRejection Detected:', error)
+        process.exit(1)
+      })
+    } else {
+      console.error('🔥 UnhandledRejection Detected:', error)
+      process.exit(1)
+    }
   })
 }
 
-// --- Run main only if not serverless ---
-if (!isServerless) main()
+// Start main
+main()
 
-// --- Export handler for Vercel serverless ---
-export default async (req: any, res: any) => {
-  await connectDb()
-  return app(req, res)
-}
+// Graceful shutdown on SIGTERM
+process.on('SIGTERM', async () => {
+  console.log('👋 SIGTERM received, shutting down server...')
+  if (server) {
+    server.close()
+  }
+})

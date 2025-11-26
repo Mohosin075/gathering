@@ -48,8 +48,6 @@ const auth =
         return next(new ApiError(StatusCodes.FORBIDDEN, 'Invalid Access Token'))
       }
 
-      console.log('Decoded User Payload:', verifyUser)
-
       // Attach to req
       req.user = verifyUser
 
