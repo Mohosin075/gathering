@@ -80,7 +80,7 @@ const fileUploadHandler = () => {
     storage: storage,
     fileFilter: filterFilter,
     limits: {
-      fileSize: 10 * 1024 * 1024, // 10 MB (adjust as needed)
+      fileSize: 30 * 1024 * 1024, // 10 MB (adjust as needed)
       files: 10, // Maximum number of files allowed
     },
   }).fields([
