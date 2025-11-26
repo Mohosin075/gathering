@@ -26,7 +26,7 @@ const uploadToS3 = async (
 ): Promise<string> => {
   const fileKey = `${folder}/${Date.now().toString()}-${file.originalname}`
   const params = {
-    Bucket: config.aws.bucket_name,
+    Bucket: config.aws.bucket_name!,
     Key: fileKey,
     Body: file.buffer,
     ContentType: file.mimetype,
@@ -53,7 +53,7 @@ export const deleteFromS3 = async (fileKey: string): Promise<void> => {
     console.log('deleted')
   } catch (error) {
     console.error('Error deleting from S3:', error)
-    throw new ApiError(StatusCodes.BAD_REQUEST, 'Failed to delete file to S3')
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Failed to delete file from S3')
   }
 }
 
@@ -66,31 +66,33 @@ const uploadMultipleFilesToS3 = async (
   }
 
   const uploadPromises = files.map(async file => {
-    // Validate file type
-    if (file.mimetype.startsWith('image/')) {
-      // process with sharp (resize/compress)
-    } else if (file.mimetype.startsWith('video/')) {
-      // upload as-is, no sharp
-    } else {
-      throw new Error('Unsupported file type')
-    }
-
     // Generate unique file name
     const fileExtension = file.originalname.split('.').pop()
-    const fileKey = `${folder}/${Date.now()}.${fileExtension}`
+    const fileKey = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExtension}`
 
     try {
-      // Optimize image using sharp (resize, compress)
-      const optimizedImage = await sharp(file.buffer)
-        .resize(1024) // Resize to a max width of 1024px (optional)
-        .jpeg({ quality: 80 }) // Compress to 80% quality (change for PNG/WebP)
-        .toBuffer()
+      // Process images with Sharp, videos as-is
+      let fileBuffer = file.buffer
+      let contentType = file.mimetype
+
+      if (file.mimetype.startsWith('image/')) {
+        // Optimize image using sharp
+        fileBuffer = await sharp(file.buffer)
+          .resize(1024)
+          .jpeg({ quality: 80 })
+          .toBuffer()
+      } else if (file.mimetype.startsWith('video/')) {
+        // Use original video buffer - no Sharp processing
+        fileBuffer = file.buffer
+      } else {
+        throw new Error(`Unsupported file type: ${file.mimetype}`)
+      }
 
       const params = {
-        Bucket: config.aws.bucket_name!,
+        Bucket: config.aws.bucket_name!, // FIXED: Use config instead of process.env
         Key: fileKey,
-        Body: optimizedImage, // Upload optimized image
-        ContentType: file.mimetype,
+        Body: fileBuffer,
+        ContentType: contentType,
       }
 
       const command = new PutObjectCommand(params)
@@ -98,14 +100,13 @@ const uploadMultipleFilesToS3 = async (
       return getPublicUri(fileKey)
     } catch (error) {
       console.error('Error uploading file to S3:', error)
-      return null // Instead of throwing, return null to continue with other uploads
+      return null
     }
   })
 
-  // Use `Promise.allSettled` to avoid one failure blocking all uploads
   const results = await Promise.allSettled(uploadPromises)
   return results
-    .filter(result => result.status === 'fulfilled' && result.value)
+    .filter(result => result.status === 'fulfilled' && result.value !== null)
     .map(result => (result as PromiseFulfilledResult<string>).value)
 }
 
@@ -118,22 +119,25 @@ const uploadMultipleVideosToS3 = async (
   }
 
   const uploadPromises = files.map(async file => {
+    // Validate it's actually a video
+    if (!file.mimetype.startsWith('video/')) {
+      console.warn(`Skipping non-video file: ${file.mimetype}`)
+      return null
+    }
+
     const fileExtension = file.originalname.split('.').pop()
-    const fileKey = `${folder}/${Date.now()}-${Math.random()
-      .toString(36)
-      .substring(2)}.${fileExtension}`
+    const fileKey = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExtension}`
 
     try {
       const params = {
-        Bucket: config.aws.bucket_name!,
+        Bucket: config.aws.bucket_name!, // FIXED: Use config instead of process.env
         Key: fileKey,
-        Body: file.buffer, // Upload raw video
+        Body: file.buffer,
         ContentType: file.mimetype,
       }
 
       const command = new PutObjectCommand(params)
       await s3Client.send(command)
-
       return getPublicUri(fileKey)
     } catch (error) {
       console.error('Error uploading video to S3:', error)
@@ -143,7 +147,7 @@ const uploadMultipleVideosToS3 = async (
 
   const results = await Promise.allSettled(uploadPromises)
   return results
-    .filter(r => r.status === 'fulfilled' && r.value)
+    .filter(r => r.status === 'fulfilled' && r.value !== null)
     .map(r => (r as PromiseFulfilledResult<string>).value)
 }
 
