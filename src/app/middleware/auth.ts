@@ -4,6 +4,7 @@ import { Secret } from 'jsonwebtoken'
 import config from '../../config'
 import { jwtHelper } from '../../helpers/jwtHelper'
 import ApiError from '../../errors/ApiError'
+import { error } from 'console'
 
 const auth =
   (...roles: string[]) =>
@@ -11,48 +12,72 @@ const auth =
     try {
       const tokenWithBearer = req.headers.authorization
 
-
       if (!tokenWithBearer) {
-        throw new ApiError(StatusCodes.NOT_FOUND, 'Token not found!')
+        return next(new ApiError(StatusCodes.UNAUTHORIZED, 'Token not found!'))
       }
 
-      if (tokenWithBearer && tokenWithBearer.startsWith('Bearer')) {
-        const token = tokenWithBearer.split(' ')[1]
+      if (!tokenWithBearer.startsWith('Bearer')) {
+        return next(
+          new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid token format'),
+        )
+      }
 
-        try {
-          // Verify token
-          const verifyUser = jwtHelper.verifyToken(
-            token,
-            config.jwt.jwt_secret as Secret,
+      const token = tokenWithBearer.split(' ')[1]
+
+      if (!token) {
+        return next(
+          new ApiError(StatusCodes.UNAUTHORIZED, 'Token missing after Bearer'),
+        )
+      }
+
+      let verifyUser
+
+      // FIRST: decode token
+      try {
+        verifyUser = jwtHelper.verifyToken(
+          token,
+          config.jwt.jwt_secret as Secret,
+        )
+      } catch (error: any) {
+        if (error.name === 'TokenExpiredError') {
+          return next(
+            new ApiError(StatusCodes.UNAUTHORIZED, 'Access Token has expired'),
           )
+        }
 
-          // Set user to header
-          req.user = verifyUser
+        return next(new ApiError(StatusCodes.FORBIDDEN, 'Invalid Access Token'))
+      }
 
-          // Guard user
-          if (roles.length && !roles.includes(verifyUser.role)) {
-            throw new ApiError(
+      console.log('Decoded User Payload:', verifyUser)
+
+      // Attach to req
+      req.user = verifyUser
+
+      // SECOND: role check
+      if (roles.length > 0) {
+        const userRole =
+          verifyUser.role || verifyUser.user?.role || verifyUser.data?.role
+
+        if (!userRole) {
+          return next(
+            new ApiError(StatusCodes.FORBIDDEN, 'User role missing in token'),
+          )
+        }
+
+        if (!roles.includes(userRole)) {
+          return next(
+            new ApiError(
               StatusCodes.FORBIDDEN,
               "You don't have permission to access this API",
-            )
-          }
-
-          next()
-        } catch (error) {
-          console.log({ error })
-
-          if (error instanceof Error && error.name === 'TokenExpiredError') {
-            throw new ApiError(
-              StatusCodes.UNAUTHORIZED,
-              'Access Token has expired',
-            )
-          }
-          next(error)
-          throw new ApiError(StatusCodes.FORBIDDEN, 'Invalid Access Token')
+            ),
+          )
         }
       }
+
+      // SUCCESS
+      return next()
     } catch (error) {
-      next(error)
+      return next(error)
     }
   }
 
@@ -87,8 +112,6 @@ export const tempAuth =
 
           // Set user to header
           req.user = verifyUser
-
-        
 
           // Guard user
           if (roles.length && !roles.includes(verifyUser.role)) {

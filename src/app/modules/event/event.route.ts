@@ -1,60 +1,44 @@
-import express from 'express';
-import { EventController } from './event.controller';
-import { EventValidations } from './event.validation';
-import validateRequest from '../../middleware/validateRequest';
-import auth from '../../middleware/auth';
-import { USER_ROLES } from '../../../enum/user';
+import express from 'express'
+import { EventController } from './event.controller'
+import { EventValidations } from './event.validation'
+import validateRequest from '../../middleware/validateRequest'
+import auth from '../../middleware/auth'
+import { USER_ROLES } from '../../../enum/user'
 
-
-const router = express.Router();
+const router = express.Router()
 
 router.get(
   '/',
-  auth(
-    USER_ROLES.SUPER_ADMIN,
-    USER_ROLES.ADMIN
-  ),
-  EventController.getAllEvents
-);
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER),
+  EventController.getAllEvents,
+)
 
 router.get(
   '/:id',
-  auth(
-    USER_ROLES.SUPER_ADMIN,
-    USER_ROLES.ADMIN
-  ),
-  EventController.getSingleEvent
-);
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER),
+  EventController.getSingleEvent,
+)
 
 router.post(
   '/',
-  auth(
-    USER_ROLES.SUPER_ADMIN,
-    USER_ROLES.ADMIN
-  ),
-  
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER),
+
   validateRequest(EventValidations.create),
-  EventController.createEvent
-);
+  EventController.createEvent,
+)
 
 router.patch(
   '/:id',
-  auth(
-    USER_ROLES.SUPER_ADMIN,
-    USER_ROLES.ADMIN
-  ),
-  
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER),
+
   validateRequest(EventValidations.update),
-  EventController.updateEvent
-);
+  EventController.updateEvent,
+)
 
 router.delete(
   '/:id',
-  auth(
-    USER_ROLES.SUPER_ADMIN,
-    USER_ROLES.ADMIN
-  ),
-  EventController.deleteEvent
-);
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER),
+  EventController.deleteEvent,
+)
 
-export const EventRoutes = router;
+export const EventRoutes = router
