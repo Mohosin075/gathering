@@ -6,6 +6,8 @@ export const handleMediaUpload = async (req: any, res: any, next: any) => {
   try {
     const payload = req.body
 
+    console.log('Received payload:', payload)
+
     if (!payload.data) {
       throw new ApiError(StatusCodes.BAD_REQUEST, 'Data is required')
     }
@@ -45,6 +47,8 @@ export const handleMediaUpload = async (req: any, res: any, next: any) => {
           [videoFile], // Pass as array
           'videos',
         )
+
+        console.log('Uploaded video URLs:', uploadedVideoUrls)
 
         if (uploadedVideoUrls.length > 0) {
           mediaItems.push({
@@ -93,6 +97,8 @@ export const handleMediaUpload = async (req: any, res: any, next: any) => {
         )
       }
     }
+
+    console.log('All media items prepared:', mediaItems)
 
     // ===============================
     // Final body structure

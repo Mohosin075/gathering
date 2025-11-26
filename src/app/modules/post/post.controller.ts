@@ -10,6 +10,8 @@ import { paginationFields } from '../../../interfaces/pagination'
 const createPost = catchAsync(async (req: Request, res: Response) => {
   const postData = req.body
 
+  console.log('Creating post with data:', postData, postData.media_source);
+
   const result = await PostServices.createPost(req.user!, postData)
 
   sendResponse(res, {
