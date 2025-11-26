@@ -4,11 +4,7 @@ import express, { Router } from 'express'
 import { NotificationRoutes } from '../app/modules/notifications/notifications.route'
 import { PublicRoutes } from '../app/modules/public/public.route'
 import { SupportRoutes } from '../app/modules/support/support.route'
-import { PostRoutes } from '../app/modules/post/post.route'
 import { UploadRoutes } from '../app/modules/upload/upload.route'
-import { LikeRoutes } from '../app/modules/like/like.route'
-import { CommentRoutes } from '../app/modules/comment/comment.route'
-import { ShareRoutes } from '../app/modules/share/share.route'
 
 const router = express.Router()
 
@@ -18,11 +14,7 @@ const apiRoutes: { path: string; route: Router }[] = [
   { path: '/notifications', route: NotificationRoutes },
   { path: '/public', route: PublicRoutes },
   { path: '/support', route: SupportRoutes },
-  { path: '/post', route: PostRoutes },
   { path: '/upload', route: UploadRoutes },
-  { path: '/like', route: LikeRoutes },
-  { path: '/comment', route: CommentRoutes },
-  { path: '/share', route: ShareRoutes },
 ]
 
 apiRoutes.forEach(route => {
