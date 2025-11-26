@@ -3,6 +3,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import config from '../../config'
 import ApiError from '../../errors/ApiError'
 import { StatusCodes } from 'http-status-codes'
@@ -155,5 +156,28 @@ export const S3Helper = {
   uploadToS3,
   uploadMultipleFilesToS3,
   uploadMultipleVideosToS3,
+  generatePresignedUploadUrl: async (
+    filename: string,
+    folder: string,
+    contentType: string,
+    expiresIn: number = 3600,
+  ): Promise<{ signedUrl: string; publicUrl: string; key: string }> => {
+    const fileKey = `${folder}/${Date.now()}-${filename}`
+    const command = new PutObjectCommand({
+      Bucket: config.aws.bucket_name!,
+      Key: fileKey,
+      ContentType: contentType,
+    })
+    try {
+      const signedUrl = await getSignedUrl(s3Client, command, { expiresIn })
+      return { signedUrl, publicUrl: getPublicUri(fileKey), key: fileKey }
+    } catch (err) {
+      console.error('Error generating presigned URL:', err)
+      throw new ApiError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Failed to generate presigned URL',
+      )
+    }
+  },
   deleteFromS3,
 }

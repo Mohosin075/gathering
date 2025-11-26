@@ -8,12 +8,26 @@ export const handleMediaUpload = async (req: any, res: any, next: any) => {
 
     console.log('Received payload:', payload)
 
-    if (!payload.data) {
+    // Support both stringified `data` (multipart form) and direct JSON body
+    if (payload.data) {
+      // If payload.data is a string (form-data with `data`), parse it
+      if (typeof payload.data === 'string') {
+        try {
+          payload.data = JSON.parse(payload.data)
+        } catch (err) {
+          throw new ApiError(
+            StatusCodes.BAD_REQUEST,
+            'Invalid JSON in data field',
+          )
+        }
+      }
+    } else if (Object.keys(payload || {}).length === 0) {
+      // empty body
       throw new ApiError(StatusCodes.BAD_REQUEST, 'Data is required')
+    } else {
+      // No `data` wrapper present, use body as data directly (typical JSON requests)
+      payload.data = payload
     }
-
-    // Parse JSON payload
-    payload.data = JSON.parse(payload.data)
 
     // Files - ensure field names match frontend
     const imageFiles = (req.files as any)?.image as Express.Multer.File[]
@@ -102,10 +116,16 @@ export const handleMediaUpload = async (req: any, res: any, next: any) => {
 
     // ===============================
     // Final body structure
-    // ===============================
+    // If caller already included `media_source` in payload.data (direct JSON), use it and append uploaded items
+    // Otherwise, take uploaded items as `media_source`.
+    const existingMediaSource =
+      payload?.data?.media_source || payload?.media_source || []
+    const mergedMediaSource = [...existingMediaSource, ...mediaItems]
+
     req.body = {
       ...payload.data,
-      media_source: mediaItems,
+      ...payload,
+      media_source: mergedMediaSource,
     }
 
     console.log('Final media items:', mediaItems)
