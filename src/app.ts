@@ -8,10 +8,18 @@ import passport from './app/modules/auth/passport.auth/config/passport'
 import router from './routes'
 import globalErrorHandler from './app/middleware/globalErrorHandler'
 import config from './config'
+import webhookApp from './webhook'
 
 const app = express()
 
+// ⚠️ CRITICAL: Webhook MUST be before body parsers to receive raw body
+app.use(webhookApp)
+
 // -------------------- Middleware --------------------
+// Body parsers must come after webhook
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
+
 // Session must come before passport
 app.use(
   session({
@@ -39,10 +47,6 @@ app.use(
     credentials: true,
   }),
 )
-
-// Body parser
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
 
 // Cookie parser
 app.use(cookieParser())

@@ -7,13 +7,11 @@ const ticketSchema = new Schema<ITicket, TicketModel>(
       type: Schema.Types.ObjectId,
       ref: 'Event',
       required: true,
-      index: true,
     },
     attendeeId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
     },
     ticketType: {
       type: String,
@@ -63,7 +61,6 @@ const ticketSchema = new Schema<ITicket, TicketModel>(
     qrCode: {
       type: String,
       required: true,
-      unique: true,
     },
     ticketNumber: {
       type: String,
@@ -87,8 +84,6 @@ const ticketSchema = new Schema<ITicket, TicketModel>(
 
 // Indexes
 ticketSchema.index({ eventId: 1, attendeeId: 1 })
-ticketSchema.index({ qrCode: 1 })
-ticketSchema.index({ ticketNumber: 1 })
 ticketSchema.index({ status: 1, paymentStatus: 1 })
 
 export const Ticket = model<ITicket, TicketModel>('Ticket', ticketSchema)
