@@ -4,8 +4,8 @@ export const TicketValidations = {
   create: z.object({
     body: z.object({
       eventId: z.string(),
-      attendeeId: z.string(),
-      ticketType: z.enum(['regular', 'vip', 'early_bird']),
+      attendeeId: z.string().optional(),
+      ticketType: z.enum(['regular', 'vip', 'early_bird']).optional(),
       price: z.number().min(0),
       quantity: z.number().min(1).max(10),
       promotionCode: z.string().optional(),
@@ -24,7 +24,7 @@ export const TicketValidations = {
 
   checkIn: z.object({
     body: z.object({
-      qrCode: z.string(),
+      ticketId: z.string(),
     }),
   }),
 }

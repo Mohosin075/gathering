@@ -78,8 +78,8 @@ const deleteTicket = catchAsync(async (req: Request, res: Response) => {
 })
 
 const checkInTicket = catchAsync(async (req: Request, res: Response) => {
-  const { qrCode } = req.body
-  const result = await TicketServices.checkInTicket(qrCode)
+  const { ticketId } = req.body
+  const result = await TicketServices.checkInTicket(ticketId)
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,

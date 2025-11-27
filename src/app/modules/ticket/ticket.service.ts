@@ -41,7 +41,7 @@ const createTicket = async (
     if (payload.promotionCode) {
       const promotion = await Promotion.findByCode(payload.promotionCode)
       if (promotion && promotion.isValid()) {
-        if (promotion.canUse(user.userId)) {
+        if (promotion.canUse(user.authId)) {
           if (promotion.discountType === 'percentage') {
             discountAmount = (finalAmount * promotion.discountValue) / 100
           } else {
@@ -50,14 +50,14 @@ const createTicket = async (
           finalAmount = Math.max(0, finalAmount - discountAmount)
 
           // Mark promotion as used
-          await promotion.markAsUsed(user.userId)
+          await promotion.markAsUsed(user.authId)
         }
       }
     }
 
     const ticketData = {
       ...payload,
-      attendeeId: user.userId,
+      attendeeId: user.authId,
       totalAmount: payload.price * payload.quantity,
       discountAmount,
       finalAmount,
@@ -123,7 +123,7 @@ const getAllTickets = async (
   // Regular users can only see their own tickets
   if (user.role === 'user' || user.role === 'organizer') {
     andConditions.push({
-      attendeeId: new Types.ObjectId(user.userId),
+      attendeeId: new Types.ObjectId(user.authId),
     })
   }
 
@@ -226,8 +226,8 @@ const deleteTicket = async (id: string): Promise<ITicket> => {
   return result
 }
 
-const checkInTicket = async (qrCode: string): Promise<ITicket> => {
-  const ticket = await Ticket.findOne({ qrCode })
+const checkInTicket = async (ticketId: string): Promise<ITicket> => {
+  const ticket = await Ticket.findOne({ _id: ticketId })
     .populate('eventId')
     .populate('attendeeId', 'name email')
 
@@ -269,13 +269,13 @@ const getMyTickets = async (
     paginationHelper.calculatePagination(pagination)
 
   const [result, total] = await Promise.all([
-    Ticket.find({ attendeeId: new Types.ObjectId(user.userId) })
+    Ticket.find({ attendeeId: new Types.ObjectId(user.authId) })
       .skip(skip)
       .limit(limit)
       .sort({ [sortBy]: sortOrder })
       .populate('eventId')
       .populate('attendeeId', 'name email'),
-    Ticket.countDocuments({ attendeeId: new Types.ObjectId(user.userId) }),
+    Ticket.countDocuments({ attendeeId: new Types.ObjectId(user.authId) }),
   ])
 
   return {

@@ -19,6 +19,7 @@ const ticketSchema = new Schema<ITicket, TicketModel>(
       type: String,
       enum: ['regular', 'vip', 'early_bird'],
       required: true,
+      default: 'regular',
     },
     price: {
       type: Number,
