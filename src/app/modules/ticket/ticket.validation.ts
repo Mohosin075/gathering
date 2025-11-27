@@ -1,41 +1,30 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 export const TicketValidations = {
   create: z.object({
-    _id: z.string(),
-    eventId: z.string(),
-    attendeeId: z.string(),
-    ticketType: z.string(),
-    price: z.number(),
-    quantity: z.number(),
-    totalAmount: z.number(),
-    promotionCode: z.string().optional(),
-    discountAmount: z.number(),
-    finalAmount: z.number(),
-    status: z.string(),
-    paymentStatus: z.string(),
-    qrCode: z.string(),
-    ticketNumber: z.string(),
-    checkedIn: z.boolean(),
-    checkedInAt: z.string().datetime().optional(),
+    body: z.object({
+      eventId: z.string(),
+      attendeeId: z.string(),
+      ticketType: z.enum(['regular', 'vip', 'early_bird']),
+      price: z.number().min(0),
+      quantity: z.number().min(1).max(10),
+      promotionCode: z.string().optional(),
+    }),
   }),
 
   update: z.object({
-    _id: z.string().optional(),
-    eventId: z.string().optional(),
-    attendeeId: z.string().optional(),
-    ticketType: z.string().optional(),
-    price: z.number().optional(),
-    quantity: z.number().optional(),
-    totalAmount: z.number().optional(),
-    promotionCode: z.string().optional(),
-    discountAmount: z.number().optional(),
-    finalAmount: z.number().optional(),
-    status: z.string().optional(),
-    paymentStatus: z.string().optional(),
-    qrCode: z.string().optional(),
-    ticketNumber: z.string().optional(),
-    checkedIn: z.boolean().optional(),
-    checkedInAt: z.string().datetime().optional(),
+    body: z
+      .object({
+        status: z.enum(['confirmed', 'cancelled', 'refunded']).optional(),
+        paymentStatus: z.enum(['paid', 'failed', 'refunded']).optional(),
+        checkedIn: z.boolean().optional(),
+      })
+      .strict(),
   }),
-};
+
+  checkIn: z.object({
+    body: z.object({
+      qrCode: z.string(),
+    }),
+  }),
+}

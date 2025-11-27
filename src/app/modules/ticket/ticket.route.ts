@@ -1,60 +1,80 @@
-import express from 'express';
-import { TicketController } from './ticket.controller';
-import { TicketValidations } from './ticket.validation';
-import validateRequest from '../../middleware/validateRequest';
-import auth from '../../middleware/auth';
-import { USER_ROLES } from '../../../enum/user';
+import express from 'express'
+import { TicketController } from './ticket.controller'
+import { TicketValidations } from './ticket.validation'
+import validateRequest from '../../middleware/validateRequest'
+import auth from '../../middleware/auth'
+import { USER_ROLES } from '../../../enum/user'
 
-
-const router = express.Router();
+const router = express.Router()
 
 router.get(
   '/',
   auth(
     USER_ROLES.SUPER_ADMIN,
-    USER_ROLES.ADMIN
+    USER_ROLES.ADMIN,
+    USER_ROLES.ORGANIZER,
+    USER_ROLES.USER,
   ),
-  TicketController.getAllTickets
-);
+  TicketController.getAllTickets,
+)
+
+router.get(
+  '/my-tickets',
+  auth(
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.ADMIN,
+    USER_ROLES.ORGANIZER,
+    USER_ROLES.USER,
+  ),
+  TicketController.getMyTickets,
+)
 
 router.get(
   '/:id',
   auth(
     USER_ROLES.SUPER_ADMIN,
-    USER_ROLES.ADMIN
+    USER_ROLES.ADMIN,
+    USER_ROLES.ORGANIZER,
+    USER_ROLES.USER,
   ),
-  TicketController.getSingleTicket
-);
+  TicketController.getSingleTicket,
+)
 
 router.post(
   '/',
   auth(
     USER_ROLES.SUPER_ADMIN,
-    USER_ROLES.ADMIN
+    USER_ROLES.ADMIN,
+    USER_ROLES.ORGANIZER,
+    USER_ROLES.USER,
   ),
-  
-  validateRequest(TicketValidations.createTicketZodSchema),
-  TicketController.createTicket
-);
+  validateRequest(TicketValidations.create),
+  TicketController.createTicket,
+)
 
 router.patch(
   '/:id',
-  auth(
-    USER_ROLES.SUPER_ADMIN,
-    USER_ROLES.ADMIN
-  ),
-  
-  validateRequest(TicketValidations.updateTicketZodSchema),
-  TicketController.updateTicket
-);
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER),
+  validateRequest(TicketValidations.update),
+  TicketController.updateTicket,
+)
 
 router.delete(
   '/:id',
   auth(
     USER_ROLES.SUPER_ADMIN,
-    USER_ROLES.ADMIN
+    USER_ROLES.ADMIN,
+    USER_ROLES.ORGANIZER,
+    USER_ROLES.USER,
   ),
-  TicketController.deleteTicket
-);
+  TicketController.deleteTicket,
+)
 
-export const TicketRoutes = router;
+router.post(
+  '/check-in',
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER),
+  validateRequest(TicketValidations.checkIn),
+  TicketController.checkInTicket,
+)
+
+export const TicketRoutes = router

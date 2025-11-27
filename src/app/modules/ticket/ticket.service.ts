@@ -1,58 +1,114 @@
-import { StatusCodes } from 'http-status-codes';
-import ApiError from '../../../errors/ApiError';
-import { ITicketFilterables, ITicket } from './ticket.interface';
-import { Ticket } from './ticket.model';
-import { JwtPayload } from 'jsonwebtoken';
-import { IPaginationOptions } from '../../../interfaces/pagination';
-import { paginationHelper } from '../../../helpers/paginationHelper';
-import { ticketSearchableFields } from './ticket.constants';
-import { Types } from 'mongoose';
+import { StatusCodes } from 'http-status-codes'
+import ApiError from '../../../errors/ApiError'
+import { ITicketFilterables, ITicket } from './ticket.interface'
+import { Ticket } from './ticket.model'
+import { JwtPayload } from 'jsonwebtoken'
+import { IPaginationOptions } from '../../../interfaces/pagination'
+import { paginationHelper } from '../../../helpers/paginationHelper'
+import { ticketSearchableFields } from './ticket.constants'
+import { Types } from 'mongoose'
+import { Event } from '../event/event.model'
+import { Promotion } from '../promotion/promotion.model'
 
+const generateTicketNumber = (): string => {
+  return `TKT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+}
+
+const generateQRCode = (): string => {
+  return `QR-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+}
 
 const createTicket = async (
   user: JwtPayload,
-  payload: ITicket
+  payload: any,
 ): Promise<ITicket> => {
   try {
-    const result = await Ticket.create(payload);
-    if (!result) {
-      
-      throw new ApiError(
-        StatusCodes.BAD_REQUEST,
-        'Failed to create Ticket, please try again with valid data.'
-      );
+    // Verify event exists
+    const event = await Event.findById(payload.eventId)
+    if (!event) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Event not found')
     }
 
-    return result;
-  } catch (error: any) {
-    
-    if (error.code === 11000) {
-      throw new ApiError(StatusCodes.CONFLICT, 'Duplicate entry found');
+    // Check event capacity
+    if (event.ticketsSold + payload.quantity > event.capacity) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Event capacity exceeded')
     }
-    throw error;
+
+    let discountAmount = 0
+    let finalAmount = payload.price * payload.quantity
+
+    // Apply promotion if provided
+    if (payload.promotionCode) {
+      const promotion = await Promotion.findByCode(payload.promotionCode)
+      if (promotion && promotion.isValid()) {
+        if (promotion.canUse(user.userId)) {
+          if (promotion.discountType === 'percentage') {
+            discountAmount = (finalAmount * promotion.discountValue) / 100
+          } else {
+            discountAmount = promotion.discountValue
+          }
+          finalAmount = Math.max(0, finalAmount - discountAmount)
+
+          // Mark promotion as used
+          await promotion.markAsUsed(user.userId)
+        }
+      }
+    }
+
+    const ticketData = {
+      ...payload,
+      attendeeId: user.userId,
+      totalAmount: payload.price * payload.quantity,
+      discountAmount,
+      finalAmount,
+      qrCode: generateQRCode(),
+      ticketNumber: generateTicketNumber(),
+    }
+
+    const result = await Ticket.create(ticketData)
+
+    if (!result) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        'Failed to create ticket, please try again with valid data.',
+      )
+    }
+
+    // Update event tickets sold count
+    await Event.findByIdAndUpdate(payload.eventId, {
+      $inc: { ticketsSold: payload.quantity },
+    })
+
+    return result
+  } catch (error: any) {
+    if (error.code === 11000) {
+      throw new ApiError(StatusCodes.CONFLICT, 'Duplicate ticket found')
+    }
+    throw error
   }
-};
+}
 
 const getAllTickets = async (
   user: JwtPayload,
   filterables: ITicketFilterables,
-  pagination: IPaginationOptions
+  pagination: IPaginationOptions,
 ) => {
-  const { searchTerm, ...filterData } = filterables;
-  const { page, skip, limit, sortBy, sortOrder } = paginationHelper.calculatePagination(pagination);
+  const { searchTerm, ...filterData } = filterables
+  const { page, skip, limit, sortBy, sortOrder } =
+    paginationHelper.calculatePagination(pagination)
 
-  const andConditions = [];
+  const andConditions = []
 
   // Search functionality
   if (searchTerm) {
     andConditions.push({
-      $or: ticketSearchableFields.map((field) => ({
+      $or: ticketSearchableFields.map(field => ({
         [field]: {
           $regex: searchTerm,
           $options: 'i',
         },
       })),
-    });
+    })
   }
 
   // Filter functionality
@@ -61,19 +117,27 @@ const getAllTickets = async (
       $and: Object.entries(filterData).map(([key, value]) => ({
         [key]: value,
       })),
-    });
+    })
   }
 
-  const whereConditions = andConditions.length ? { $and: andConditions } : {};
+  // Regular users can only see their own tickets
+  if (user.role === 'user' || user.role === 'organizer') {
+    andConditions.push({
+      attendeeId: new Types.ObjectId(user.userId),
+    })
+  }
+
+  const whereConditions = andConditions.length ? { $and: andConditions } : {}
 
   const [result, total] = await Promise.all([
-    Ticket
-      .find(whereConditions)
+    Ticket.find(whereConditions)
       .skip(skip)
       .limit(limit)
-      .sort({ [sortBy]: sortOrder }).populate('_id').populate('eventId').populate('attendeeId'),
+      .sort({ [sortBy]: sortOrder })
+      .populate('eventId')
+      .populate('attendeeId', 'name email'),
     Ticket.countDocuments(whereConditions),
-  ]);
+  ])
 
   return {
     meta: {
@@ -83,31 +147,34 @@ const getAllTickets = async (
       totalPages: Math.ceil(total / limit),
     },
     data: result,
-  };
-};
+  }
+}
 
 const getSingleTicket = async (id: string): Promise<ITicket> => {
   if (!Types.ObjectId.isValid(id)) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Ticket ID');
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Ticket ID')
   }
 
-  const result = await Ticket.findById(id).populate('_id').populate('eventId').populate('attendeeId');
+  const result = await Ticket.findById(id)
+    .populate('eventId')
+    .populate('attendeeId', 'name email')
+
   if (!result) {
     throw new ApiError(
       StatusCodes.NOT_FOUND,
-      'Requested ticket not found, please try again with valid id'
-    );
+      'Requested ticket not found, please try again with valid id',
+    )
   }
 
-  return result;
-};
+  return result
+}
 
 const updateTicket = async (
   id: string,
-  payload: Partial<ITicket>
+  payload: Partial<ITicket>,
 ): Promise<ITicket | null> => {
   if (!Types.ObjectId.isValid(id)) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Ticket ID');
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Ticket ID')
   }
 
   const result = await Ticket.findByIdAndUpdate(
@@ -116,34 +183,111 @@ const updateTicket = async (
     {
       new: true,
       runValidators: true,
-    }
-  ).populate('_id').populate('eventId').populate('attendeeId');
+    },
+  )
+    .populate('eventId')
+    .populate('attendeeId', 'name email')
 
   if (!result) {
     throw new ApiError(
       StatusCodes.NOT_FOUND,
-      'Requested ticket not found, please try again with valid id'
-    );
+      'Requested ticket not found, please try again with valid id',
+    )
   }
 
-  return result;
-};
+  return result
+}
 
 const deleteTicket = async (id: string): Promise<ITicket> => {
   if (!Types.ObjectId.isValid(id)) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Ticket ID');
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Ticket ID')
   }
 
-  const result = await Ticket.findByIdAndDelete(id);
+  const result = await Ticket.findByIdAndUpdate(
+    id,
+    { status: 'cancelled' }, // soft-delete
+    { new: true, runValidators: true },
+  )
+    .populate('eventId')
+    .populate('attendeeId', 'name email')
+
   if (!result) {
     throw new ApiError(
       StatusCodes.NOT_FOUND,
-      'Something went wrong while deleting ticket, please try again with valid id.'
-    );
+      'Ticket not found or could not be cancelled, please try again with a valid ID.',
+    )
   }
 
-  return result;
-};
+  // Update event tickets sold count
+  await Event.findByIdAndUpdate(result.eventId, {
+    $inc: { ticketsSold: -result.quantity },
+  })
+
+  return result
+}
+
+const checkInTicket = async (qrCode: string): Promise<ITicket> => {
+  const ticket = await Ticket.findOne({ qrCode })
+    .populate('eventId')
+    .populate('attendeeId', 'name email')
+
+  if (!ticket) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Invalid QR code')
+  }
+
+  if (ticket.checkedIn) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Ticket already checked in')
+  }
+
+  if (ticket.status !== 'confirmed') {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Ticket is not confirmed')
+  }
+
+  if (ticket.paymentStatus !== 'paid') {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Ticket is not paid')
+  }
+
+  const result = await Ticket.findByIdAndUpdate(
+    ticket._id,
+    {
+      checkedIn: true,
+      checkedInAt: new Date(),
+    },
+    { new: true, runValidators: true },
+  )
+    .populate('eventId')
+    .populate('attendeeId', 'name email')
+
+  return result!
+}
+
+const getMyTickets = async (
+  user: JwtPayload,
+  pagination: IPaginationOptions,
+) => {
+  const { page, skip, limit, sortBy, sortOrder } =
+    paginationHelper.calculatePagination(pagination)
+
+  const [result, total] = await Promise.all([
+    Ticket.find({ attendeeId: new Types.ObjectId(user.userId) })
+      .skip(skip)
+      .limit(limit)
+      .sort({ [sortBy]: sortOrder })
+      .populate('eventId')
+      .populate('attendeeId', 'name email'),
+    Ticket.countDocuments({ attendeeId: new Types.ObjectId(user.userId) }),
+  ])
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+    data: result,
+  }
+}
 
 export const TicketServices = {
   createTicket,
@@ -151,4 +295,6 @@ export const TicketServices = {
   getSingleTicket,
   updateTicket,
   deleteTicket,
-};
+  checkInTicket,
+  getMyTickets,
+}
