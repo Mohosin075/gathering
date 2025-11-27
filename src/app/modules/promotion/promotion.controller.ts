@@ -10,6 +10,7 @@ import { JwtPayload } from 'jsonwebtoken'
 
 const createPromotion = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as JwtPayload
+  console.log(user)
   const result = await PromotionService.createPromotion(user, req.body)
 
   sendResponse(res, {

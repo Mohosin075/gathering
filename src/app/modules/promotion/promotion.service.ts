@@ -17,7 +17,9 @@ export interface IPromotionFilterables {
 const promotionSearchableFields = ['code', 'description']
 
 const createPromotion = async (user: JwtPayload, payload: any) => {
-  payload.createdBy = user.userId
+  payload.createdBy = user.authId
+
+  console.log(payload)
 
   const existingPromotion = await Promotion.findOne({
     code: payload.code.toUpperCase(),
@@ -116,7 +118,7 @@ const deletePromotion = async (id: string) => {
   return result
 }
 
-const validatePromotion = async (code: string, userId: string) => {
+const validatePromotion = async (code: string, authId: string) => {
   // Replace static method with regular query
   const promotion = await Promotion.findOne({ code: code.toUpperCase().trim() })
 
@@ -131,7 +133,7 @@ const validatePromotion = async (code: string, userId: string) => {
     )
   }
 
-  if (!promotion.canUse(userId)) {
+  if (!promotion.canUse(authId)) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
       'Promotion code has already been used',
@@ -141,8 +143,8 @@ const validatePromotion = async (code: string, userId: string) => {
   return promotion
 }
 
-const applyPromotion = async (code: string, userId: string, amount: number) => {
-  const promotion = await validatePromotion(code, userId)
+const applyPromotion = async (code: string, authId: string, amount: number) => {
+  const promotion = await validatePromotion(code, authId)
 
   let discountAmount = 0
 
@@ -155,7 +157,7 @@ const applyPromotion = async (code: string, userId: string, amount: number) => {
   const finalAmount = Math.max(0, amount - discountAmount)
 
   // Mark promotion as used
-  await promotion.markAsUsed(userId)
+  await promotion.markAsUsed(authId)
 
   return {
     promotion,
@@ -186,11 +188,11 @@ const getMyPromotions = async (
     paginationHelper.calculatePagination(pagination)
 
   const [result, total] = await Promise.all([
-    Promotion.find({ createdBy: user.userId })
+    Promotion.find({ createdBy: user.authId })
       .skip(skip)
       .limit(limit)
       .sort({ [sortBy]: sortOrder }),
-    Promotion.countDocuments({ createdBy: user.userId }),
+    Promotion.countDocuments({ createdBy: user.authId }),
   ])
 
   return {
@@ -214,9 +216,9 @@ const findActivePromotions = async () => {
 }
 
 // Helper function to find promotions by user (replacement for static method)
-const findPromotionsByUser = async (userId: string) => {
+const findPromotionsByUser = async (authId: string) => {
   return await Promotion.find({
-    $or: [{ createdBy: userId }, { usedBy: new Types.ObjectId(userId) }],
+    $or: [{ createdBy: authId }, { usedBy: new Types.ObjectId(authId) }],
   })
 }
 

@@ -77,7 +77,8 @@ PromotionSchema.index({ usedBy: 1 })
 // Virtual methods
 PromotionSchema.methods.isValid = function (): boolean {
   const now = new Date()
-  return this.isActive && now <= this.validUntil && !this.isExhausted()
+  const valid = this.isActive && now <= this.validUntil && !this.isExhausted()
+  return valid
 }
 
 PromotionSchema.methods.isExhausted = function (): boolean {

@@ -27,16 +27,15 @@ router.get(
 
 router.get(
   '/my-promotions',
-  auth(
-    USER_ROLES.ADMIN,
-    USER_ROLES.SUPER_ADMIN,
-    USER_ROLES.USER,
-    USER_ROLES.ORGANIZER,
-  ),
+  auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN, USER_ROLES.ORGANIZER),
   PromotionController.getMyPromotions,
 )
 
-router.get('/:id', auth(), PromotionController.getSinglePromotion)
+router.get(
+  '/:id',
+  auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN, USER_ROLES.ORGANIZER),
+  PromotionController.getSinglePromotion,
+)
 
 router.patch(
   '/:id',
