@@ -4,8 +4,9 @@ import { Server } from 'socket.io'
 import app from './app'
 import config from './config'
 
-import { socketHelper } from './helpers/socketHelper'
+import { Server as SocketServer } from 'socket.io'
 import { UserServices } from './app/modules/user/user.service'
+import { socketHelper } from './helpers/socketHelper'
 
 // Uncaught exceptions
 process.on('uncaughtException', error => {
@@ -15,6 +16,8 @@ process.on('uncaughtException', error => {
 
 export const onlineUsers = new Map()
 let server: any
+
+export let io: SocketServer
 
 async function main() {
   try {
@@ -31,7 +34,7 @@ async function main() {
     })
 
     // Socket.IO setup
-    const io = new Server(server, {
+    io = new Server(server, {
       pingTimeout: 60000,
       cors: { origin: '*' },
     })

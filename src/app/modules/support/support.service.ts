@@ -1,59 +1,83 @@
-import { StatusCodes } from 'http-status-codes';
-import ApiError from '../../../errors/ApiError';
-import { ISupportFilterables, ISupport } from './support.interface';
-import { Support } from './support.model';
-import { JwtPayload } from 'jsonwebtoken';
-import { IPaginationOptions } from '../../../interfaces/pagination';
-import { paginationHelper } from '../../../helpers/paginationHelper';
-import { supportSearchableFields } from './support.constants';
-import { Types } from 'mongoose';
-import { SUPPORT_STATUS } from '../../../enum/support';
-
+import { StatusCodes } from 'http-status-codes'
+import ApiError from '../../../errors/ApiError'
+import { ISupportFilterables, ISupport } from './support.interface'
+import { Support } from './support.model'
+import { JwtPayload } from 'jsonwebtoken'
+import { IPaginationOptions } from '../../../interfaces/pagination'
+import { paginationHelper } from '../../../helpers/paginationHelper'
+import { Types } from 'mongoose'
+import { SUPPORT_STATUS } from '../../../enum/support'
+import config from '../../../config'
+import { sendNotifications } from '../../../helpers/notificationsHelper'
+import { User } from '../user/user.model'
+import { USER_ROLES, USER_STATUS } from '../../../enum/user'
 
 const createSupport = async (
   user: JwtPayload,
-  payload: ISupport
+  payload: ISupport,
 ): Promise<ISupport> => {
+  console.log({ user, payload })
 
-  console.log({user, payload})
-
-  const data = {...payload, userId: user?.authId, status : SUPPORT_STATUS.IN_PROGRESS};
+  const data = {
+    ...payload,
+    userId: user?.authId,
+    status: SUPPORT_STATUS.IN_PROGRESS,
+  }
 
   try {
-    const result = await Support.create(data);
+    const result = await Support.create(data)
     if (!result) {
-      
       throw new ApiError(
         StatusCodes.BAD_REQUEST,
-        'Failed to create Support, please try again with valid data.'
-      );
+        'Failed to create Support, please try again with valid data.',
+      )
     }
 
-    return result;
-  } catch (error: any) {
-    
-    if (error.code === 11000) {
-      throw new ApiError(StatusCodes.CONFLICT, 'Duplicate entry found');
+    const superAdmin = await User.findOne({
+      role: USER_ROLES.SUPER_ADMIN,
+      status: USER_STATUS.ACTIVE,
+    }).select('_id email')
+
+    const notification = {
+      text: 'Your support request has been received.',
+      title: 'Support Created',
+      direction: 'inbox',
+      link: '/support/1234567890abcdef',
+      receiver: superAdmin?._id,
+      sender: user?.authId,
+      read: false,
+      type: 'ADMIN',
+      createdAt: new Date('2025-11-29T01:00:00.000Z'),
+      updatedAt: new Date('2025-11-29T01:00:00.000Z'),
     }
-    throw error;
+
+    await sendNotifications(notification)
+
+    return result
+  } catch (error: any) {
+    if (error.code === 11000) {
+      throw new ApiError(StatusCodes.CONFLICT, 'Duplicate entry found')
+    }
+    throw error
   }
-};
+}
 
 const getAllSupports = async (
   user: JwtPayload,
   filterables: ISupportFilterables,
-  pagination: IPaginationOptions
+  pagination: IPaginationOptions,
 ) => {
-  const { page, skip, limit, sortBy, sortOrder } = paginationHelper.calculatePagination(pagination);
+  const { page, skip, limit, sortBy, sortOrder } =
+    paginationHelper.calculatePagination(pagination)
 
   const [result, total] = await Promise.all([
-    Support
-      .find({status  : {$nin: [SUPPORT_STATUS.DELETED]}})
+    Support.find({ status: { $nin: [SUPPORT_STATUS.DELETED] } })
       .skip(skip)
       .limit(limit)
-      .sort({ [sortBy]: sortOrder }).populate('userId'),
-    Support.countDocuments({status  : {$nin: [SUPPORT_STATUS.DELETED]}}),
-  ]);
+      .sort({ [sortBy]: sortOrder })
+      .populate('userId'),
+    Support.countDocuments({ status: { $nin: [SUPPORT_STATUS.DELETED] } }),
+  ])
 
   return {
     meta: {
@@ -63,89 +87,91 @@ const getAllSupports = async (
       totalPages: Math.ceil(total / limit),
     },
     data: result,
-  };
-};
+  }
+}
 
 const getSingleSupport = async (id: string): Promise<ISupport> => {
   if (!Types.ObjectId.isValid(id)) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Support ID');
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Support ID')
   }
 
-  const result = await Support.findById(id).populate('userId');
+  const result = await Support.findById(id).populate('userId')
   if (!result) {
     throw new ApiError(
       StatusCodes.NOT_FOUND,
-      'Requested support not found, please try again with valid id'
-    );
+      'Requested support not found, please try again with valid id',
+    )
   }
 
-  return result;
-};
+  return result
+}
 
 const updateSupport = async (
   id: string,
-  payload: Partial<ISupport>
+  payload: Partial<ISupport>,
 ): Promise<ISupport | null> => {
   if (!Types.ObjectId.isValid(id)) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Support ID');
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Support ID')
   }
 
   const isSupportExist = await Support.findOne({
     _id: id,
-    status: { $nin: [SUPPORT_STATUS.DELETED] }
-  });
+    status: { $nin: [SUPPORT_STATUS.DELETED] },
+  })
 
   if (!isSupportExist) {
     throw new ApiError(
       StatusCodes.NOT_FOUND,
-      'Requested support not found, please try again with valid id'
-    );
+      'Requested support not found, please try again with valid id',
+    )
   }
 
   const result = await Support.findByIdAndUpdate(
     id,
     { $set: payload },
-    { new: true, runValidators: true }
-  ).populate('userId');
+    { new: true, runValidators: true },
+  ).populate('userId')
 
   if (!result) {
     throw new ApiError(
       StatusCodes.NOT_FOUND,
-      'Requested support not found, please try again with valid id'
-    );
+      'Requested support not found, please try again with valid id',
+    )
   }
 
-  return result;
-};
-
+  return result
+}
 
 const deleteSupport = async (id: string): Promise<ISupport> => {
   if (!Types.ObjectId.isValid(id)) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Support ID');
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Support ID')
   }
 
-    const isSupportExist = await Support.findOne({
+  const isSupportExist = await Support.findOne({
     _id: id,
-    status: { $nin: [SUPPORT_STATUS.DELETED] }
-  });
+    status: { $nin: [SUPPORT_STATUS.DELETED] },
+  })
   if (!isSupportExist) {
-    throw new ApiError(StatusCodes.NOT_FOUND, 'Requested support not found, please try again with valid id');
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      'Requested support not found, please try again with valid id',
+    )
   }
 
   const result = await Support.findByIdAndUpdate(
     id,
     { $set: { status: SUPPORT_STATUS.DELETED } },
-    { new: true }
-  );
+    { new: true },
+  )
   if (!result) {
     throw new ApiError(
       StatusCodes.NOT_FOUND,
-      'Something went wrong while deleting support, please try again with valid id.'
-    );
+      'Something went wrong while deleting support, please try again with valid id.',
+    )
   }
 
-  return result;
-};
+  return result
+}
 
 export const SupportServices = {
   createSupport,
@@ -153,4 +179,4 @@ export const SupportServices = {
   getSingleSupport,
   updateSupport,
   deleteSupport,
-};
+}

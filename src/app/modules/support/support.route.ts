@@ -13,9 +13,15 @@ router.get('/:id', auth(USER_ROLES.ADMIN), SupportController.getSingleSupport)
 
 router.post(
   '/',
-  auth(USER_ROLES.ADMIN, USER_ROLES.USER),
+  auth(
+    USER_ROLES.ADMIN,
+    USER_ROLES.USER,
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.ORGANIZER,
+  ),
 
   validateRequest(createSupportSchema),
+
   SupportController.createSupport,
 )
 
