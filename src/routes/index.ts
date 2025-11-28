@@ -9,6 +9,8 @@ import { PromotionRoutes } from '../app/modules/promotion/promotion.route'
 import { TicketRoutes } from '../app/modules/ticket/ticket.route'
 import { PaymentRoutes } from '../app/modules/payment/payment.route'
 import { NotificationRoutes } from '../app/modules/notification/notification.routes'
+import { MessageRoutes } from '../app/modules/message/message.routes'
+import { ChatRoutes } from '../app/modules/chat/chat.routes'
 
 const router = express.Router()
 
@@ -23,6 +25,8 @@ const apiRoutes: { path: string; route: Router }[] = [
   { path: '/promotion', route: PromotionRoutes },
   { path: '/ticket', route: TicketRoutes },
   { path: '/payment', route: PaymentRoutes },
+  { path: '/message', route: MessageRoutes },
+  { path: '/chat', route: ChatRoutes },
 ]
 
 apiRoutes.forEach(route => {

@@ -1,0 +1,56 @@
+import { Request, Response } from 'express'
+import catchAsync from '../../../shared/catchAsync'
+import sendResponse from '../../../shared/sendResponse'
+import { StatusCodes } from 'http-status-codes'
+import { MessageService } from './message.service'
+import { JwtPayload } from 'jsonwebtoken'
+import { Chat } from '../chat/chat.model'
+import ApiError from '../../../errors/ApiError'
+
+const sendMessage = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user as JwtPayload
+
+  const payload = req.body
+
+  const chat = await Chat.findById(payload.chatId).populate('participants')
+  if (!chat) throw new ApiError(StatusCodes.NOT_FOUND, 'Chat not found')
+
+  // find the receiver (the participant that is NOT the sender)
+  const receiverId = chat.participants.find(
+    id => id.toString() !== user.authId.toString(),
+  )
+
+  if (!receiverId)
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'No receiver found')
+
+  payload.receiver = receiverId // now you have a valid receiver ID
+
+  const data = {
+    ...req.body,
+    image: payload.images[0],
+    sender: user.authId,
+    receiver: receiverId,
+  }
+
+  const message = await MessageService.sendMessageToDB(data)
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Send Message Successfully',
+    data: message,
+  })
+})
+
+const getMessage = catchAsync(async (req: Request, res: Response) => {
+  const id = req.params.id
+  console.log({ id }, 'chatId')
+  const messages = await MessageService.getMessageFromDB(id)
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Message Retrieve Successfully',
+    data: messages,
+  })
+})
+
+export const MessageController = { sendMessage, getMessage }
