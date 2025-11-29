@@ -4,6 +4,7 @@ import { USER_ROLES } from '../../../enum/user'
 import auth from '../../middleware/auth'
 const router = express.Router()
 
+// Existing routes
 router.get(
   '/',
   auth(
@@ -26,11 +27,48 @@ router.patch(
 )
 router.patch(
   '/admin',
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
+  NotificationController.adminReadNotification,
+)
+router.get(
+  '/history',
+  auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+  NotificationController.getNotificationsHistory,
+)
+
+// Broadcast notification
+router.post(
+  '/broadcast',
   auth(
+    USER_ROLES.ORGANIZER,
+    USER_ROLES.USER,
     USER_ROLES.SUPER_ADMIN,
     USER_ROLES.ADMIN,
   ),
-  NotificationController.adminReadNotification,
+  NotificationController.createNotification,
+)
+
+// NEW ROUTES - Add these
+router.post(
+  '/track-open',
+  auth(
+    USER_ROLES.ADMIN,
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.ORGANIZER,
+    USER_ROLES.USER,
+  ),
+  NotificationController.trackNotificationOpen,
+)
+
+router.post(
+  '/track-engagement',
+  auth(
+    USER_ROLES.ADMIN,
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.ORGANIZER,
+    USER_ROLES.USER,
+  ),
+  NotificationController.trackNotificationEngagement,
 )
 
 export const NotificationRoutes = router

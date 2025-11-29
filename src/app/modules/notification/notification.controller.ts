@@ -56,10 +56,87 @@ const adminReadNotification = catchAsync(
     })
   },
 )
+// Create notification
+const createNotification = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user as JwtPayload
+  const payload = req.body
+
+  const result = await NotificationService.createBroadcastNotification({
+    ...payload,
+    sender: user.authId,
+  })
+
+  sendResponse(res, {
+    statusCode: StatusCodes.CREATED,
+    success: true,
+    message: payload.scheduled
+      ? 'Notification scheduled successfully'
+      : 'Notification sent successfully',
+    data: result,
+  })
+})
+
+// Get notification history
+const getNotificationsHistory = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await NotificationService.getNotificationHistory()
+
+    sendResponse(res, {
+      statusCode: StatusCodes.OK,
+      success: true,
+      message: 'Notification history retrieved successfully',
+      data: result,
+    })
+  },
+)
+
+// Track notification open
+const trackNotificationOpen = catchAsync(
+  async (req: Request, res: Response) => {
+    const user = req.user as JwtPayload
+    const { notificationId } = req.body
+
+    const result = await NotificationService.trackNotificationOpen(
+      user,
+      notificationId,
+    )
+
+    sendResponse(res, {
+      statusCode: StatusCodes.OK,
+      success: true,
+      message: 'Open tracked successfully',
+      data: result,
+    })
+  },
+)
+
+// Track notification engagement
+const trackNotificationEngagement = catchAsync(
+  async (req: Request, res: Response) => {
+    const user = req.user as JwtPayload
+    const { notificationId } = req.body
+
+    const result = await NotificationService.trackNotificationEngagement(
+      user,
+      notificationId,
+    )
+
+    sendResponse(res, {
+      statusCode: StatusCodes.OK,
+      success: true,
+      message: 'Engagement tracked successfully',
+      data: result,
+    })
+  },
+)
 
 export const NotificationController = {
   adminNotificationFromDB,
   getNotificationFromDB,
   readNotification,
   adminReadNotification,
+  createNotification,
+  getNotificationsHistory,
+  trackNotificationOpen,
+  trackNotificationEngagement,
 }
