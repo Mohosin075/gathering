@@ -87,6 +87,62 @@ const getAllEvents = async (
     data: result,
   }
 }
+const getMyEvents = async (
+  user: JwtPayload,
+  filterables: IEventFilterables,
+  pagination: IPaginationOptions,
+) => {
+  const { searchTerm, ...filterData } = filterables
+  const { page, skip, limit, sortBy, sortOrder } =
+    paginationHelper.calculatePagination(pagination)
+
+  const andConditions = []
+
+  // Search functionality
+  if (searchTerm) {
+    andConditions.push({
+      $or: eventSearchableFields.map(field => ({
+        [field]: {
+          $regex: searchTerm,
+          $options: 'i',
+        },
+      })),
+    })
+  }
+
+  // Filter functionality
+  if (Object.keys(filterData).length) {
+    andConditions.push({
+      $and: Object.entries(filterData).map(([key, value]) => ({
+        [key]: value,
+      })),
+    })
+  }
+
+  const whereConditions = andConditions.length ? { $and: andConditions } : {}
+
+  const [result, total] = await Promise.all([
+    Event.find({
+      ...whereConditions,
+      organizerId: user.authId,
+    })
+      .skip(skip)
+      .limit(limit)
+      .sort({ [sortBy]: sortOrder })
+      .populate('organizerId'),
+    Event.countDocuments(whereConditions),
+  ])
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+    data: result,
+  }
+}
 
 const getSingleEvent = async (id: string): Promise<IEvent> => {
   if (!Types.ObjectId.isValid(id)) {
@@ -158,4 +214,5 @@ export const EventServices = {
   getSingleEvent,
   updateEvent,
   deleteEvent,
+  getMyEvents,
 }

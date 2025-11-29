@@ -11,6 +11,7 @@ export const eventFilterables = [
   'meetingLink',
   'currency',
   'images',
+  'status'
 ]
 
 // Searchable fields for Event

@@ -63,6 +63,23 @@ const getAllEvents = catchAsync(async (req: Request, res: Response) => {
     data: result,
   })
 })
+const getMyEvents = catchAsync(async (req: Request, res: Response) => {
+  const filterables = pick(req.query, eventFilterables)
+  const pagination = pick(req.query, paginationFields)
+
+  const result = await EventServices.getAllEvents(
+    req.user!,
+    filterables,
+    pagination,
+  )
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'My Events retrieved successfully',
+    data: result,
+  })
+})
 
 const deleteEvent = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params
@@ -82,4 +99,5 @@ export const EventController = {
   getSingleEvent,
   getAllEvents,
   deleteEvent,
+  getMyEvents,
 }

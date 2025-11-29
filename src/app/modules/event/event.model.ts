@@ -1,17 +1,18 @@
 import { Schema, model } from 'mongoose'
 import { IEvent, EventModel } from './event.interface'
+import { EVENT_CATEGORIES, EVENT_STATUS } from '../../../enum/event'
 
 const eventSchema = new Schema<IEvent, EventModel>(
   {
     title: { type: String, required: true },
     description: { type: String, required: true },
-    category: { type: String, required: true },
+    category: { type: String, enum: EVENT_CATEGORIES, required: true },
     tags: { type: [String], default: [] },
-    organizerId: { type: Schema.Types.ObjectId, ref: 'User'},
+    organizerId: { type: Schema.Types.ObjectId, ref: 'User' },
     status: {
       type: String,
-      enum: ['draft', 'published', 'cancelled', 'archived'],
-      default: 'draft',
+      enum: EVENT_STATUS,
+      default: EVENT_STATUS.PENDING,
     },
     visibility: {
       type: String,

@@ -13,6 +13,11 @@ router.get(
   auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER),
   EventController.getAllEvents,
 )
+router.get(
+  '/my-events',
+  auth(USER_ROLES.ORGANIZER),
+  EventController.getMyEvents,
+)
 
 router.get(
   '/:id',
@@ -22,7 +27,7 @@ router.get(
 
 router.post(
   '/',
-  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER),
+  auth(USER_ROLES.ORGANIZER),
 
   fileAndBodyProcessorUsingDiskStorage(),
 

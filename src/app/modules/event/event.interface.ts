@@ -1,5 +1,6 @@
 import { Model, Types } from 'mongoose'
 import { Point } from '../user/user.interface'
+import { EVENT_CATEGORIES, EVENT_STATUS } from '../../../enum/event'
 
 export interface IEventFilterables {
   searchTerm?: string
@@ -20,10 +21,10 @@ export interface IEvent {
   _id: Types.ObjectId
   title: string
   description: string
-  category: string
+  category: EVENT_CATEGORIES
   tags: string[]
   organizerId: Types.ObjectId
-  status: 'draft' | 'published' | 'cancelled' | 'archived'
+  status: EVENT_STATUS
   visibility: 'public' | 'private' | 'unlisted'
   startDate: string
   startTime: string
