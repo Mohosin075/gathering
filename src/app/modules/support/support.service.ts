@@ -39,16 +39,13 @@ const createSupport = async (
     }).select('_id email')
 
     const notification = {
-      text: 'Your support request has been received.',
-      title: 'Support Created',
-      direction: 'inbox',
-      link: '/support/1234567890abcdef',
+      title: 'Support Request Received',
+      message:
+        'Your support request has been received. Our team will review it shortly.',
+      notificationType: 'SYSTEM_ALERT',
       receiver: superAdmin?._id,
       sender: user?.authId,
-      read: false,
-      type: 'ADMIN',
-      createdAt: new Date('2025-11-29T01:00:00.000Z'),
-      updatedAt: new Date('2025-11-29T01:00:00.000Z'),
+      type: 'INDIVIDUAL',
     }
 
     await sendNotifications(notification)

@@ -76,10 +76,20 @@ const createNotification = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
-// Get notification history
+// Get notification history with optional tracking
 const getNotificationsHistory = catchAsync(
   async (req: Request, res: Response) => {
-    const result = await NotificationService.getNotificationHistory()
+    const user = req.user as JwtPayload
+    const { notificationId, opened, clicked } = req.body
+
+    const trackingData = notificationId
+      ? { notificationId, opened, clicked }
+      : undefined
+
+    const result = await NotificationService.getNotificationHistory(
+      user,
+      trackingData,
+    )
 
     sendResponse(res, {
       statusCode: StatusCodes.OK,
@@ -90,45 +100,6 @@ const getNotificationsHistory = catchAsync(
   },
 )
 
-// Track notification open
-const trackNotificationOpen = catchAsync(
-  async (req: Request, res: Response) => {
-    const user = req.user as JwtPayload
-    const { notificationId } = req.body
-
-    const result = await NotificationService.trackNotificationOpen(
-      user,
-      notificationId,
-    )
-
-    sendResponse(res, {
-      statusCode: StatusCodes.OK,
-      success: true,
-      message: 'Open tracked successfully',
-      data: result,
-    })
-  },
-)
-
-// Track notification engagement
-const trackNotificationEngagement = catchAsync(
-  async (req: Request, res: Response) => {
-    const user = req.user as JwtPayload
-    const { notificationId } = req.body
-
-    const result = await NotificationService.trackNotificationEngagement(
-      user,
-      notificationId,
-    )
-
-    sendResponse(res, {
-      statusCode: StatusCodes.OK,
-      success: true,
-      message: 'Engagement tracked successfully',
-      data: result,
-    })
-  },
-)
 
 export const NotificationController = {
   adminNotificationFromDB,
@@ -136,7 +107,5 @@ export const NotificationController = {
   readNotification,
   adminReadNotification,
   createNotification,
-  getNotificationsHistory,
-  trackNotificationOpen,
-  trackNotificationEngagement,
+  getNotificationsHistory
 }
