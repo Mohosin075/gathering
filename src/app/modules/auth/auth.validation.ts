@@ -139,7 +139,7 @@ const addressSchema = z.object({
 
 const createUserZodSchema = z.object({
   body: z.object({
-    email: z.string({ required_error: 'Email is required' }).email(),
+    email: z.string({ required_error: 'Email is required' }).email().optional(),
     password: z.string({ required_error: 'Password is required' }).min(6),
     name: z.string({ required_error: 'Name is required' }).optional(),
     phone: z.string().refine(
