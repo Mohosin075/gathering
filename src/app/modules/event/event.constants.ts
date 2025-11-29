@@ -1,5 +1,6 @@
 // Filterable fields for Event
 export const eventFilterables = [
+  'searchTerm',
   'title',
   'description',
   'category',
@@ -11,11 +12,12 @@ export const eventFilterables = [
   'meetingLink',
   'currency',
   'images',
-  'status'
+  'status',
 ]
 
 // Searchable fields for Event
 export const eventSearchableFields = [
+  'searchTerm',
   'title',
   'description',
   'category',

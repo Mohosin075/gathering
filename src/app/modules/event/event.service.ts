@@ -42,15 +42,18 @@ const getAllEvents = async (
   const { searchTerm, ...filterData } = filterables
   const { page, skip, limit, sortBy, sortOrder } =
     paginationHelper.calculatePagination(pagination)
+  let whereConditions: any = {}
 
-  const andConditions = []
+  // 🔥 FIXED: Properly typed arrays
+  const searchConditions: any[] = []
+  const filterConditions: any[] = []
 
   // Search functionality
-  if (searchTerm) {
-    andConditions.push({
+  if (searchTerm && searchTerm.trim() !== '') {
+    searchConditions.push({
       $or: eventSearchableFields.map(field => ({
         [field]: {
-          $regex: searchTerm,
+          $regex: searchTerm.trim(),
           $options: 'i',
         },
       })),
@@ -58,15 +61,24 @@ const getAllEvents = async (
   }
 
   // Filter functionality
-  if (Object.keys(filterData).length) {
-    andConditions.push({
-      $and: Object.entries(filterData).map(([key, value]) => ({
-        [key]: value,
-      })),
+  if (Object.keys(filterData).length > 0) {
+    Object.entries(filterData).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        filterConditions.push({ [key]: value })
+      }
     })
   }
 
-  const whereConditions = andConditions.length ? { $and: andConditions } : {}
+  // Combine conditions
+  if (searchConditions.length > 0 && filterConditions.length > 0) {
+    whereConditions = {
+      $and: [...searchConditions, ...filterConditions],
+    }
+  } else if (searchConditions.length > 0) {
+    whereConditions = { $and: searchConditions }
+  } else if (filterConditions.length > 0) {
+    whereConditions = { $and: filterConditions }
+  }
 
   const [result, total] = await Promise.all([
     Event.find(whereConditions)
@@ -87,6 +99,7 @@ const getAllEvents = async (
     data: result,
   }
 }
+
 const getMyEvents = async (
   user: JwtPayload,
   filterables: IEventFilterables,
@@ -96,14 +109,18 @@ const getMyEvents = async (
   const { page, skip, limit, sortBy, sortOrder } =
     paginationHelper.calculatePagination(pagination)
 
-  const andConditions = []
+  let whereConditions: any = {}
+
+  // 🔥 FIXED: Properly typed arrays
+  const searchConditions: any[] = []
+  const filterConditions: any[] = []
 
   // Search functionality
-  if (searchTerm) {
-    andConditions.push({
+  if (searchTerm && searchTerm.trim() !== '') {
+    searchConditions.push({
       $or: eventSearchableFields.map(field => ({
         [field]: {
-          $regex: searchTerm,
+          $regex: searchTerm.trim(),
           $options: 'i',
         },
       })),
@@ -111,26 +128,38 @@ const getMyEvents = async (
   }
 
   // Filter functionality
-  if (Object.keys(filterData).length) {
-    andConditions.push({
-      $and: Object.entries(filterData).map(([key, value]) => ({
-        [key]: value,
-      })),
+  if (Object.keys(filterData).length > 0) {
+    Object.entries(filterData).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        filterConditions.push({ [key]: value })
+      }
     })
   }
 
-  const whereConditions = andConditions.length ? { $and: andConditions } : {}
+  // Combine conditions
+  if (searchConditions.length > 0 && filterConditions.length > 0) {
+    whereConditions = {
+      $and: [...searchConditions, ...filterConditions],
+    }
+  } else if (searchConditions.length > 0) {
+    whereConditions = { $and: searchConditions }
+  } else if (filterConditions.length > 0) {
+    whereConditions = { $and: filterConditions }
+  }
+
+  // Add organizer filter to only get current user's events
+  const finalConditions = {
+    ...whereConditions,
+    organizerId: user.authId,
+  }
 
   const [result, total] = await Promise.all([
-    Event.find({
-      ...whereConditions,
-      organizerId: user.authId,
-    })
+    Event.find(finalConditions)
       .skip(skip)
       .limit(limit)
       .sort({ [sortBy]: sortOrder })
       .populate('organizerId'),
-    Event.countDocuments(whereConditions),
+    Event.countDocuments(finalConditions),
   ])
 
   return {

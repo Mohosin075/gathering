@@ -67,7 +67,7 @@ const getMyEvents = catchAsync(async (req: Request, res: Response) => {
   const filterables = pick(req.query, eventFilterables)
   const pagination = pick(req.query, paginationFields)
 
-  const result = await EventServices.getAllEvents(
+  const result = await EventServices.getMyEvents(
     req.user!,
     filterables,
     pagination,

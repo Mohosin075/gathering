@@ -84,37 +84,54 @@ const createAdmin = async (): Promise<Partial<IUser> | null> => {
 
 const getAllUsers = async (
   paginationOptions: IPaginationOptions,
-  filterables: IUserFilterables = {}, // safe default
+  filterables: IUserFilterables = {},
 ) => {
-  const { searchTerm, ...otherFilters } = filterables
+  const { searchTerm, ...filterData } = filterables
   const { page, skip, limit, sortBy, sortOrder } =
     paginationHelper.calculatePagination(paginationOptions)
 
-  const andConditions: any[] = []
+  let whereConditions: any = {}
 
-  // 🔍 Search functionality
-  if (searchTerm) {
-    andConditions.push({
+  // 🔥 FIXED: Properly typed arrays
+  const searchConditions: any[] = []
+  const filterConditions: any[] = []
+
+  // Search functionality
+  if (searchTerm && searchTerm.trim() !== '') {
+    searchConditions.push({
       $or: userFilterableFields.map(field => ({
-        [field]: { $regex: searchTerm, $options: 'i' },
+        [field]: {
+          $regex: searchTerm.trim(),
+          $options: 'i',
+        },
       })),
     })
   }
 
-  // 🎯 Dynamic filters (role, verified, etc.)
-  if (Object.keys(otherFilters).length) {
-    for (const [key, value] of Object.entries(otherFilters)) {
-      andConditions.push({ [key]: value })
-    }
+  // Filter functionality
+  if (Object.keys(filterData).length > 0) {
+    Object.entries(filterData).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        filterConditions.push({ [key]: value })
+      }
+    })
   }
 
-  // 🛑 Always exclude deleted users
-  andConditions.push({
+  // Always exclude deleted users
+  filterConditions.push({
     status: { $nin: [USER_STATUS.DELETED, null] },
   })
 
-  // 💡 Final query object
-  const whereConditions = andConditions.length ? { $and: andConditions } : {}
+  // Combine conditions
+  if (searchConditions.length > 0 && filterConditions.length > 0) {
+    whereConditions = {
+      $and: [...searchConditions, ...filterConditions],
+    }
+  } else if (searchConditions.length > 0) {
+    whereConditions = { $and: searchConditions }
+  } else if (filterConditions.length > 0) {
+    whereConditions = { $and: filterConditions }
+  }
 
   const [result, total] = await Promise.all([
     User.find(whereConditions)
@@ -122,7 +139,6 @@ const getAllUsers = async (
       .limit(limit)
       .sort(sortBy ? { [sortBy]: sortOrder } : { createdAt: -1 })
       .select('-password -authentication -__v'),
-
     User.countDocuments(whereConditions),
   ])
 
