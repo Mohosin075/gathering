@@ -48,4 +48,27 @@ router.post(
   NotificationController.createNotification,
 )
 
+// NEW ROUTES - Add these
+router.post(
+  '/track-open',
+  auth(
+    USER_ROLES.ADMIN,
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.ORGANIZER,
+    USER_ROLES.USER,
+  ),
+  NotificationController.trackNotificationOpen,
+)
+
+router.post(
+  '/track-engagement',
+  auth(
+    USER_ROLES.ADMIN,
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.ORGANIZER,
+    USER_ROLES.USER,
+  ),
+  NotificationController.trackNotificationEngagement,
+)
+
 export const NotificationRoutes = router

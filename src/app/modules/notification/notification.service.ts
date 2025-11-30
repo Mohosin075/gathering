@@ -8,21 +8,13 @@ import { User } from '../user/user.model'
 const getNotificationFromDB = async (
   user: JwtPayload,
 ): Promise<INotification> => {
-  const result = await Notification.find({
-    $or: [
-      { targetAudience: 'ALL_USERS' },
-      { 'deliveredTo.userId': user.authId },
-    ],
-  }).select(
-    'title message notificationType targetAudience deliveredTo createdAt sender',
+  const result = await Notification.find({ receiver: user.authId }).select(
+    'title text read direction link createdAt',
   )
 
   const unreadCount = await Notification.countDocuments({
-    $or: [
-      { targetAudience: 'ALL_USERS' },
-      { 'deliveredTo.userId': user.authId },
-    ],
-    'deliveredTo.openedAt': { $exists: false },
+    receiver: user.authId,
+    read: false,
   })
 
   const data: any = {
@@ -38,34 +30,25 @@ const readNotificationToDB = async (
   user: JwtPayload,
 ): Promise<INotification | undefined> => {
   console.log({ user })
-  // Mark notifications as opened for this user
   const result: any = await Notification.updateMany(
-    {
-      'deliveredTo.userId': user.authId,
-      'deliveredTo.openedAt': { $exists: false },
-    },
-    { $set: { 'deliveredTo.$[elem].openedAt': new Date() } },
-    { arrayFilters: [{ 'elem.userId': user.authId }] },
+    { receiver: user.authId, read: false },
+    { $set: { read: true } },
   )
   return result
 }
 
 // get notifications for admin
 const adminNotificationFromDB = async () => {
-  const result = await Notification.find({
-    $or: [{ targetAudience: 'ALL_USERS' }, { type: 'BROADCAST' }],
-  })
-    .sort({ createdAt: -1 })
-    .populate('sender', 'name email')
+  const result = await Notification.find({ type: 'ADMIN' })
   return result
 }
 
 // read notifications only for admin
 const adminReadNotificationToDB = async (): Promise<INotification | null> => {
-  // Mark all broadcast notifications as read
   const result: any = await Notification.updateMany(
-    { type: 'BROADCAST', isSent: true },
-    { $set: { 'deliveredTo.$[].openedAt': new Date() } },
+    { type: 'ADMIN', read: false },
+    { $set: { read: true } },
+    { new: true },
   )
   return result
 }
@@ -111,66 +94,11 @@ const createBroadcastNotification = async (
   return result
 }
 
-// Get notification history with all tracking data
-const getNotificationHistory = async (
-  user?: JwtPayload,
-  trackingData?: {
-    notificationId: string
-    opened?: boolean
-    clicked?: boolean
-  },
-): Promise<any> => {
-  // If tracking data provided, update it first
-  if (trackingData && user) {
-    const notification = await Notification.findById(
-      trackingData.notificationId,
-    )
-    if (notification) {
-      const deliveryIndex = notification.deliveredTo.findIndex(
-        (delivery: any) => delivery.userId.toString() === user.authId,
-      )
-
-      if (deliveryIndex === -1) {
-        notification.deliveredTo.push({
-          userId: user.authId,
-          deliveredAt: new Date(),
-          openedAt: trackingData.opened ? new Date() : undefined,
-          clickedAt: trackingData.clicked ? new Date() : undefined,
-        })
-      } else {
-        if (trackingData.opened) {
-          notification.deliveredTo[deliveryIndex].openedAt = new Date()
-        }
-        if (trackingData.clicked) {
-          notification.deliveredTo[deliveryIndex].clickedAt = new Date()
-        }
-      }
-
-      if (trackingData.opened) {
-        notification.openCount += 1
-        notification.openRate = Math.round(
-          (notification.openCount / notification.sentCount) * 100,
-        )
-      }
-
-      if (trackingData.clicked) {
-        notification.clickCount += 1
-        notification.engagement = Math.round(
-          (notification.clickCount / notification.sentCount) * 100,
-        )
-      }
-
-      await notification.save()
-    }
-  }
-
-  // Return all notifications with tracking data
+// Get notification history
+const getNotificationHistory = async (): Promise<any> => {
   const result = await Notification.find({ type: 'BROADCAST' })
     .sort({ createdAt: -1 })
     .populate('sender', 'name email')
-    .populate('deliveredTo.userId', 'name email')
-    .lean()
-
   return result
 }
 
@@ -187,7 +115,7 @@ const sendScheduledNotifications = async (): Promise<void> => {
     //@ts-ignore
     const socketIo = global.io
     if (socketIo) {
-      sendSocketNotification(socketIo, notification)
+      socketIo.emit('broadcastNotification', notification)
     }
 
     notification.isSent = true
@@ -196,11 +124,10 @@ const sendScheduledNotifications = async (): Promise<void> => {
   }
 }
 
-// Track notification open and engagement combined
-const trackNotification = async (
+// Track notification open
+const trackNotificationOpen = async (
   user: JwtPayload,
   notificationId: string,
-  trackingData?: { opened?: boolean; clicked?: boolean },
 ): Promise<any> => {
   const notification = await Notification.findById(notificationId)
   if (!notification) {
@@ -217,56 +144,22 @@ const trackNotification = async (
     notification.deliveredTo.push({
       userId: user.authId,
       deliveredAt: new Date(),
-      openedAt: trackingData?.opened ? new Date() : undefined,
-      clickedAt: trackingData?.clicked ? new Date() : undefined,
+      openedAt: new Date(),
     })
   } else {
     // Update existing delivery
-    if (trackingData?.opened) {
-      notification.deliveredTo[deliveryIndex].openedAt = new Date()
-    }
-    if (trackingData?.clicked) {
-      notification.deliveredTo[deliveryIndex].clickedAt = new Date()
-    }
+    notification.deliveredTo[deliveryIndex].openedAt = new Date()
   }
 
   // Update analytics
-  if (trackingData?.opened) {
-    notification.openCount += 1
-    notification.openRate = Math.round(
-      (notification.openCount / notification.sentCount) * 100,
-    )
-  }
-
-  if (trackingData?.clicked) {
-    notification.clickCount += 1
-    notification.engagement = Math.round(
-      (notification.clickCount / notification.sentCount) * 100,
-    )
-  }
+  notification.openCount += 1
+  notification.openRate = Math.round(
+    (notification.openCount / notification.sentCount) * 100,
+  )
 
   await notification.save()
 
-  return {
-    success: true,
-    message: 'Tracking updated successfully',
-    data: {
-      notificationId,
-      openedAt: trackingData?.opened ? new Date() : undefined,
-      clickedAt: trackingData?.clicked ? new Date() : undefined,
-      openCount: notification.openCount,
-      engagement: notification.engagement,
-      openRate: notification.openRate,
-    },
-  }
-}
-
-// Track notification open
-const trackNotificationOpen = async (
-  user: JwtPayload,
-  notificationId: string,
-): Promise<any> => {
-  return trackNotification(user, notificationId, { opened: true })
+  return { success: true, message: 'Open tracked successfully' }
 }
 
 // Track notification engagement
@@ -274,7 +167,29 @@ const trackNotificationEngagement = async (
   user: JwtPayload,
   notificationId: string,
 ): Promise<any> => {
-  return trackNotification(user, notificationId, { clicked: true })
+  const notification = await Notification.findById(notificationId)
+  if (!notification) {
+    throw new Error('Notification not found')
+  }
+
+  // Update engagement tracking
+  const deliveryIndex = notification.deliveredTo.findIndex(
+    (delivery: any) => delivery.userId.toString() === user.authId,
+  )
+
+  if (deliveryIndex !== -1) {
+    notification.deliveredTo[deliveryIndex].clickedAt = new Date()
+  }
+
+  // Update analytics
+  notification.clickCount += 1
+  notification.engagement = Math.round(
+    (notification.clickCount / notification.sentCount) * 100,
+  )
+
+  await notification.save()
+
+  return { success: true, message: 'Engagement tracked successfully' }
 }
 
 export const NotificationService = {
