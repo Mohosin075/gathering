@@ -27,7 +27,7 @@ const sendMessage = catchAsync(async (req: Request, res: Response) => {
 
   const data = {
     ...req.body,
-    image: payload.images[0],
+    image: payload?.images ? payload.images[0] : null,
     sender: user.authId,
     receiver: receiverId,
   }
