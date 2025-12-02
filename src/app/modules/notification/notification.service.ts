@@ -6,12 +6,12 @@ import { Notification } from './notification.model'
 const getNotificationFromDB = async (
   user: JwtPayload,
 ): Promise<INotification> => {
-  const result = await Notification.find({ receiver: user.id }).select(
+  const result = await Notification.find({ receiver: user.authId }).select(
     'title text read direction link createdAt',
   )
 
   const unreadCount = await Notification.countDocuments({
-    receiver: user.id,
+    receiver: user.authId,
     read: false,
   })
 
@@ -28,7 +28,7 @@ const readNotificationToDB = async (
   user: JwtPayload,
 ): Promise<INotification | undefined> => {
   const result: any = await Notification.updateMany(
-    { receiver: user.id, read: false },
+    { receiver: user.authId, read: false },
     { $set: { read: true } },
   )
   return result

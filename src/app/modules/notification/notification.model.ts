@@ -1,5 +1,9 @@
 import { model, Schema } from 'mongoose'
 import { INotification, NotificationModel } from './notification.interface'
+import {
+  NOTIFICATION_CATEGORY,
+  TARGET_AUDIENCE,
+} from '../../../enum/notification'
 
 const notificationSchema = new Schema<INotification, NotificationModel>(
   {
@@ -35,6 +39,18 @@ const notificationSchema = new Schema<INotification, NotificationModel>(
     type: {
       type: String,
       enum: ['ADMIN'],
+      required: false,
+    },
+    notificationCategory: {
+      type: String,
+      enum: NOTIFICATION_CATEGORY,
+      default: NOTIFICATION_CATEGORY.GENERAL,
+      required: false,
+    },
+    targetAudience: {
+      type: String,
+      enum: TARGET_AUDIENCE,
+      default: TARGET_AUDIENCE.ALL_USER,
       required: false,
     },
   },

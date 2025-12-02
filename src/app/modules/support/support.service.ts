@@ -11,6 +11,11 @@ import config from '../../../config'
 import { sendNotifications } from '../../../helpers/notificationsHelper'
 import { User } from '../user/user.model'
 import { USER_ROLES, USER_STATUS } from '../../../enum/user'
+import {
+  NOTIFICATION_CATEGORY,
+  TARGET_AUDIENCE,
+} from '../../../enum/notification'
+import { INotification } from '../notification/notification.interface'
 
 const createSupport = async (
   user: JwtPayload,
@@ -38,17 +43,17 @@ const createSupport = async (
       status: USER_STATUS.ACTIVE,
     }).select('_id email')
 
-    const notification = {
-      text: 'Your support request has been received.',
-      title: 'Support Created',
-      direction: 'inbox',
-      link: '/support/1234567890abcdef',
+    const notification: Partial<INotification> = {
+      text: 'Your event is starting soon!',
+      title: 'Event Reminder',
+      direction: 'outbound',
+      link: result?._id?.toString(),
       receiver: superAdmin?._id,
       sender: user?.authId,
       read: false,
       type: 'ADMIN',
-      createdAt: new Date('2025-11-29T01:00:00.000Z'),
-      updatedAt: new Date('2025-11-29T01:00:00.000Z'),
+      notificationCategory: NOTIFICATION_CATEGORY.GENERAL,
+      targetAudience: TARGET_AUDIENCE.ADMIN,
     }
 
     await sendNotifications(notification)

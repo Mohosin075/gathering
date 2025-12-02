@@ -6,7 +6,12 @@ const router = express.Router()
 
 router.get(
   '/',
-  auth(USER_ROLES.ORGANIZER, USER_ROLES.USER),
+  auth(
+    USER_ROLES.ORGANIZER,
+    USER_ROLES.USER,
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.ADMIN,
+  ),
   NotificationController.getNotificationFromDB,
 )
 router.get(
