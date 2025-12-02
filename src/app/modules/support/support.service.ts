@@ -75,7 +75,7 @@ const getAllSupports = async (
       .skip(skip)
       .limit(limit)
       .sort({ [sortBy]: sortOrder })
-      .populate('userId'),
+      .populate({ path: 'userId', select: 'email name' }),
     Support.countDocuments({ status: { $nin: [SUPPORT_STATUS.DELETED] } }),
   ])
 
@@ -95,7 +95,10 @@ const getSingleSupport = async (id: string): Promise<ISupport> => {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Support ID')
   }
 
-  const result = await Support.findById(id).populate('userId')
+  const result = await Support.findById(id).populate({
+    path: 'userId',
+    select: 'email name',
+  })
   if (!result) {
     throw new ApiError(
       StatusCodes.NOT_FOUND,
