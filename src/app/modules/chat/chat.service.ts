@@ -1,37 +1,58 @@
-import { IChat } from './chat.interface';
-import { Chat } from './chat.model';
+import { Message } from '../message/message.model'
+import { IChat } from './chat.interface'
+import { Chat } from './chat.model'
 
 const createChatToDB = async (payload: any): Promise<IChat> => {
   const isExistChat: IChat | null = await Chat.findOne({
     participants: { $all: payload },
-  });
+  })
 
   if (isExistChat) {
-    return isExistChat;
+    return isExistChat
   }
-  const chat: IChat = await Chat.create({ participants: payload });
-  return chat;
-};
+  const chat: IChat = await Chat.create({ participants: payload })
+  return chat
+}
 
 const getChatFromDB = async (user: any, search: string): Promise<IChat[]> => {
-
   const chats: any = await Chat.find({ participants: { $in: [user.authId] } })
     .populate({
       path: 'participants',
-      select: '_id firstName lastName image profession',
+      select: '_id name image profession updatedAt',
       match: {
-        _id: { $ne: user.authId }, // Exclude user.id in the populated participants
-        ...(search && { firstName: { $regex: search, $options: 'i' } }), // Apply $regex only if search is valid
-      }
+        _id: { $ne: user.authId },
+        ...(search && { name: { $regex: search, $options: 'i' } }),
+      },
     })
-    .select('participants status createdAt');
+    .select('participants status updatedAt')
+    .sort({ updatedAt: -1 }) // Sort chats by latest update
+    .lean()
 
-  // Filter out chats where no participants match the search (empty participants)
+  // Filter out chats where no participants match
   const filteredChats = chats?.filter(
-    (chat: any) => chat?.participants?.length > 0
-  );
+    (chat: any) => chat?.participants?.length > 0,
+  )
 
-  return filteredChats;
-};
+  // Get last message for each chat
+  const chatsWithLastMessage = await Promise.all(
+    filteredChats.map(async (chat: any) => {
+      const lastMessage = await Message.findOne(
+        { chatId: chat._id },
+        { text: 1, image: 1 },
+      )
+        .sort({ createdAt: -1 })
+        .limit(1)
+        .populate('sender', 'name image') // Populate sender info if needed
+        .lean()
 
-export const ChatService = { createChatToDB, getChatFromDB };
+      return {
+        ...chat,
+        lastMessage: lastMessage || null,
+      }
+    }),
+  )
+
+  return chatsWithLastMessage
+}
+
+export const ChatService = { createChatToDB, getChatFromDB }
