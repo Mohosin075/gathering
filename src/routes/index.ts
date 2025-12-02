@@ -14,6 +14,7 @@ import { ChatRoutes } from '../app/modules/chat/chat.routes'
 import { ReviewRoutes } from '../app/modules/review/review.route'
 import { SavedEventRoutes } from '../app/modules/savedEvent/savedEvent.route'
 import { AttendeeRoutes } from '../app/modules/attendee/attendee.route'
+import { MeetingRoutes } from '../app/modules/meeting/meeting.route'
 
 const router = express.Router()
 
@@ -32,7 +33,9 @@ const apiRoutes: { path: string; route: Router }[] = [
   { path: '/chat', route: ChatRoutes },
   { path: '/review', route: ReviewRoutes },
   { path: '/saved', route: SavedEventRoutes },
-  { path: '/attendee', route: AttendeeRoutes }]
+  { path: '/attendee', route: AttendeeRoutes },
+  { path: '/meetings', route: MeetingRoutes },
+]
 
 apiRoutes.forEach(route => {
   router.use(route.path, route.route)

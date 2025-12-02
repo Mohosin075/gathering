@@ -42,6 +42,10 @@ export default {
     webhookSecret: process.env.WEBHOOK_SECRET,
     paymentSuccess: process.env.SUCCESS_URL,
   },
+  agora: {
+    app_id: process.env.AGORA_APP_ID,
+    app_certificate: process.env.AGORA_APP_CERTIFICATE,
+  },
   jwt: {
     jwt_secret: process.env.JWT_SECRET,
     jwt_expire_in: process.env.JWT_EXPIRE_IN,

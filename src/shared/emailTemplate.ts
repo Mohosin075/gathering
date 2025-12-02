@@ -43,49 +43,7 @@ export interface IStaffCreateEmail {
   otp: string
 }
 
-export const staffCreateTemplate = (values: IStaffCreateEmail) => {
-  return {
-    to: values.email,
-    subject: `Welcome to the Team, ${values.name}!`,
-    html: `
-    <body style="margin:0; padding:0; background-color:#f4f5f7; font-family: Arial, sans-serif;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f5f7; padding: 20px 0;">
-        <tr>
-          <td align="center">
-            <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
-              <tr>
-                <td style="padding: 30px; text-align:center;">
-                  <img src="/images/logo.png" alt="Company Logo" style="width:140px; height:auto; display:block; margin:0 auto;">
-                </td>
-              </tr>
-              <tr>
-                <td style="padding: 40px; text-align:center;">
-                  <h1 style="color:#2c3e50; font-size:26px; margin:0 0 20px;">Welcome, ${values.name}!</h1>
-                  <p style="color:#555555; font-size:16px; margin:0 0 30px;">
-                    You have been added as a <strong>${values.role}</strong> in our platform. Your account has been created successfully.
-                  </p>
-                  <p style="color:#555555; font-size:16px; margin:0 0 30px;">
-                    Your login email is: <strong>${values.email}</strong><br>
-                    Your Login temporary password is: <strong>${values.otp}</strong>
-                  </p>
-                  <p style="color:#777777; font-size:14px; margin:0;">
-                    Welcome aboard and happy working!.
-                  </p>
-                </td>
-              </tr>
-              <tr>
-                <td style="background:#f9fafc; padding:20px; text-align:center; font-size:12px; color:#999999;">
-                  &copy; ${new Date().getFullYear()} Your Company. All rights reserved.
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    </body>
-    `,
-  }
-}
+
 
 export const emailTemplate = {
   createAccount,

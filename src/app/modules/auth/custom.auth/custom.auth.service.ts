@@ -213,8 +213,10 @@ const resetPassword = async (resetToken: string, payload: IResetPassword) => {
   if (newPassword !== confirmPassword) {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Passwords do not match')
   }
-  console.log({ newPassword, confirmPassword })
+  console.log({ newPassword, confirmPassword, resetToken })
   const isTokenExist = await Token.findOne({ token: resetToken }).lean()
+
+  console.log({ isTokenExist })
 
   if (!isTokenExist) {
     throw new ApiError(

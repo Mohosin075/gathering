@@ -51,8 +51,9 @@ const forgetPassword = catchAsync(async (req: Request, res: Response) => {
 })
 
 const resetPassword = catchAsync(async (req: Request, res: Response) => {
-  // const token = req.headers.authorization
-  const { token, ...resetData } = req.body
+  const token = req.headers.authorization
+  const { ...resetData } = req.body
+  console.log({ token, resetData })
   const result = await CustomAuthServices.resetPassword(token!, resetData)
   sendResponse(res, {
     statusCode: StatusCodes.OK,
