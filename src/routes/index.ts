@@ -12,6 +12,7 @@ import { NotificationRoutes } from '../app/modules/notification/notification.rou
 import { MessageRoutes } from '../app/modules/message/message.routes'
 import { ChatRoutes } from '../app/modules/chat/chat.routes'
 import { ReviewRoutes } from '../app/modules/review/review.route'
+import { SavedEventRoutes } from '../app/modules/savedEvent/savedEvent.route'
 
 const router = express.Router()
 
@@ -29,6 +30,7 @@ const apiRoutes: { path: string; route: Router }[] = [
   { path: '/message', route: MessageRoutes },
   { path: '/chat', route: ChatRoutes },
   { path: '/review', route: ReviewRoutes },
+  { path: '/saved', route: SavedEventRoutes },
 ]
 
 apiRoutes.forEach(route => {
