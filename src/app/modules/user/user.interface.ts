@@ -41,7 +41,6 @@ export interface IUser {
   name?: string
   email?: string
   profile?: string
-  businessName?: string
   phone?: string
   description?: string
   interest?: InterestCategory[]
@@ -59,6 +58,12 @@ export interface IUser {
   subscribe: boolean
   isOnboardingComplete: boolean
   // membership: Membership
+  settings?: {
+    pushNotification?: boolean
+    emailNotification?: boolean
+    locationService?: boolean
+    profileStatus: 'public' | 'private'
+  }
 
   authentication: IAuthentication
   createdAt: Date

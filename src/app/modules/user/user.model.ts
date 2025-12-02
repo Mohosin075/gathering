@@ -9,7 +9,6 @@ const UserSchema = new Schema<IUser, UserModel>(
     name: { type: String, trim: true },
     email: { type: String, unique: true, lowercase: true, required: true },
     profile: { type: String },
-    businessName: { type: String },
     phone: { type: String },
     description: { type: String },
     interest: { type: [String], enum: Object.values(InterestCategory) },
@@ -53,6 +52,13 @@ const UserSchema = new Schema<IUser, UserModel>(
     deviceToken: { type: String },
     timezone: { type: String, default: 'UTC' },
     isOnboardingComplete: { type: Boolean, default: false },
+
+    settings: {
+      pushNotification: { type: Boolean, default: true },
+      emailNotification: { type: Boolean, default: true },
+      locationService: { type: Boolean, default: true },
+      profileStatus: { type: String, default: 'public' },
+    },
 
     authentication: {
       restrictionLeftAt: { type: Date, default: null },
