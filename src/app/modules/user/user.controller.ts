@@ -98,6 +98,18 @@ const getProfile = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
+const addUserInterest = catchAsync(async (req: Request, res: Response) => {
+  const { authId } = req.user as JwtPayload
+  const { interest } = req.body
+  const result = await UserServices.addUserInterest(authId, interest)
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'User interest updated successfully',
+    data: result,
+  })
+})
+
 export const UserController = {
   updateProfile,
   getAllUsers,
@@ -106,4 +118,5 @@ export const UserController = {
   updateUserStatus,
   getProfile,
   deleteProfile,
+  addUserInterest,
 }

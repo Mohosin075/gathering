@@ -1,5 +1,5 @@
 import { Model, Types } from 'mongoose'
-import { USER_ROLES, USER_STATUS } from '../../../enum/user'
+import { InterestCategory, USER_ROLES, USER_STATUS } from '../../../enum/user'
 
 export interface IUserFilterables {
   searchTerm?: string
@@ -44,8 +44,7 @@ export interface IUser {
   businessName?: string
   phone?: string
   description?: string
-  specialty?: string
-  services: Types.ObjectId[]
+  interest?: InterestCategory[]
 
   status: USER_STATUS // standardize statuses
   verified: boolean
@@ -58,6 +57,7 @@ export interface IUser {
   deviceToken?: string
   timezone: string
   subscribe: boolean
+  isOnboardingComplete: boolean
   // membership: Membership
 
   authentication: IAuthentication

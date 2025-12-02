@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose'
 import bcrypt from 'bcrypt'
 import { IUser, UserModel } from './user.interface'
-import { USER_ROLES, USER_STATUS } from '../../../enum/user'
+import { InterestCategory, USER_ROLES, USER_STATUS } from '../../../enum/user'
 
 // ------------------ USER SCHEMA ------------------
 const UserSchema = new Schema<IUser, UserModel>(
@@ -12,8 +12,7 @@ const UserSchema = new Schema<IUser, UserModel>(
     businessName: { type: String },
     phone: { type: String },
     description: { type: String },
-    specialty: { type: String },
-    services: { type: [Schema.Types.ObjectId], ref: 'Service' },
+    interest: { type: [String], enum: Object.values(InterestCategory) },
 
     status: {
       type: String,
@@ -53,6 +52,7 @@ const UserSchema = new Schema<IUser, UserModel>(
     provider: { type: String },
     deviceToken: { type: String },
     timezone: { type: String, default: 'UTC' },
+    isOnboardingComplete: { type: Boolean, default: false },
 
     authentication: {
       restrictionLeftAt: { type: Date, default: null },

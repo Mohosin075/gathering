@@ -7,7 +7,11 @@ import ApiError from '../../../errors/ApiError'
 import { StatusCodes } from 'http-status-codes'
 import { S3Helper } from '../../../helpers/image/s3helper'
 import fileUploadHandler from '../../middleware/fileUploadHandler'
-import { createStaffSchema, updateUserSchema } from './user.validation'
+import {
+  addUserInterestSchema,
+  createStaffSchema,
+  updateUserSchema,
+} from './user.validation'
 
 const router = express.Router()
 
@@ -15,6 +19,18 @@ router.get(
   '/profile',
   auth(USER_ROLES.ADMIN, USER_ROLES.USER),
   UserController.getProfile,
+)
+
+router.post(
+  '/interest',
+  auth(
+    USER_ROLES.ADMIN,
+    USER_ROLES.USER,
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.ORGANIZER,
+  ),
+  validateRequest(addUserInterestSchema),
+  UserController.addUserInterest,
 )
 
 router.patch(

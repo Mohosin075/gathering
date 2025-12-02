@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { USER_ROLES, USER_STATUS } from '../../../enum/user'
+import { InterestCategory, USER_ROLES, USER_STATUS } from '../../../enum/user'
 
 // ------------------ SUB-SCHEMAS ------------------
 const addressSchema = z.object({
@@ -64,5 +64,11 @@ export const createStaffSchema = z.object({
       })
       .min(1, 'Select at least one specialty'),
     bio: z.string().optional(),
+  }),
+})
+
+export const addUserInterestSchema = z.object({
+  body: z.object({
+    interest: z.array(z.nativeEnum(InterestCategory)).optional(),
   }),
 })
