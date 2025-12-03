@@ -7,8 +7,6 @@ import { IPaginationOptions } from '../../../interfaces/pagination'
 import { paginationHelper } from '../../../helpers/paginationHelper'
 import { Types } from 'mongoose'
 import { SUPPORT_STATUS } from '../../../enum/support'
-import config from '../../../config'
-import { sendNotifications } from '../../../helpers/notificationsHelper'
 import { User } from '../user/user.model'
 import { USER_ROLES, USER_STATUS } from '../../../enum/user'
 import {
@@ -43,20 +41,6 @@ const createSupport = async (
       status: USER_STATUS.ACTIVE,
     }).select('_id email')
 
-    const notification: Partial<INotification> = {
-      text: 'Your event is starting soon!',
-      title: 'Event Reminder',
-      direction: 'outbound',
-      link: result?._id?.toString(),
-      receiver: superAdmin?._id,
-      sender: user?.authId,
-      read: false,
-      type: 'ADMIN',
-      notificationCategory: NOTIFICATION_CATEGORY.GENERAL,
-      targetAudience: TARGET_AUDIENCE.ADMIN,
-    }
-
-    await sendNotifications(notification)
 
     return result
   } catch (error: any) {

@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { sendNotifications } from '../../../helpers/notificationsHelper';
+// import { sendNotifications } from '../../../helpers/notificationsHelper';
 import { IMessage } from './message.interface';
 import { Message } from './message.model';
 import ApiError from '../../../errors/ApiError';
@@ -30,7 +30,7 @@ const sendMessageToDB = async (payload: any): Promise<IMessage> => {
       direction: "message",
       receiver: payload.receiver
     }
-    await sendNotifications(data);
+    // await sendNotifications(data);
 
   }
 
