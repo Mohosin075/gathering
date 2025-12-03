@@ -1,25 +1,109 @@
 import { Model, Types } from 'mongoose'
-import {
-  NOTIFICATION_CATEGORY,
-  TARGET_AUDIENCE,
-} from '../../../enum/notification'
 
-export type INotification = {
-  sender?: Types.ObjectId
-  receiver?: Types.ObjectId
-  title?: string
-  text: string
-  read: boolean
-  direction?: string
-  link?: string
-  type?: 'ADMIN' // not focus and changes this
-
-  // for gathering
-  notificationCategory?: NOTIFICATION_CATEGORY
-  targetAudience?: TARGET_AUDIENCE
-  schedule?: boolean
-  scheduleDate?: Date
-  scheduleTime?: string
+export interface INotification {
+  _id: Types.ObjectId
+  userId: Types.ObjectId
+  title: string
+  content: string
+  type: NotificationType
+  channel: NotificationChannel
+  status: NotificationStatus
+  priority: NotificationPriority
+  metadata?: Record<string, any>
+  scheduledAt?: Date
+  sentAt?: Date
+  readAt?: Date
+  actionUrl?: string
+  actionText?: string
+  isRead: boolean
+  isArchived: boolean
+  createdAt: Date
+  updatedAt: Date
 }
 
-export type NotificationModel = Model<INotification>
+export enum NotificationType {
+  EVENT_REMINDER = 'EVENT_REMINDER',
+  TICKET_CONFIRMATION = 'TICKET_CONFIRMATION',
+  PAYMENT_SUCCESS = 'PAYMENT_SUCCESS',
+  PAYMENT_FAILED = 'PAYMENT_FAILED',
+  EVENT_CREATED = 'EVENT_CREATED',
+  EVENT_UPDATED = 'EVENT_UPDATED',
+  EVENT_CANCELLED = 'EVENT_CANCELLED',
+  ATTENDEE_CHECKED_IN = 'ATTENDEE_CHECKED_IN',
+  NEW_MESSAGE = 'NEW_MESSAGE',
+  SYSTEM_ALERT = 'SYSTEM_ALERT',
+  PROMOTIONAL = 'PROMOTIONAL',
+  WELCOME = 'WELCOME',
+  PASSWORD_RESET = 'PASSWORD_RESET',
+  ACCOUNT_VERIFICATION = 'ACCOUNT_VERIFICATION',
+}
+
+export enum NotificationChannel {
+  IN_APP = 'IN_APP',
+  EMAIL = 'EMAIL',
+  BOTH = 'BOTH',
+}
+
+export enum NotificationStatus {
+  PENDING = 'PENDING',
+  SENT = 'SENT',
+  FAILED = 'FAILED',
+  READ = 'READ',
+  ARCHIVED = 'ARCHIVED',
+}
+
+export enum NotificationPriority {
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH',
+  URGENT = 'URGENT',
+}
+
+export interface INotificationFilterables {
+  searchTerm?: string
+  userId?: string
+  type?: NotificationType
+  channel?: NotificationChannel
+  status?: NotificationStatus
+  priority?: NotificationPriority
+  isRead?: boolean
+  isArchived?: boolean
+  startDate?: string
+  endDate?: string
+}
+
+export interface EmailNotificationData {
+  to: string | string[]
+  subject: string
+  template: string
+  data: Record<string, any>
+  attachments?: Array<{
+    filename: string
+    path?: string
+    content?: Buffer | string
+    contentType?: string
+  }>
+}
+
+export interface CreateNotificationDto {
+  userId: string | Types.ObjectId
+  title: string
+  content: string
+  type: NotificationType
+  channel?: NotificationChannel
+  priority?: NotificationPriority
+  metadata?: Record<string, any>
+  scheduledAt?: Date
+  actionUrl?: string
+  actionText?: string
+}
+
+export type NotificationModel = Model<INotification, {}, {}>
+
+export interface INotificationStats {
+  total: number
+  unread: number
+  byType: Record<string, number>
+  byChannel: Record<string, number>
+  byStatus: Record<string, number>
+}

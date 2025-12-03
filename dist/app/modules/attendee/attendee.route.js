@@ -1,0 +1,22 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AttendeeRoutes = void 0;
+const express_1 = __importDefault(require("express"));
+const attendee_controller_1 = require("./attendee.controller");
+const attendee_validation_1 = require("./attendee.validation");
+const validateRequest_1 = __importDefault(require("../../middleware/validateRequest"));
+const auth_1 = __importDefault(require("../../middleware/auth"));
+const user_1 = require("../../../enum/user");
+const router = express_1.default.Router();
+router.get('/', (0, auth_1.default)(user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.USER), (0, validateRequest_1.default)(attendee_validation_1.AttendeeValidations.filter), attendee_controller_1.AttendeeController.getAllAttendees);
+router.get('/my-attendees', (0, auth_1.default)(user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.USER), attendee_controller_1.AttendeeController.getMyAttendees);
+router.get('/event/:eventId', (0, auth_1.default)(user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.ORGANIZER), attendee_controller_1.AttendeeController.getEventAttendees);
+router.get('/:id', (0, auth_1.default)(user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.USER), attendee_controller_1.AttendeeController.getSingleAttendee);
+router.post('/', (0, auth_1.default)(user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.USER), (0, validateRequest_1.default)(attendee_validation_1.AttendeeValidations.create), attendee_controller_1.AttendeeController.createAttendee);
+router.patch('/:id', (0, auth_1.default)(user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.ORGANIZER), (0, validateRequest_1.default)(attendee_validation_1.AttendeeValidations.update), attendee_controller_1.AttendeeController.updateAttendee);
+router.post('/check-in', (0, auth_1.default)(user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.USER), (0, validateRequest_1.default)(attendee_validation_1.AttendeeValidations.checkIn), attendee_controller_1.AttendeeController.checkInAttendee);
+router.delete('/:id', (0, auth_1.default)(user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.ORGANIZER), attendee_controller_1.AttendeeController.deleteAttendee);
+exports.AttendeeRoutes = router;
