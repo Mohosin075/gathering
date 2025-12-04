@@ -1,3 +1,4 @@
+// livestream.validation.ts - FIXED VERSION
 import { z } from 'zod'
 
 // Create Live Stream Validation
@@ -18,6 +19,7 @@ const createLiveStreamZodSchema = z.object({
     streamPassword: z.string().optional(),
     allowedEmails: z.array(z.string().email()).optional(),
     tags: z.array(z.string()).optional(),
+    channelName: z.string().optional(), // Add this if needed
   }),
 })
 
@@ -46,7 +48,7 @@ const getAgoraTokenZodSchema = z.object({
     streamId: z.string({ required_error: 'Stream ID is required' }),
   }),
   query: z.object({
-    role: z.enum(['broadcaster', 'viewer']).optional(),
+    role: z.enum(['broadcaster', 'viewer']),
   }),
 })
 

@@ -79,8 +79,9 @@ const liveStreamSchema = new Schema<ILiveStream, LiveStreamModel>(
     streamPassword: { type: String },
     allowedEmails: [{ type: String }],
 
-    isActive: { type: Boolean, default: false },
-    isUpcoming: { type: Boolean, default: false },
+    // REMOVE THESE TWO FIELDS - they should be virtuals
+    // isActive: { type: Boolean, default: false },
+    // isUpcoming: { type: Boolean, default: false },
 
     // Metadata
     tags: [{ type: String }],
@@ -92,6 +93,9 @@ const liveStreamSchema = new Schema<ILiveStream, LiveStreamModel>(
       transform: function (doc, ret) {
         delete ret.streamKey
         delete ret.__v
+        // Ensure virtuals are included
+        ret.isUpcoming = doc.isUpcoming
+        ret.isActive = doc.isActive
         return ret
       },
     },
@@ -117,33 +121,15 @@ liveStreamSchema.virtual('duration').get(function () {
   return 0
 })
 
-// Virtuals - FIXED VERSION
-// liveStreamSchema.virtual('isUpcoming').get(function () {
-//   const now = new Date()
-//   return (
-//     this.streamStatus === 'scheduled' &&
-//     this.scheduledStartTime &&
-//     this.scheduledStartTime > now
-//   )
-// })
+// Virtual: isUpcoming
+liveStreamSchema.virtual('isUpcoming').get(function () {
+  return this.streamStatus === 'scheduled' || this.streamStatus === 'starting'
+})
 
-// // FIXED: Simplified logic for isActive
-// liveStreamSchema.virtual('isActive').get(function () {
-//   // Active when stream status is 'starting' or 'live'
-//   return this.streamStatus === 'starting' || this.streamStatus === 'live'
-// })
-
-// liveStreamSchema.virtual('isActive').get(function () {
-//   const now = new Date()
-//   return (
-//     this.isLive ||
-//     (this.streamStatus === 'live' &&
-//       this.scheduledStartTime &&
-//       this.scheduledEndTime &&
-//       now >= this.scheduledStartTime &&
-//       now <= this.scheduledEndTime)
-//   )
-// })
+// Virtual: isActive
+liveStreamSchema.virtual('isActive').get(function () {
+  return this.streamStatus === 'starting' || this.streamStatus === 'live'
+})
 
 // Static Methods
 liveStreamSchema.statics.canViewStream = async function (
@@ -177,7 +163,6 @@ liveStreamSchema.statics.canViewStream = async function (
   // Ticketed streams - check payment
   if (stream.streamType === 'ticketed') {
     // Implementation depends on your ticket/payment system
-    // You need to implement this based on your business logic
     return false
   }
 
@@ -229,6 +214,10 @@ liveStreamSchema.pre('save', async function (next) {
 
   next()
 })
+
+// Ensure virtuals are included in lean queries
+liveStreamSchema.set('toObject', { virtuals: true })
+liveStreamSchema.set('toJSON', { virtuals: true })
 
 export const LiveStream = model<ILiveStream, LiveStreamModel>(
   'LiveStream',

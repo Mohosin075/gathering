@@ -23,6 +23,7 @@ const auth =
       }
 
       const token = tokenWithBearer.split(' ')[1]
+      console.log({ token })
 
       if (!token) {
         return next(
@@ -38,6 +39,7 @@ const auth =
           token,
           config.jwt.jwt_secret as Secret,
         )
+        console.log({ verifyUser })
       } catch (error: any) {
         if (error.name === 'TokenExpiredError') {
           return next(
