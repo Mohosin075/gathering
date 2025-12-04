@@ -47,6 +47,21 @@ const eventSchema = new Schema<IEvent, EventModel>(
     gallery: { type: [String], default: [] },
     views: { type: Number, default: 0 },
     favorites: { type: Number, default: 0 },
+
+    // Live Stream Reference
+    hasLiveStream: {
+      type: Boolean,
+      default: false,
+    },
+    liveStreamId: {
+      type: Schema.Types.ObjectId,
+      ref: 'LiveStream',
+      default: null,
+    },
+    isStreamingActive: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     toJSON: { virtuals: true, transform: sanitizeOrganizer },

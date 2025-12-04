@@ -10,7 +10,7 @@ const meetingSchema = new Schema<IMeeting>(
       type: String,
       enum: ['scheduled', 'instant'],
       required: true,
-      default: 'scheduled',
+      default: 'instant',
     },
     startTime: { type: Date },
     endTime: { type: Date },

@@ -41,6 +41,11 @@ export interface IEvent {
   gallery: string[]
   views?: number
   favorites?: number
+
+  // New fields
+  hasLiveStream: boolean
+  liveStreamId?: Types.ObjectId
+  isStreamingActive: boolean
 }
 
 export type EventModel = Model<IEvent, {}, {}>

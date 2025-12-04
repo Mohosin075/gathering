@@ -1,0 +1,595 @@
+import { StatusCodes } from 'http-status-codes'
+import { JwtPayload } from 'jsonwebtoken'
+import config from '../../../config'
+import ApiError from '../../../errors/ApiError'
+import { User } from '../user/user.model'
+import { Event } from '../event/event.model'
+import {
+  ILiveStream,
+  ICreateLiveStreamDTO,
+  IUpdateLiveStreamDTO,
+  IAgoraTokenResponseDTO,
+  ILiveStreamResponseDTO,
+  IStreamListQueryDTO,
+  IPaginatedResponse,
+} from './livestream.interface'
+import { RtcTokenBuilder, RtcRole } from 'agora-access-token'
+import { LiveStream } from './livestream.model'
+
+// Create Live Stream
+const createLiveStreamToDB = async (
+  user: JwtPayload,
+  payload: ICreateLiveStreamDTO,
+): Promise<ILiveStream> => {
+  const { eventId, ...restPayload } = payload
+
+  // Check if event exists and user is organizer
+  const event = await Event.findById(eventId)
+  if (!event) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Event not found')
+  }
+
+  if (String(event.organizerId) !== String(user.userId)) {
+    throw new ApiError(
+      StatusCodes.FORBIDDEN,
+      'Only event organizer can create live stream',
+    )
+  }
+
+  // Check if event already has active live stream
+  const existingStream = await LiveStream.findOne({
+    event: eventId,
+    streamStatus: { $in: ['scheduled', 'starting', 'live'] },
+  })
+
+  if (existingStream) {
+    throw new ApiError(
+      StatusCodes.CONFLICT,
+      'Event already has an active or scheduled live stream',
+    )
+  }
+
+  // Create live stream
+  const liveStreamData = {
+    event: eventId,
+    streamer: user.userId,
+    ...restPayload,
+  }
+
+  const liveStream = await LiveStream.create(liveStreamData)
+
+  // Update event with live stream reference
+  await Event.findByIdAndUpdate(eventId, {
+    hasLiveStream: true,
+    liveStreamId: liveStream._id,
+  })
+
+  return liveStream
+}
+
+// Get Agora Token for Stream
+const getAgoraTokenFromDB = async (
+  user: JwtPayload,
+  streamId: string,
+  role: 'broadcaster' | 'viewer',
+): Promise<IAgoraTokenResponseDTO> => {
+  const stream = await LiveStream.findById(streamId)
+  if (!stream) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Live stream not found')
+  }
+
+  // Check authorization based on role
+  if (role === 'broadcaster') {
+    const canBroadcast = await LiveStream.canBroadcast(streamId, user.userId)
+    if (!canBroadcast) {
+      throw new ApiError(
+        StatusCodes.FORBIDDEN,
+        'You are not authorized to broadcast this stream',
+      )
+    }
+  } else {
+    const canView = await LiveStream.canViewStream(streamId, user.userId)
+    if (!canView) {
+      throw new ApiError(
+        StatusCodes.FORBIDDEN,
+        'You are not authorized to view this stream',
+      )
+    }
+  }
+
+  // Check if stream is active
+  if (!stream.isActive && !stream.isUpcoming) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      'Stream is not active or upcoming',
+    )
+  }
+
+  // Validate Agora configuration
+  if (!config.agora?.app_id || !config.agora?.app_certificate) {
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      'Agora configuration is missing',
+    )
+  }
+
+  // Generate Agora token
+  const appID = config.agora.app_id as string
+  const appCertificate = config.agora.app_certificate as string
+  const channelName = stream.channelName
+  const uid = 0 // Let Agora assign UID
+  const agoraRole =
+    role === 'broadcaster' ? RtcRole.PUBLISHER : RtcRole.SUBSCRIBER
+  const expireTimeInSeconds = 3600 // 1 hour
+  const currentTimestamp = Math.floor(Date.now() / 1000)
+  const privilegeExpiredTs = currentTimestamp + expireTimeInSeconds
+
+  const token = RtcTokenBuilder.buildTokenWithUid(
+    appID,
+    appCertificate,
+    channelName,
+    uid,
+    agoraRole,
+    privilegeExpiredTs,
+  )
+
+  return {
+    token,
+    channelName,
+    uid,
+    role: agoraRole === RtcRole.PUBLISHER ? 'publisher' : 'subscriber',
+    expireTime: privilegeExpiredTs,
+    streamingMode: stream.streamingMode,
+  }
+}
+
+// Get All Live Streams
+const getAllLiveStreamsFromDB = async (
+  query: IStreamListQueryDTO,
+): Promise<IPaginatedResponse<ILiveStreamResponseDTO>> => {
+  const {
+    page = 1,
+    limit = 10,
+    search,
+    streamType,
+    streamStatus,
+    isLive,
+    tags,
+    sortBy = 'createdAt',
+    sortOrder = 'desc',
+  } = query
+
+  const skip = (page - 1) * limit
+
+  // Build filter
+  const filter: any = {}
+
+  if (search) {
+    filter.$or = [
+      { title: { $regex: search, $options: 'i' } },
+      { description: { $regex: search, $options: 'i' } },
+    ]
+  }
+
+  if (streamType) {
+    filter.streamType = streamType
+  }
+
+  if (streamStatus) {
+    filter.streamStatus = streamStatus
+  }
+
+  if (typeof isLive === 'boolean') {
+    filter.isLive = isLive
+  }
+
+  if (tags && tags.length > 0) {
+    filter.tags = { $in: tags }
+  }
+
+  // Only show public streams for non-authenticated users
+  // (You can modify this based on your auth middleware)
+  filter.streamType = 'public'
+
+  // Sort
+  const sort: any = {}
+  sort[sortBy] = sortOrder === 'desc' ? -1 : 1
+
+  // Execute query
+  const [streams, total] = await Promise.all([
+    LiveStream.find(filter)
+      .populate('event', 'title description')
+      .populate('streamer', 'name email profile')
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    LiveStream.countDocuments(filter),
+  ])
+
+  // Transform to response DTO
+  const data: ILiveStreamResponseDTO[] = streams.map(stream => ({
+    id: stream._id.toString(),
+    event: {
+      id: stream.event._id.toString(),
+      title: (stream.event as any).title,
+      description: (stream.event as any).description,
+    },
+    streamer: {
+      id: stream.streamer._id.toString(),
+      name: (stream.streamer as any).name,
+      email: (stream.streamer as any).email,
+      avatar: (stream.streamer as any).profile?.avatar,
+    },
+    title: stream.title,
+    description: stream.description,
+    channelName: stream.channelName,
+    streamStatus: stream.streamStatus,
+    isLive: stream.isLive,
+    currentViewers: stream.currentViewers,
+    maxViewers: stream.maxViewers,
+    streamType: stream.streamType,
+    chatEnabled: stream.chatEnabled,
+    thumbnail: stream.thumbnail,
+    playbackUrl: stream.playbackUrl,
+    hlsUrl: stream.hlsUrl,
+    scheduledStartTime: stream.scheduledStartTime,
+    liveStartedAt: stream.liveStartedAt,
+    createdAt: stream.createdAt,
+    updatedAt: stream.updatedAt,
+    isUpcoming: stream.isUpcoming,
+    isActive: stream.isActive,
+    requiresApproval: stream.requiresApproval,
+    tags: stream.tags,
+  }))
+
+  return {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Live streams retrieved successfully',
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+    data,
+  }
+}
+
+// Get My Live Streams (Streamer's streams)
+const getMyLiveStreamsFromDB = async (
+  user: JwtPayload,
+  query: IStreamListQueryDTO,
+): Promise<IPaginatedResponse<ILiveStreamResponseDTO>> => {
+  const { page = 1, limit = 10, streamStatus, isLive } = query
+  const skip = (page - 1) * limit
+
+  const filter: any = { streamer: user.userId }
+
+  if (streamStatus) {
+    filter.streamStatus = streamStatus
+  }
+
+  if (typeof isLive === 'boolean') {
+    filter.isLive = isLive
+  }
+
+  const [streams, total] = await Promise.all([
+    LiveStream.find(filter)
+      .populate('event', 'title description')
+      .populate('streamer', 'name email profile')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    LiveStream.countDocuments(filter),
+  ])
+
+  const data: ILiveStreamResponseDTO[] = streams.map(stream => ({
+    id: stream._id.toString(),
+    event: {
+      id: stream.event._id.toString(),
+      title: (stream.event as any).title,
+      description: (stream.event as any).description,
+    },
+    streamer: {
+      id: stream.streamer._id.toString(),
+      name: (stream.streamer as any).name,
+      email: (stream.streamer as any).email,
+      avatar: (stream.streamer as any).profile?.avatar,
+    },
+    title: stream.title,
+    description: stream.description,
+    channelName: stream.channelName,
+    streamStatus: stream.streamStatus,
+    isLive: stream.isLive,
+    currentViewers: stream.currentViewers,
+    maxViewers: stream.maxViewers,
+    streamType: stream.streamType,
+    chatEnabled: stream.chatEnabled,
+    thumbnail: stream.thumbnail,
+    playbackUrl: stream.playbackUrl,
+    hlsUrl: stream.hlsUrl,
+    scheduledStartTime: stream.scheduledStartTime,
+    liveStartedAt: stream.liveStartedAt,
+    createdAt: stream.createdAt,
+    updatedAt: stream.updatedAt,
+    isUpcoming: stream.isUpcoming,
+    isActive: stream.isActive,
+    requiresApproval: stream.requiresApproval,
+    tags: stream.tags,
+  }))
+
+  return {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Your live streams retrieved successfully',
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+    data,
+  }
+}
+
+// Get Single Live Stream
+const getSingleLiveStreamFromDB = async (
+  streamId: string,
+  user?: JwtPayload,
+): Promise<ILiveStreamResponseDTO> => {
+  const stream = await LiveStream.findById(streamId)
+    .populate('event', 'title description')
+    .populate('streamer', 'name email profile')
+    .lean()
+
+  if (!stream) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Live stream not found')
+  }
+
+  // Check authorization for private streams
+  const userId = user?.userId
+  const canView = await LiveStream.canViewStream(streamId, userId)
+
+  if (!canView) {
+    throw new ApiError(
+      StatusCodes.FORBIDDEN,
+      'You are not authorized to view this stream',
+    )
+  }
+
+  return {
+    id: stream._id.toString(),
+    event: {
+      id: stream.event._id.toString(),
+      title: (stream.event as any).title,
+      description: (stream.event as any).description,
+    },
+    streamer: {
+      id: stream.streamer._id.toString(),
+      name: (stream.streamer as any).name,
+      email: (stream.streamer as any).email,
+      avatar: (stream.streamer as any).profile?.avatar,
+    },
+    title: stream.title,
+    description: stream.description,
+    channelName: stream.channelName,
+    streamStatus: stream.streamStatus,
+    isLive: stream.isLive,
+    currentViewers: stream.currentViewers,
+    maxViewers: stream.maxViewers,
+    streamType: stream.streamType,
+    chatEnabled: stream.chatEnabled,
+    thumbnail: stream.thumbnail,
+    playbackUrl: stream.playbackUrl,
+    hlsUrl: stream.hlsUrl,
+    scheduledStartTime: stream.scheduledStartTime,
+    liveStartedAt: stream.liveStartedAt,
+    createdAt: stream.createdAt,
+    updatedAt: stream.updatedAt,
+    isUpcoming: stream.isUpcoming,
+    isActive: stream.isActive,
+    requiresApproval: stream.requiresApproval,
+    tags: stream.tags,
+  }
+}
+
+// Update Live Stream
+const updateLiveStreamToDB = async (
+  user: JwtPayload,
+  streamId: string,
+  payload: IUpdateLiveStreamDTO,
+): Promise<ILiveStream> => {
+  const stream = await LiveStream.findById(streamId)
+  if (!stream) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Live stream not found')
+  }
+
+  // Check if user is streamer
+  if (String(stream.streamer) !== String(user.userId)) {
+    throw new ApiError(
+      StatusCodes.FORBIDDEN,
+      'Only streamer can update live stream',
+    )
+  }
+
+  // Don't allow updates if stream is live
+  if (stream.isLive) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      'Cannot update stream while it is live',
+    )
+  }
+
+  const updatedStream = await LiveStream.findByIdAndUpdate(streamId, payload, {
+    new: true,
+    runValidators: true,
+  })
+
+  if (!updatedStream) {
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      'Failed to update live stream',
+    )
+  }
+
+  return updatedStream
+}
+
+// Delete Live Stream
+const deleteLiveStreamToDB = async (
+  user: JwtPayload,
+  streamId: string,
+): Promise<{ id: string; title: string }> => {
+  const stream = await LiveStream.findById(streamId)
+  if (!stream) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Live stream not found')
+  }
+
+  // Check if user is streamer
+  if (String(stream.streamer) !== String(user.userId)) {
+    throw new ApiError(
+      StatusCodes.FORBIDDEN,
+      'Only streamer can delete live stream',
+    )
+  }
+
+  // Don't allow deletion if stream is live
+  if (stream.isLive) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      'Cannot delete stream while it is live',
+    )
+  }
+
+  // Remove reference from event
+  await Event.findByIdAndUpdate(stream.event, {
+    $unset: { liveStreamId: '' },
+    hasLiveStream: false,
+  })
+
+  await LiveStream.findByIdAndDelete(streamId)
+
+  return {
+    id: streamId,
+    title: stream.title,
+  }
+}
+
+// Start Live Stream
+const startLiveStreamToDB = async (
+  user: JwtPayload,
+  streamId: string,
+): Promise<ILiveStream> => {
+  const stream = await LiveStream.findById(streamId)
+  if (!stream) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Live stream not found')
+  }
+
+  // Check if user is streamer
+  if (String(stream.streamer) !== String(user.userId)) {
+    throw new ApiError(
+      StatusCodes.FORBIDDEN,
+      'Only streamer can start live stream',
+    )
+  }
+
+  // Check if stream can be started
+  if (stream.isLive) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Stream is already live')
+  }
+
+  if (stream.streamStatus === 'ended' || stream.streamStatus === 'cancelled') {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      'Cannot start a stream that has ended or been cancelled',
+    )
+  }
+
+  // Update stream status
+  stream.streamStatus = 'live'
+  stream.isLive = true
+  stream.liveStartedAt = new Date()
+
+  await stream.save()
+
+  return stream
+}
+
+// End Live Stream
+const endLiveStreamToDB = async (
+  user: JwtPayload,
+  streamId: string,
+): Promise<ILiveStream> => {
+  const stream = await LiveStream.findById(streamId)
+  if (!stream) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Live stream not found')
+  }
+
+  // Check if user is streamer
+  if (String(stream.streamer) !== String(user.userId)) {
+    throw new ApiError(
+      StatusCodes.FORBIDDEN,
+      'Only streamer can end live stream',
+    )
+  }
+
+  // Check if stream is live
+  if (!stream.isLive) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Stream is not live')
+  }
+
+  // Update stream status
+  stream.streamStatus = 'ended'
+  stream.isLive = false
+  stream.liveEndedAt = new Date()
+
+  await stream.save()
+
+  return stream
+}
+
+// Update Viewer Count (for webhooks)
+const updateViewerCountToDB = async (
+  streamId: string,
+  action: 'join' | 'leave',
+): Promise<{ currentViewers: number; peakViewers: number }> => {
+  const stream = await LiveStream.findById(streamId)
+  if (!stream) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Live stream not found')
+  }
+
+  if (action === 'join') {
+    stream.currentViewers += 1
+    stream.totalViewers += 1
+  } else if (action === 'leave') {
+    stream.currentViewers = Math.max(0, stream.currentViewers - 1)
+  }
+
+  // Update peak viewers
+  if (stream.currentViewers > stream.peakViewers) {
+    stream.peakViewers = stream.currentViewers
+  }
+
+  await stream.save()
+
+  return {
+    currentViewers: stream.currentViewers,
+    peakViewers: stream.peakViewers,
+  }
+}
+
+export const LiveStreamService = {
+  createLiveStreamToDB,
+  getAgoraTokenFromDB,
+  getAllLiveStreamsFromDB,
+  getMyLiveStreamsFromDB,
+  getSingleLiveStreamFromDB,
+  updateLiveStreamToDB,
+  deleteLiveStreamToDB,
+  startLiveStreamToDB,
+  endLiveStreamToDB,
+  updateViewerCountToDB,
+}
