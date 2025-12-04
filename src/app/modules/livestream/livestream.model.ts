@@ -23,7 +23,7 @@ const liveStreamSchema = new Schema<ILiveStream, LiveStreamModel>(
 
     // Technical Stream Details
     channelName: { type: String, required: true, unique: true },
-    streamKey: { type: String, required: true },
+    streamKey: { type: String },
     streamId: { type: String, unique: true },
 
     // Streaming URLs
@@ -79,6 +79,9 @@ const liveStreamSchema = new Schema<ILiveStream, LiveStreamModel>(
     streamPassword: { type: String },
     allowedEmails: [{ type: String }],
 
+    isActive: { type: Boolean, default: false },
+    isUpcoming: { type: Boolean, default: false },
+
     // Metadata
     tags: [{ type: String }],
   },
@@ -114,26 +117,33 @@ liveStreamSchema.virtual('duration').get(function () {
   return 0
 })
 
-liveStreamSchema.virtual('isUpcoming').get(function () {
-  const now = new Date()
-  return (
-    this.streamStatus === 'scheduled' &&
-    this.scheduledStartTime &&
-    this.scheduledStartTime > now
-  )
-})
+// Virtuals - FIXED VERSION
+// liveStreamSchema.virtual('isUpcoming').get(function () {
+//   const now = new Date()
+//   return (
+//     this.streamStatus === 'scheduled' &&
+//     this.scheduledStartTime &&
+//     this.scheduledStartTime > now
+//   )
+// })
 
-liveStreamSchema.virtual('isActive').get(function () {
-  const now = new Date()
-  return (
-    this.isLive ||
-    (this.streamStatus === 'live' &&
-      this.scheduledStartTime &&
-      this.scheduledEndTime &&
-      now >= this.scheduledStartTime &&
-      now <= this.scheduledEndTime)
-  )
-})
+// // FIXED: Simplified logic for isActive
+// liveStreamSchema.virtual('isActive').get(function () {
+//   // Active when stream status is 'starting' or 'live'
+//   return this.streamStatus === 'starting' || this.streamStatus === 'live'
+// })
+
+// liveStreamSchema.virtual('isActive').get(function () {
+//   const now = new Date()
+//   return (
+//     this.isLive ||
+//     (this.streamStatus === 'live' &&
+//       this.scheduledStartTime &&
+//       this.scheduledEndTime &&
+//       now >= this.scheduledStartTime &&
+//       now <= this.scheduledEndTime)
+//   )
+// })
 
 // Static Methods
 liveStreamSchema.statics.canViewStream = async function (
@@ -154,7 +164,10 @@ liveStreamSchema.statics.canViewStream = async function (
 
   // Private streams - check allowed emails
   if (stream.streamType === 'private') {
-        const user = await (this as any).db.model('User').findById(userId).select('email')
+    const user = await (this as any).db
+      .model('User')
+      .findById(userId)
+      .select('email')
     if (user && stream.allowedEmails?.includes(user.email)) {
       return true
     }

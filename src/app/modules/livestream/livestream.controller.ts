@@ -42,6 +42,7 @@ const getAgoraToken = catchAsync(async (req: Request, res: Response) => {
 // Get All Live Streams
 const getAllLiveStreams = catchAsync(async (req: Request, res: Response) => {
   const query = req.query as unknown as IStreamListQueryDTO
+  
   const result = await LiveStreamService.getAllLiveStreamsFromDB(query)
 
   sendResponse(res, {
