@@ -56,6 +56,10 @@ export interface ILiveStream extends Document {
   // Metadata
   tags: string[]
 
+  // Virtual properties
+  isUpcoming: boolean
+  isActive: boolean
+
   // Timestamps (from Mongoose)
   createdAt: Date
   updatedAt: Date
@@ -154,7 +158,6 @@ export interface ILiveStreamResponseDTO {
   isActive: boolean
   requiresApproval: boolean
   tags: string[]
-  
 }
 
 // Stream Statistics DTO
