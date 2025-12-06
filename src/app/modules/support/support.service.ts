@@ -9,11 +9,7 @@ import { Types } from 'mongoose'
 import { SUPPORT_STATUS } from '../../../enum/support'
 import { User } from '../user/user.model'
 import { USER_ROLES, USER_STATUS } from '../../../enum/user'
-import {
-  NOTIFICATION_CATEGORY,
-  TARGET_AUDIENCE,
-} from '../../../enum/notification'
-import { INotification } from '../notification/notification.interface'
+
 
 const createSupport = async (
   user: JwtPayload,

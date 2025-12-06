@@ -39,7 +39,6 @@ const auth =
           token,
           config.jwt.jwt_secret as Secret,
         )
-        console.log({ verifyUser })
       } catch (error: any) {
         if (error.name === 'TokenExpiredError') {
           return next(
@@ -99,7 +98,6 @@ export const tempAuth =
       if (tokenWithBearer && tokenWithBearer.startsWith('Bearer')) {
         const token = tokenWithBearer.split(' ')[1]
 
-        console.log({ token })
 
         try {
           // Verify token
@@ -108,7 +106,6 @@ export const tempAuth =
             config.jwt.temp_jwt_secret as Secret,
           )
 
-          console.log({ verifyUser })
 
           // Set user to header
           req.user = verifyUser

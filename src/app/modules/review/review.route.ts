@@ -18,6 +18,9 @@ router
     ReviewController.createReview,
   )
 
+  router.route('/:eventId/event')
+  .get(auth(...Object.values(USER_ROLES)), ReviewController.getReviewsByEvent)
+
 // router.route('/:type')
 //   .get(auth(...roles), ReviewController.getAllReviews);
 
