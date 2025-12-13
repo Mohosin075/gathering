@@ -1,0 +1,442 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API Documentation",
+    "version": "1.0.0",
+    "description": "Generated API documentation"
+  },
+  "paths": {
+    "/chatmessage": {
+      "post": {
+        "tags": [
+          "Chatmessage"
+        ],
+        "summary": "Create a new Chatmessage",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatmessageCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Chatmessage created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Chatmessage"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Chatmessage"
+        ],
+        "summary": "Get all Chatmessages",
+        "responses": {
+          "200": {
+            "description": "List of Chatmessages retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Chatmessage"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chatmessage/{id}": {
+      "get": {
+        "tags": [
+          "Chatmessage"
+        ],
+        "summary": "Get Chatmessage by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Chatmessage ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chatmessage retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Chatmessage"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Chatmessage not found"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Chatmessage"
+        ],
+        "summary": "Update Chatmessage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Chatmessage ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatmessageUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Chatmessage updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Chatmessage"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Chatmessage not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Chatmessage"
+        ],
+        "summary": "Delete Chatmessage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Chatmessage ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chatmessage deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Chatmessage"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Chatmessage not found"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Chatmessage": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "description": "MongoDB ObjectId"
+          },
+          "streamId": {
+            "type": "string",
+            "description": "streamId reference ID"
+          },
+          "userId": {
+            "type": "string",
+            "description": "userId reference ID"
+          },
+          "userProfile": {
+            "type": "object",
+            "description": "userProfile object"
+          },
+          "name": {
+            "type": "string",
+            "description": "name field"
+          },
+          "avatar": {
+            "type": "string",
+            "description": "avatar field"
+          },
+          "message": {
+            "type": "string",
+            "description": "message field"
+          },
+          "messageType": {
+            "type": "string",
+            "description": "messageType field"
+          },
+          "isDeleted": {
+            "type": "boolean",
+            "description": "isDeleted field"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "deletedAt field"
+          },
+          "likes": {
+            "type": "number",
+            "description": "likes field"
+          },
+          "likedBy": {
+            "type": "string",
+            "description": "likedBy field"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        },
+        "required": [
+          "_id",
+          "streamId",
+          "userId",
+          "userProfile",
+          "name",
+          "message",
+          "messageType",
+          "isDeleted",
+          "likes",
+          "likedBy",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ChatmessageCreate": {
+        "type": "object",
+        "properties": {
+          "streamId": {
+            "type": "string",
+            "description": "streamId reference ID"
+          },
+          "userId": {
+            "type": "string",
+            "description": "userId reference ID"
+          },
+          "userProfile": {
+            "type": "object",
+            "description": "userProfile object"
+          },
+          "name": {
+            "type": "string",
+            "description": "name field"
+          },
+          "avatar": {
+            "type": "string",
+            "description": "avatar field"
+          },
+          "message": {
+            "type": "string",
+            "description": "message field"
+          },
+          "messageType": {
+            "type": "string",
+            "description": "messageType field"
+          },
+          "isDeleted": {
+            "type": "boolean",
+            "description": "isDeleted field"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "deletedAt field"
+          },
+          "likes": {
+            "type": "number",
+            "description": "likes field"
+          },
+          "likedBy": {
+            "type": "string",
+            "description": "likedBy field"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "createdAt field"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "updatedAt field"
+          }
+        },
+        "required": [
+          "streamId",
+          "userId",
+          "userProfile",
+          "name",
+          "message",
+          "messageType",
+          "isDeleted",
+          "likes",
+          "likedBy",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ChatmessageUpdate": {
+        "type": "object",
+        "properties": {
+          "streamId": {
+            "type": "string",
+            "description": "streamId reference ID"
+          },
+          "userId": {
+            "type": "string",
+            "description": "userId reference ID"
+          },
+          "userProfile": {
+            "type": "object",
+            "description": "userProfile object"
+          },
+          "name": {
+            "type": "string",
+            "description": "name field"
+          },
+          "avatar": {
+            "type": "string",
+            "description": "avatar field"
+          },
+          "message": {
+            "type": "string",
+            "description": "message field"
+          },
+          "messageType": {
+            "type": "string",
+            "description": "messageType field"
+          },
+          "isDeleted": {
+            "type": "boolean",
+            "description": "isDeleted field"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "deletedAt field"
+          },
+          "likes": {
+            "type": "number",
+            "description": "likes field"
+          },
+          "likedBy": {
+            "type": "string",
+            "description": "likedBy field"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "createdAt field"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "updatedAt field"
+          }
+        }
+      }
+    }
+  }
+}

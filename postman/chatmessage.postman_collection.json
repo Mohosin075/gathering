@@ -1,0 +1,129 @@
+{
+  "info": {
+    "name": "Chatmessage API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Chatmessage",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"streamId\": \"507f1f77bcf86cd799439011\",\n  \"userId\": \"507f1f77bcf86cd799439011\",\n  \"userProfile\": {\n    \"key\": \"value\"\n  },\n  \"name\": \"sample_name\",\n  \"avatar\": \"sample_avatar\",\n  \"message\": \"sample_message\",\n  \"messageType\": \"sample_messageType\",\n  \"isDeleted\": true,\n  \"deletedAt\": \"2025-12-13T20:15:00.838Z\",\n  \"likes\": 123,\n  \"likedBy\": \"sample_likedBy\",\n  \"createdAt\": \"2025-12-13T20:15:00.840Z\",\n  \"updatedAt\": \"2025-12-13T20:15:00.840Z\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/chatmessage",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "chatmessage"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get All Chatmessages",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/chatmessage",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "chatmessage"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Chatmessage by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/chatmessage/{{chatmessage_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "chatmessage",
+            "{{chatmessage_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Chatmessage",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"streamId\": \"507f1f77bcf86cd799439011\",\n  \"userId\": \"507f1f77bcf86cd799439011\",\n  \"userProfile\": {\n    \"key\": \"value\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/chatmessage/{{chatmessage_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "chatmessage",
+            "{{chatmessage_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delete Chatmessage",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/chatmessage/{{chatmessage_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "chatmessage",
+            "{{chatmessage_id}}"
+          ]
+        }
+      }
+    }
+  ]
+}
