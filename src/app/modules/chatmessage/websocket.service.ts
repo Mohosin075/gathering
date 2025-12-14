@@ -6,7 +6,10 @@ const getIO = () => (global as any).io
 const broadcastMessage = (streamId: string, message: IChatMessageResponseDTO) => {
   const io = getIO()
   if (io) {
+    console.log(`Broadcasting new-message to stream:${streamId}`)
     io.to(`stream:${streamId}`).emit('new-message', message)
+  } else {
+    console.error('Socket.io instance not found in global scope')
   }
 }
 

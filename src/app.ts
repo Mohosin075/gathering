@@ -39,6 +39,7 @@ app.use(
   cors({
     origin: [
       '*',
+      'http://10.10.7.11:5173',
       'http://localhost:60851',
       'http://localhost:5173',
       'https://buddi-script-server.vercel.app',
