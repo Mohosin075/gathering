@@ -29,13 +29,13 @@ const createLiveStreamToDB = async (
     throw new ApiError(StatusCodes.NOT_FOUND, 'Event not found')
   }
 
-  // Uncomment and fix authorization when ready
-  // if (String(event.organizerId) !== String(user.authId)) {
-  //   throw new ApiError(
-  //     StatusCodes.FORBIDDEN,
-  //     'Only event organizer can create live stream',
-  //   )
-  // }
+  // Check authorization
+  if (String(event.organizerId) !== String(user.authId)) {
+    throw new ApiError(
+      StatusCodes.FORBIDDEN,
+      'Only event organizer can create live stream',
+    )
+  }
 
   // Validate scheduled start time
   if (restPayload.scheduledStartTime) {
@@ -252,7 +252,6 @@ const getAllLiveStreamsFromDB = async (
     LiveStream.countDocuments(filter),
   ])
 
-  console.log({ streams: streams[0] })
 
   // Transform to response DTO
   const data: ILiveStreamResponseDTO[] = streams.map(stream => ({
@@ -603,28 +602,56 @@ const updateViewerCountToDB = async (
   streamId: string,
   action: 'join' | 'leave',
 ): Promise<{ currentViewers: number; peakViewers: number }> => {
-  const stream = await LiveStream.findById(streamId)
-  if (!stream) {
+  // Use atomic update to prevent race conditions
+  const updateOperation =
+    action === 'join'
+      ? { $inc: { currentViewers: 1, totalViewers: 1 } }
+      : { $inc: { currentViewers: -1 } }
+
+  // We need to handle the "max(0)" logic for leaving. 
+  // MongoDB $inc can result in negative numbers if we aren't careful, 
+  // but for a simple viewer count, we usually trust the join/leave events match.
+  // Ideally, we'd use a pipeline update or check for >= 0, 
+  // but for now, simple $inc is much better than the race condition.
+
+  const updatedStream = await LiveStream.findByIdAndUpdate(
+    streamId,
+    [
+      {
+        $set: {
+          currentViewers: {
+            $max: [
+              0,
+              {
+                $add: [
+                  '$currentViewers',
+                  action === 'join' ? 1 : -1
+                ]
+              }
+            ]
+          },
+          totalViewers: {
+            $add: ['$totalViewers', action === 'join' ? 1 : 0]
+          }
+        }
+      },
+      // Update peak viewers if current > peak
+      {
+        $set: {
+          peakViewers: { $max: ['$peakViewers', '$currentViewers'] }
+        }
+      }
+    ],
+    { new: true }
+  )
+
+  if (!updatedStream) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Live stream not found')
   }
 
-  if (action === 'join') {
-    stream.currentViewers += 1
-    stream.totalViewers += 1
-  } else if (action === 'leave') {
-    stream.currentViewers = Math.max(0, stream.currentViewers - 1)
-  }
-
-  // Update peak viewers
-  if (stream.currentViewers > stream.peakViewers) {
-    stream.peakViewers = stream.currentViewers
-  }
-
-  await stream.save()
-
   return {
-    currentViewers: stream.currentViewers,
-    peakViewers: stream.peakViewers,
+    currentViewers: updatedStream.currentViewers,
+    peakViewers: updatedStream.peakViewers,
   }
 }
 

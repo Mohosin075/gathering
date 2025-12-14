@@ -23,7 +23,6 @@ const auth =
       }
 
       const token = tokenWithBearer.split(' ')[1]
-      console.log({ token })
 
       if (!token) {
         return next(
@@ -48,6 +47,8 @@ const auth =
 
         return next(new ApiError(StatusCodes.FORBIDDEN, 'Invalid Access Token'))
       }
+
+      console.log('Verified User:', verifyUser)
 
       // Attach to req
       req.user = verifyUser

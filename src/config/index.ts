@@ -45,6 +45,7 @@ export default {
   agora: {
     app_id: process.env.AGORA_APP_ID,
     app_certificate: process.env.AGORA_APP_CERTIFICATE,
+    web_hook_secret: process.env.AGORA_WEB_HOOK_SECRET,
   },
   jwt: {
     jwt_secret: process.env.JWT_SECRET,

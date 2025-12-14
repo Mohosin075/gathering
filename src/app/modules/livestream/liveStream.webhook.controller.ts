@@ -4,10 +4,21 @@ import catchAsync from '../../../shared/catchAsync'
 import sendResponse from '../../../shared/sendResponse'
 import { LiveStream } from './livestream.model'
 import { LiveStreamService } from './livestream.service'
+import config from '../../../config'
 
 // Agora Webhook Handler
 const agoraWebhook = catchAsync(async (req: Request, res: Response) => {
   const { event, channel, uid, timestamp } = req.body
+  const secret = req.headers['agora-signature']
+
+  // Verify Webhook Secret if configured
+  if (config.agora.web_hook_secret && secret !== config.agora.web_hook_secret) {
+    return sendResponse(res, {
+      statusCode: StatusCodes.FORBIDDEN,
+      success: false,
+      message: 'Invalid webhook signature',
+    })
+  }
 
   // Find stream by channel name
   const stream = await LiveStream.findOne({ channelName: channel }).lean()

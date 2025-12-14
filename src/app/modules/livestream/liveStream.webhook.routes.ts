@@ -1,5 +1,5 @@
 import express from 'express'
-import { LiveStreamWebhookController } from './liveStream.webhook.controller'
+import { LiveStreamWebhookController } from './livestream.webhook.controller'
 
 const router = express.Router()
 
