@@ -12,6 +12,7 @@ import { LiveStream } from '../livestream/livestream.model'
 import { ChatMessage } from './chatmessage.model'
 import { USER_ROLES } from '../../../enum/user'
 import mongoose from 'mongoose'
+import { ChatSocketHelper } from './websocket.service'
 
 // Send message to chat
 const sendMessageToDB = async (
@@ -58,6 +59,19 @@ const sendMessageToDB = async (
     },
     message: payload.message,
     messageType: payload.messageType || 'text',
+  })
+
+  // Broadcast message
+  ChatSocketHelper.broadcastMessage(streamId, {
+    id: chatMessage._id.toString(),
+    userId: chatMessage.userId.toString(),
+    userProfile: chatMessage.userProfile,
+    message: chatMessage.message,
+    messageType: chatMessage.messageType,
+    formattedTime: chatMessage.formattedTime || '',
+    likes: chatMessage.likes,
+    hasLiked: false,
+    createdAt: chatMessage.createdAt,
   })
 
   return {
@@ -174,6 +188,13 @@ const likeMessageToDB = async (
 
   await message.save()
 
+  // Broadcast like update
+  ChatSocketHelper.broadcastLike(
+    message.streamId.toString(),
+    messageId,
+    user.authId
+  )
+
   return {
     likes: message.likes,
     hasLiked: !hasLiked,
@@ -208,6 +229,9 @@ const deleteMessageToDB = async (
   message.isDeleted = true
   message.deletedAt = new Date()
   await message.save()
+
+  // Broadcast delete
+  ChatSocketHelper.broadcastDelete(message.streamId.toString(), messageId)
 
   return {
     id: messageId,
