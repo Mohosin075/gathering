@@ -19,6 +19,7 @@ import { LiveStreamRoutes } from '../app/modules/livestream/livestream.route'
 import { ChatmessageRoutes } from '../app/modules/chatmessage/chatmessage.route'
 import { LiveStreamWebhookRoutes } from '../app/modules/livestream/livestream.webhook.routes'
 import { FollowRoutes } from '../app/modules/follow/follow.route'
+import { EventStatsRoutes } from '../app/modules/stats/stats.route'
 
 const router = express.Router()
 
@@ -35,6 +36,7 @@ const apiRoutes: { path: string; route: Router }[] = [
   { path: '/payment', route: PaymentRoutes },
   { path: '/message', route: MessageRoutes },
   { path: '/chat', route: ChatRoutes },
+  { path: '/stats', route: EventStatsRoutes },
   { path: '/review', route: ReviewRoutes },
   { path: '/saved', route: SavedEventRoutes },
   { path: '/attendee', route: AttendeeRoutes },
