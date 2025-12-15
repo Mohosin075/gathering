@@ -141,12 +141,34 @@ const handlePaymentSuccess = async (paymentIntent: any): Promise<void> => {
   console.log(paymentIntent)
 
   try {
-    const payment = await Payment.findOne({
-      userEmail: paymentIntent.customer_email,
+    // STRICT LOOKUP: First try paymentIntentId
+    let payment = await Payment.findOne({
+      paymentIntentId: paymentIntent.id,
     }).session(mongoSession)
 
+    // FALLBACK LOOKUP: If not found by ID (common if DB has SessionID stored instead of PI ID),
+    // try to find by ticketId from metadata + status=pending.
+    if (!payment && paymentIntent.metadata && paymentIntent.metadata.ticketId) {
+      console.log(`Payment not found by ID ${paymentIntent.id}. Trying fallback lookup by ticketId: ${paymentIntent.metadata.ticketId}`)
+      payment = await Payment.findOne({
+        ticketId: paymentIntent.metadata.ticketId,
+        status: 'pending',
+      }).session(mongoSession)
+       
+       // If we found it via fallback, update the paymentIntentId to the correct one immediately
+       if (payment) {
+         payment.paymentIntentId = paymentIntent.id
+       }
+    }
+
     if (!payment) {
-      throw new Error(`${paymentIntent.id}`)
+      // If payment not found by ID, it might be that the checkout session creation
+      // hasn't synced yet, OR this event is irrelevant because we primarily rely on
+      // checkout.session.completed for initial fulfillment.
+      // We will simply log and return.
+      console.log(`Payment not found for intent: ${paymentIntent.id}. Skipping payment_intent.succeeded handler.`)
+      await mongoSession.commitTransaction()
+      return
     }
 
     // Check if already processed
@@ -157,7 +179,7 @@ const handlePaymentSuccess = async (paymentIntent: any): Promise<void> => {
 
     // Update payment
     payment.status = 'succeeded'
-    payment.paymentIntentId = paymentIntent.id
+    // Ensure we don't overwrite crucial metadata if it exists
     payment.metadata = { ...payment.metadata, ...paymentIntent }
     await payment.save({ session: mongoSession })
 

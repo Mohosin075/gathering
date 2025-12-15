@@ -66,6 +66,13 @@ const createCheckoutSession = async (
         eventId: event._id.toString(),
       },
       expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
+      payment_intent_data: {
+        metadata: {
+          ticketId: payload.ticketId,
+          authId: user.authId,
+          eventId: event._id.toString(),
+        },
+      },
     })
 
     // Create payment record with consistent ID storage
@@ -108,8 +115,14 @@ const verifyCheckoutSession = async (sessionId: string): Promise<IPayment> => {
       expand: ['payment_intent'],
     })
 
-    // Find payment record
-    const payment = await Payment.findOne({ paymentIntentId: sessionId })
+    // Find payment record using either paymentIntentId (legacy/direct) or metadata.checkoutSessionId (correct for checkout)
+    const payment = await Payment.findOne({
+      $or: [
+        { paymentIntentId: sessionId },
+        { 'metadata.checkoutSessionId': sessionId },
+        { paymentIntentId: session.payment_intent as string }
+      ]
+    })
       .populate('ticketId')
       .populate('userId', 'name email')
       .populate('eventId', 'title startDate')
