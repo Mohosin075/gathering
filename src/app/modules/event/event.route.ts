@@ -28,7 +28,7 @@ router.get(
 
 router.get(
   '/:id',
-  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER),
+  // auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER),
   EventController.getSingleEvent,
 )
 

@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { Request, Response } from 'express'
 import { EventStatsController } from './stats.controller'
 import auth from '../../middleware/auth'
 import { USER_ROLES } from '../../../enum/user'
@@ -45,35 +45,7 @@ router.get(
 router.get(
   '/admin/summary',
   auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
-  async (req: Request, res: Response) => {
-    try {
-      const [dashboard, events, users, revenue, status] = await Promise.all([
-        EventStatsServices.getAdminDashboardStats(),
-        EventStatsServices.getEventStats(),
-        EventStatsServices.getUserStats(),
-        EventStatsServices.getRevenueStats(),
-        EventStatsServices.getEventStatusStats(),
-      ])
-
-      res.status(200).json({
-        success: true,
-        message: 'All statistics fetched successfully',
-        data: {
-          dashboard,
-          events,
-          users,
-          revenue,
-          status,
-        },
-      })
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Error fetching summary statistics',
-        error: error instanceof Error ? error.message : 'Unknown error',
-      })
-    }
-  },
+  EventStatsController.getAppSummary,
 )
 
 export const EventStatsRoutes = router

@@ -94,10 +94,29 @@ const getEventStatusStats = async (req: Request, res: Response) => {
   }
 }
 
+const getAppSummary = async (req: Request, res: Response) => {
+  try {
+    const data = await EventStatsServices.getAppSummary()
+
+    res.status(200).json({
+      success: true,
+      message: 'All statistics fetched successfully',
+      data,
+    })
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching summary statistics',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    })
+  }
+}
+
 export const EventStatsController = {
   getAdminDashboardStats,
   getEventStats,
   getUserStats,
   getRevenueStats,
   getEventStatusStats,
+  getAppSummary,
 }

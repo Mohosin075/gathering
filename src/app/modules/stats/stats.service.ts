@@ -34,6 +34,7 @@ const getMonthName = (monthIndex: number): string => {
 const fillMissingMonths = (
   data: Array<{ month: string; count?: number; revenue?: number }>,
   months: number = 6,
+  type: 'count' | 'revenue' = 'count',
 ) => {
   const result = []
   const endDate = new Date()
@@ -48,11 +49,7 @@ const fillMissingMonths = (
     if (existingData) {
       result.push(existingData)
     } else {
-      if ('count' in data[0]) {
-        result.push({ month: monthName, count: 0 })
-      } else if ('revenue' in data[0]) {
-        result.push({ month: monthName, revenue: 0 })
-      }
+      result.push({ month: monthName, [type]: 0 })
     }
   }
 
@@ -336,7 +333,8 @@ export const getEventStats = async (
   const filledEventTrend = fillMissingMonths(
     eventTrend.map(item => ({ month: item.month, count: item.count })),
     months,
-  )
+    'count',
+  ) as Array<{ month: string; count: number }>
 
   return {
     totalEvents,
@@ -487,7 +485,8 @@ export const getUserStats = async (months: number = 6): Promise<IUserStats> => {
   const filledMonthlySignups = fillMissingMonths(
     monthlySignups.map(item => ({ month: item.month, count: item.count })),
     months,
-  )
+    'count',
+  ) as Array<{ month: string; count: number }>
 
   return {
     totalUsers,
@@ -701,7 +700,8 @@ export const getRevenueStats = async (
   const filledMonthlyRevenue = fillMissingMonths(
     monthlyRevenue.map(item => ({ month: item.month, revenue: item.revenue })),
     months,
-  )
+    'revenue',
+  ) as Array<{ month: string; revenue: number }>
 
   return {
     totalRevenue: Math.round(currentRevenue.totalRevenue * 100) / 100,
@@ -742,10 +742,30 @@ export const getEventStatusStats = async (): Promise<IEventStatusStats> => {
   return statusStats
 }
 
+// Get app summary (all stats)
+export const getAppSummary = async () => {
+  const [dashboard, events, users, revenue, status] = await Promise.all([
+    getAdminDashboardStats(),
+    getEventStats(),
+    getUserStats(),
+    getRevenueStats(),
+    getEventStatusStats(),
+  ])
+
+  return {
+    dashboard,
+    events,
+    users,
+    revenue,
+    status,
+  }
+}
+
 export const EventStatsServices = {
   getAdminDashboardStats,
   getEventStats,
   getUserStats,
   getRevenueStats,
   getEventStatusStats,
+  getAppSummary,
 }
