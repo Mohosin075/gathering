@@ -1,6 +1,6 @@
 import express from 'express'
 import { EventController } from './event.controller'
-import { EventValidations } from './event.validation'
+import { EventValidations, nearbySchema } from './event.validation'
 import validateRequest from '../../middleware/validateRequest'
 import auth from '../../middleware/auth'
 import { USER_ROLES } from '../../../enum/user'
@@ -17,6 +17,13 @@ router.get(
   '/my-events',
   auth(USER_ROLES.ORGANIZER),
   EventController.getMyEvents,
+)
+
+router.get(
+  '/nearby',
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER),
+  // validateRequest(nearbySchema),
+  EventController.getNearbyEvents,
 )
 
 router.get(

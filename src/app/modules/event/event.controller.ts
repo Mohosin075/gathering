@@ -4,7 +4,7 @@ import catchAsync from '../../../shared/catchAsync'
 import sendResponse from '../../../shared/sendResponse'
 import { StatusCodes } from 'http-status-codes'
 import pick from '../../../shared/pick'
-import { eventFilterables } from './event.constants'
+import { eventFilterables, nearbyEventFilterables } from './event.constants'
 import { paginationFields } from '../../../interfaces/pagination'
 
 const createEvent = catchAsync(async (req: Request, res: Response) => {
@@ -93,6 +93,36 @@ const deleteEvent = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
+const getNearbyEvents = catchAsync(async (req: Request, res: Response) => {
+  const filterables = pick(req.query, nearbyEventFilterables)
+  const pagination = pick(req.query, paginationFields)
+  const data = {
+    lat: Number(req.body.lat),
+    lng: Number(req.body.lng),
+    distance: Number(req.body.distance) || 1000,
+    tags: req.body.tags
+      ? Array.isArray(req.body.tags)
+        ? (req.body.tags as string[])
+        : (req.body.tags as string).split(',')
+      : undefined,
+  }
+
+  const result = await EventServices.getNearbyEvents(
+    req.user!,
+    filterables,
+    pagination,
+    data,
+  )
+
+  // Send response
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Nearby events retrieved successfully',
+    data: result,
+  })
+})
+
 export const EventController = {
   createEvent,
   updateEvent,
@@ -100,4 +130,5 @@ export const EventController = {
   getAllEvents,
   deleteEvent,
   getMyEvents,
+  getNearbyEvents,
 }

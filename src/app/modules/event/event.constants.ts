@@ -15,6 +15,21 @@ export const eventFilterables = [
   'status',
 ]
 
+export const nearbyEventFilterables = [
+  'searchTerm',
+  'category',
+  'startDate',
+  'endDate',
+  'startTime',
+  'endTime',
+  'timezone',
+  'meetingLink',
+  'currency',
+  'images',
+  'status',
+]
+
+
 // Searchable fields for Event
 export const eventSearchableFields = [
   'searchTerm',

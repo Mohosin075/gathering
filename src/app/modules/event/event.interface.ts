@@ -1,6 +1,7 @@
 import { Model, Types } from 'mongoose'
 import { Point } from '../user/user.interface'
 import { EVENT_CATEGORIES, EVENT_STATUS } from '../../../enum/event'
+import { IPaginationOptions } from '../../../interfaces/pagination'
 
 export interface IEventFilterables {
   searchTerm?: string
@@ -46,6 +47,14 @@ export interface IEvent {
   hasLiveStream: boolean
   liveStreamId?: Types.ObjectId
   isStreamingActive: boolean
+}
+
+export interface INearbyOptions {
+  lat?: number
+  lng?: number
+  distance?: number
+  category?: string
+  tags?: string[]
 }
 
 export type EventModel = Model<IEvent, {}, {}>

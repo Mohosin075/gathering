@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes'
 import ApiError from '../../../errors/ApiError'
-import { IEventFilterables, IEvent } from './event.interface'
+import { IEventFilterables, IEvent, INearbyOptions } from './event.interface'
 import { Event } from './event.model'
 import { JwtPayload } from 'jsonwebtoken'
 import { IPaginationOptions } from '../../../interfaces/pagination'
@@ -237,6 +237,130 @@ const deleteEvent = async (id: string): Promise<IEvent> => {
   return result
 }
 
+const getNearbyEvents = async (
+  user: JwtPayload,
+  filterables: IEventFilterables,
+  pagination: IPaginationOptions,
+  data: INearbyOptions,
+) => {
+  const { searchTerm, category, ...otherFilters } = filterables
+  const { lat, lng, distance = 10, tags } = data
+  const {
+    page,
+    limit,
+    sortBy = 'startDate',
+    sortOrder = 'asc',
+  } = paginationHelper.calculatePagination(pagination)
+
+  const latitude = Number(lat)
+  const longitude = Number(lng)
+  const dist = Number(distance)
+
+  console.log(latitude, longitude, dist)
+
+  if (isNaN(latitude) || isNaN(longitude)) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid latitude or longitude')
+  }
+
+  // Initial Match for $geoNear
+  const geoNearMatch: any = {
+    status: 'approved',
+    visibility: 'public',
+  }
+
+  // Dynamic Filters Match
+  const matchStage: any = { $and: [] }
+
+  // Search
+  if (searchTerm) {
+    matchStage.$and.push({
+      $or: eventSearchableFields.map(field => ({
+        [field]: { $regex: searchTerm, $options: 'i' },
+      })),
+    })
+  }
+
+  // Filters
+  if (category) matchStage.$and.push({ category })
+  if (tags && tags.length > 0) matchStage.$and.push({ tags: { $in: tags } })
+
+  // Other dynamic filters
+  if (Object.keys(otherFilters).length > 0) {
+    Object.entries(otherFilters).forEach(([key, value]) => {
+      matchStage.$and.push({ [key]: value })
+    })
+  }
+
+  // If no match conditions, remove $and to avoid empty array error
+  if (matchStage.$and.length === 0) delete matchStage.$and
+
+  const pipeline: any[] = [
+    {
+      $geoNear: {
+        near: {
+          type: 'Point',
+          coordinates: [longitude, latitude],
+        },
+        distanceField: 'distance',
+        maxDistance: dist * 1000, // convert km to meters
+        query: geoNearMatch,
+        spherical: true,
+      },
+    },
+  ]
+
+  // Add match stage if we have conditions
+  if (matchStage.$and) {
+    pipeline.push({ $match: matchStage })
+  }
+
+  // Facet for Data and Count
+  pipeline.push({
+    $facet: {
+      data: [
+        { $sort: { [sortBy]: sortOrder === 'asc' ? 1 : -1 } },
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
+        // Lookup Organizer
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'organizerId',
+            foreignField: '_id',
+            as: 'organizerId',
+          },
+        },
+        { $unwind: { path: '$organizerId', preserveNullAndEmptyArrays: true } },
+        // Sanitize Organizer (similar to model transform)
+        {
+          $project: {
+            'organizerId.password': 0,
+            'organizerId.createdAt': 0,
+            'organizerId.updatedAt': 0,
+            'organizerId.__v': 0,
+          },
+        },
+      ],
+      total: [{ $count: 'count' }],
+    },
+  })
+
+  const result = await Event.aggregate(pipeline)
+
+  const dataResult = result[0].data
+  const total = result[0].total[0]?.count || 0
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+    data: dataResult,
+  }
+}
+
 export const EventServices = {
   createEvent,
   getAllEvents,
@@ -244,4 +368,5 @@ export const EventServices = {
   updateEvent,
   deleteEvent,
   getMyEvents,
+  getNearbyEvents,
 }

@@ -82,3 +82,35 @@ export const EventValidations = {
       .strict(),
   }),
 }
+
+
+export const nearbySchema = z.object({
+  body: z.object({
+    lat: z
+      .union([z.string(), z.number()])
+      .refine(val => !isNaN(Number(val)), {
+        message: 'Latitude must be a valid number',
+      })
+      .transform(val => Number(val)),
+    lng: z
+      .union([z.string(), z.number()])
+      .refine(val => !isNaN(Number(val)), {
+        message: 'Longitude must be a valid number',
+      })
+      .transform(val => Number(val)),
+    distance: z
+      .union([z.string(), z.number()])
+      .optional()
+      .transform(val => (val ? Number(val) : 10)),
+    category: z.string().optional(),
+    tags: z
+      .union([z.string(), z.array(z.string())])
+      .optional()
+      .transform(val => {
+        if (!val) return []
+        if (Array.isArray(val)) return val
+        return val.split(',')
+      }), // comma-separated strings or array
+    searchTerm: z.string().optional(),
+  }),
+})

@@ -69,7 +69,7 @@ const eventSchema = new Schema<IEvent, EventModel>(
     timestamps: true,
   },
 )
-
+eventSchema.index({ location: '2dsphere' })
 // Transform function to sanitize populated organizer fields
 
 function sanitizeOrganizer(doc: any, ret: any) {
