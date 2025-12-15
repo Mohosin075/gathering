@@ -232,7 +232,6 @@ export const FollowServices = {
   },
 
   // Get followers/following list
-  // Get followers/following list
   async getFollowList(
     userId: string,
     type: 'followers' | 'following',

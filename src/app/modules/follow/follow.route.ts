@@ -21,7 +21,7 @@ const router = express.Router()
 
 // Follow/Unfollow routes
 router.post(
-  '/:userId/follow',
+  '/:userId',
   auth(...Object.values(USER_ROLES)),
   validateRequest(followUserSchema),
   FollowController.followUser,
