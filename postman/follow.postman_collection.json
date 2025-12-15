@@ -1,0 +1,129 @@
+{
+  "info": {
+    "name": "Follow API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Follow",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"follower\": \"507f1f77bcf86cd799439011\",\n  \"following\": \"507f1f77bcf86cd799439011\",\n  \"status\": \"sample_status\",\n  \"createdAt\": \"2025-12-15T00:27:08.114Z\",\n  \"updatedAt\": \"2025-12-15T00:27:08.116Z\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/follow",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "follow"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get All Follows",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/follow",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "follow"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Follow by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/follow/{{follow_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "follow",
+            "{{follow_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Follow",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"follower\": \"507f1f77bcf86cd799439011\",\n  \"following\": \"507f1f77bcf86cd799439011\",\n  \"status\": \"sample_status\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/follow/{{follow_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "follow",
+            "{{follow_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delete Follow",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/follow/{{follow_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "follow",
+            "{{follow_id}}"
+          ]
+        }
+      }
+    }
+  ]
+}
