@@ -84,4 +84,11 @@ router.get(
   EventStatsController.getOrganizerAppSummary,
 )
 
+// GET /api/stats/organizer/event/:eventId - Individual event statistics
+router.get(
+  '/organizer/event/:eventId',
+  auth(USER_ROLES.ORGANIZER),
+  EventStatsController.getIndividualEventStats,
+)
+
 export const EventStatsRoutes = router

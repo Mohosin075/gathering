@@ -143,6 +143,20 @@ const getOrganizerAppSummary = catchAsync(async (req: Request, res: Response) =>
   })
 })
 
+const getIndividualEventStats = catchAsync(async (req: Request, res: Response) => {
+  const { eventId } = req.params
+  const days = parseInt(req.query.days as string) || 7
+
+  const result = await EventStatsServices.getIndividualEventStats(eventId, days)
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Individual event statistics fetched successfully',
+    data: result,
+  })
+})
+
 export const EventStatsController = {
   getAdminDashboardStats,
   getEventStats,
@@ -155,4 +169,5 @@ export const EventStatsController = {
   getOrganizerRevenueStats,
   getOrganizerEventStatusStats,
   getOrganizerAppSummary,
+  getIndividualEventStats,
 }

@@ -66,3 +66,18 @@ export interface IOrganizerStats {
   eventsCreatedGrowth: number
   revenueGrowth: number
 }
+
+export interface IIndividualEventStats {
+  totalViews: number
+  ticketsSold: number
+  capacity: number
+  totalRevenue: number
+  averageTicketPrice: number
+  conversionRate: number
+  dailyStats: Array<{
+    date: string
+    views: number
+    sales: number
+    revenue: number
+  }>
+}

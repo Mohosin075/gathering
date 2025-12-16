@@ -9,6 +9,7 @@ import {
   IRevenueStats,
   IEventStatusStats,
   IOrganizerStats,
+  IIndividualEventStats,
 } from './stats.interface'
 import { EVENT_STATUS, EVENT_CATEGORIES } from '../../../enum/event'
 import { USER_ROLES, USER_STATUS } from '../../../enum/user'
@@ -1407,6 +1408,121 @@ export const getAppSummary = async () => {
   }
 }
 
+// Get individual event statistics (for event organizer view)
+export const getIndividualEventStats = async (
+  eventId: string,
+  days: number = 7,
+): Promise<IIndividualEventStats> => {
+  const { Ticket } = await import('../ticket/ticket.model')
+  
+  // Calculate date range for daily stats
+  const endDate = new Date()
+  const startDate = new Date()
+  startDate.setDate(startDate.getDate() - days)
+
+  // Get event details and ticket data in parallel
+  const [eventData, ticketStats, dailyTicketData] = await Promise.all([
+    // Get event details
+    Event.findById(eventId).select('capacity views ticketPrice ticketsSold'),
+
+    // Get ticket statistics
+    Ticket.aggregate([
+      {
+        $match: {
+          eventId: new Object(eventId),
+          paymentStatus: 'paid',
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalTickets: { $sum: '$quantity' },
+          totalRevenue: { $sum: '$finalAmount' },
+        },
+      },
+    ]),
+
+    // Get daily ticket sales and revenue
+    Ticket.aggregate([
+      {
+        $match: {
+          eventId: new Object(eventId),
+          paymentStatus: 'paid',
+          createdAt: { $gte: startDate },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' },
+            day: { $dayOfMonth: '$createdAt' },
+          },
+          sales: { $sum: '$quantity' },
+          revenue: { $sum: '$finalAmount' },
+        },
+      },
+      {
+        $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 },
+      },
+    ]),
+  ])
+
+  if (!eventData) {
+    throw new Error('Event not found')
+  }
+
+  const ticketData = ticketStats[0] || { totalTickets: 0, totalRevenue: 0 }
+  const totalViews = eventData.views || 0
+  const ticketsSold = ticketData.totalTickets
+  const totalRevenue = ticketData.totalRevenue
+  const averageTicketPrice = ticketsSold > 0 ? totalRevenue / ticketsSold : 0
+  const conversionRate = totalViews > 0 ? (ticketsSold / totalViews) * 100 : 0
+
+  // Create a map of daily data
+  const dailyDataMap = new Map()
+  dailyTicketData.forEach(item => {
+    const date = new Date(item._id.year, item._id.month - 1, item._id.day)
+    const dateStr = date.toISOString().split('T')[0]
+    dailyDataMap.set(dateStr, {
+      sales: item.sales,
+      revenue: item.revenue,
+    })
+  })
+
+  // Fill in missing days with zeros
+  const dailyStats = []
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date()
+    date.setDate(date.getDate() - i)
+    const dateStr = date.toISOString().split('T')[0]
+    
+    const dayData = dailyDataMap.get(dateStr) || { sales: 0, revenue: 0 }
+    
+    // For views, we'll distribute total views evenly across days (simplified approach)
+    // In a real app, you'd track daily views separately
+    const dailyViews = Math.floor(totalViews / days)
+    
+    dailyStats.push({
+      date: dateStr,
+      views: dailyViews,
+      sales: dayData.sales,
+      revenue: Math.round(dayData.revenue * 100) / 100,
+    })
+  }
+
+  return {
+    totalViews,
+    ticketsSold,
+    capacity: eventData.capacity,
+    totalRevenue: Math.round(totalRevenue * 100) / 100,
+    averageTicketPrice: Math.round(averageTicketPrice * 100) / 100,
+    conversionRate: Math.round(conversionRate * 100) / 100,
+    dailyStats,
+  }
+}
+
+
 export const EventStatsServices = {
   getAdminDashboardStats,
   getEventStats,
@@ -1419,4 +1535,5 @@ export const EventStatsServices = {
   getOrganizerRevenueStats,
   getOrganizerEventStatusStats,
   getOrganizerAppSummary,
+  getIndividualEventStats,
 }
