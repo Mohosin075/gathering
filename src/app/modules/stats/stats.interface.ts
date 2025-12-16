@@ -59,6 +59,8 @@ export interface IOrganizerStats {
   eventsCreated: number
   totalFollowers: number
   totalRevenue: number
+  totalViews: number
+  avgEngagement: number
   followersGrowth: number
   eventGrowth: number
   eventsCreatedGrowth: number

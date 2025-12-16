@@ -763,6 +763,7 @@ export const getOrganizerDashboardStats = async (
     lastMonthEventsCreated,
     lastMonthFollowers,
     lastMonthRevenue,
+    viewsAndEngagementData,
   ] = await Promise.all([
     // Total Events
     Event.countDocuments({ organizerId }),
@@ -853,10 +854,55 @@ export const getOrganizerDashboardStats = async (
         },
       },
     ]),
+
+    // Total Views and Engagement Data
+    Event.aggregate([
+      {
+        $match: {
+          organizerId: new Object(organizerId),
+        },
+      },
+      {
+        $lookup: {
+          from: 'reviews',
+          localField: '_id',
+          foreignField: 'eventId',
+          as: 'reviews',
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalViews: { $sum: { $ifNull: ['$views', 0] } },
+          totalFavorites: { $sum: { $ifNull: ['$favorites', 0] } },
+          totalTicketsSold: { $sum: { $ifNull: ['$ticketsSold', 0] } },
+          totalReviews: { $sum: { $size: '$reviews' } },
+        },
+      },
+    ]),
   ])
 
   const revenue = currentRevenue[0]?.totalRevenue || 0
   const lastRevenue = lastMonthRevenue[0]?.totalRevenue || 0
+
+  // Extract views and engagement data
+  const engagementData = viewsAndEngagementData[0] || {
+    totalViews: 0,
+    totalFavorites: 0,
+    totalTicketsSold: 0,
+    totalReviews: 0,
+  }
+
+  // Calculate average engagement rate
+  // Engagement = (favorites + reviews + tickets sold) / views * 100
+  const totalInteractions =
+    engagementData.totalFavorites +
+    engagementData.totalReviews +
+    engagementData.totalTicketsSold
+  const avgEngagement =
+    engagementData.totalViews > 0
+      ? (totalInteractions / engagementData.totalViews) * 100
+      : 0
 
   // Calculate growth percentages
   const eventGrowth =
@@ -895,6 +941,8 @@ export const getOrganizerDashboardStats = async (
     eventsCreated: eventsCreatedThisMonth,
     totalFollowers,
     totalRevenue: Math.round(revenue * 100) / 100,
+    totalViews: engagementData.totalViews,
+    avgEngagement: Math.round(avgEngagement * 100) / 100,
     eventGrowth: Math.round(eventGrowth * 10) / 10,
     eventsCreatedGrowth: Math.round(eventsCreatedGrowth * 10) / 10,
     followersGrowth: Math.round(followersGrowth * 10) / 10,
