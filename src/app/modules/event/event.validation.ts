@@ -8,6 +8,7 @@ export const EventValidations = {
       description: z.string(),
       category: z.string(),
       tags: z.array(z.string()).default([]),
+      features: z.array(z.string()).default([]),
       organizerId: z.string().optional(),
       status: z
         .enum([
@@ -28,6 +29,7 @@ export const EventValidations = {
       location: z.object({
         type: z.literal('Point').default('Point'),
         coordinates: z.array(z.number()).length(2).default([0, 0]), // [longitude, latitude]
+        address: z.string().optional(),
       }),
       address: z.string(),
       meetingLink: z.string().optional(),

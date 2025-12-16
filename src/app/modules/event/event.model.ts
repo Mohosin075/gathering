@@ -14,6 +14,7 @@ const eventSchema = new Schema<IEvent, EventModel>(
       enum: EVENT_STATUS,
       default: EVENT_STATUS.PENDING,
     },
+    features: { type: [String], default: [] },
     visibility: {
       type: String,
       enum: ['public', 'private', 'unlisted'],
@@ -37,6 +38,7 @@ const eventSchema = new Schema<IEvent, EventModel>(
         type: [Number],
         default: [0, 0],
       },
+      address: { type: String },
     },
     address: { type: String, required: true },
     meetingLink: { type: String },

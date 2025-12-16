@@ -33,6 +33,7 @@ export type IAddress = {
 export type Point = {
   type: 'Point'
   coordinates: [number, number] // [longitude, latitude]
+  address ?: string[]
 }
 
 // ------------------ USER TYPE ------------------

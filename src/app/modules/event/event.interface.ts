@@ -24,6 +24,7 @@ export interface IEvent {
   description: string
   category: EVENT_CATEGORIES
   tags: string[]
+  features: string[]
   organizerId: Types.ObjectId
   status: EVENT_STATUS
   visibility: 'public' | 'private' | 'unlisted'
