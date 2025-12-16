@@ -48,4 +48,40 @@ router.get(
   EventStatsController.getAppSummary,
 )
 
+// Organizer Routes
+// GET /api/stats/organizer/dashboard - Main organizer dashboard stats
+router.get(
+  '/organizer/dashboard',
+  auth(USER_ROLES.ORGANIZER),
+  EventStatsController.getOrganizerDashboardStats,
+)
+
+// GET /api/stats/organizer/events - Organizer event statistics
+router.get(
+  '/organizer/events',
+  auth(USER_ROLES.ORGANIZER),
+  EventStatsController.getOrganizerEventStats,
+)
+
+// GET /api/stats/organizer/revenue - Organizer revenue statistics
+router.get(
+  '/organizer/revenue',
+  auth(USER_ROLES.ORGANIZER),
+  EventStatsController.getOrganizerRevenueStats,
+)
+
+// GET /api/stats/organizer/event-status - Organizer event status distribution
+router.get(
+  '/organizer/event-status',
+  auth(USER_ROLES.ORGANIZER),
+  EventStatsController.getOrganizerEventStatusStats,
+)
+
+// GET /api/stats/organizer/summary - All organizer statistics
+router.get(
+  '/organizer/summary',
+  auth(USER_ROLES.ORGANIZER),
+  EventStatsController.getOrganizerAppSummary,
+)
+
 export const EventStatsRoutes = router

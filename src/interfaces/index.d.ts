@@ -4,7 +4,13 @@ import 'express-session'
 declare global {
   namespace Express {
     interface Request {
-      user: JwtPayload
+      user: JwtPayload & {
+        authId: string
+        role: string
+        name?: string
+        email?: string
+        deviceToken?: string
+      }
     }
   }
 }

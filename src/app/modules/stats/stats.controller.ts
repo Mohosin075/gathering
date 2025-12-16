@@ -1,116 +1,147 @@
 import { Request, Response } from 'express'
 import { EventStatsServices } from './stats.service'
+import catchAsync from '../../../shared/catchAsync'
+import sendResponse from '../../../shared/sendResponse'
+import { StatusCodes } from 'http-status-codes'
+import { JwtPayload } from 'jsonwebtoken'
 
-const getAdminDashboardStats = async (req: Request, res: Response) => {
-  try {
-    const data = await EventStatsServices.getAdminDashboardStats()
+const getAdminDashboardStats = catchAsync(async (req: Request, res: Response) => {
+  const result = await EventStatsServices.getAdminDashboardStats()
 
-    res.status(200).json({
-      success: true,
-      message: 'Admin dashboard stats fetched successfully',
-      data,
-    })
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching admin dashboard stats',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    })
-  }
-}
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Admin dashboard stats fetched successfully',
+    data: result,
+  })
+})
 
-const getEventStats = async (req: Request, res: Response) => {
-  try {
-    const months = parseInt(req.query.months as string) || 6
-    const data = await EventStatsServices.getEventStats(months)
+const getEventStats = catchAsync(async (req: Request, res: Response) => {
+  const months = parseInt(req.query.months as string) || 6
+  const result = await EventStatsServices.getEventStats(months)
 
-    res.status(200).json({
-      success: true,
-      message: 'Event statistics fetched successfully',
-      data,
-    })
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching event statistics',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    })
-  }
-}
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Event statistics fetched successfully',
+    data: result,
+  })
+})
 
-const getUserStats = async (req: Request, res: Response) => {
-  try {
-    const months = parseInt(req.query.months as string) || 6
-    const data = await EventStatsServices.getUserStats(months)
+const getUserStats = catchAsync(async (req: Request, res: Response) => {
+  const months = parseInt(req.query.months as string) || 6
+  const result = await EventStatsServices.getUserStats(months)
 
-    res.status(200).json({
-      success: true,
-      message: 'User statistics fetched successfully',
-      data,
-    })
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching user statistics',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    })
-  }
-}
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'User statistics fetched successfully',
+    data: result,
+  })
+})
 
-const getRevenueStats = async (req: Request, res: Response) => {
-  try {
-    const months = parseInt(req.query.months as string) || 6
-    const data = await EventStatsServices.getRevenueStats(months)
+const getRevenueStats = catchAsync(async (req: Request, res: Response) => {
+  const months = parseInt(req.query.months as string) || 6
+  const result = await EventStatsServices.getRevenueStats(months)
 
-    res.status(200).json({
-      success: true,
-      message: 'Revenue statistics fetched successfully',
-      data,
-    })
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching revenue statistics',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    })
-  }
-}
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Revenue statistics fetched successfully',
+    data: result,
+  })
+})
 
-const getEventStatusStats = async (req: Request, res: Response) => {
-  try {
-    const data = await EventStatsServices.getEventStatusStats()
+const getEventStatusStats = catchAsync(async (req: Request, res: Response) => {
+  const result = await EventStatsServices.getEventStatusStats()
 
-    res.status(200).json({
-      success: true,
-      message: 'Event status statistics fetched successfully',
-      data,
-    })
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching event status statistics',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    })
-  }
-}
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Event status statistics fetched successfully',
+    data: result,
+  })
+})
 
-const getAppSummary = async (req: Request, res: Response) => {
-  try {
-    const data = await EventStatsServices.getAppSummary()
+const getAppSummary = catchAsync(async (req: Request, res: Response) => {
+  const result = await EventStatsServices.getAppSummary()
 
-    res.status(200).json({
-      success: true,
-      message: 'All statistics fetched successfully',
-      data,
-    })
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching summary statistics',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    })
-  }
-}
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'All statistics fetched successfully',
+    data: result,
+  })
+})
+
+const getOrganizerDashboardStats = catchAsync(async (req: Request, res: Response) => {
+  const result = await EventStatsServices.getOrganizerDashboardStats(
+    (req.user as JwtPayload).authId,
+  )
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Organizer dashboard stats fetched successfully',
+    data: result,
+  })
+})
+
+const getOrganizerEventStats = catchAsync(async (req: Request, res: Response) => {
+  const months = parseInt(req.query.months as string) || 6
+  const result = await EventStatsServices.getOrganizerEventStats(
+    (req.user as JwtPayload).authId,
+    months,
+  )
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Organizer event statistics fetched successfully',
+    data: result,
+  })
+})
+
+const getOrganizerRevenueStats = catchAsync(async (req: Request, res: Response) => {
+  const months = parseInt(req.query.months as string) || 6
+  const result = await EventStatsServices.getOrganizerRevenueStats(
+    (req.user as JwtPayload).authId,
+    months,
+  )
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Organizer revenue statistics fetched successfully',
+    data: result,
+  })
+})
+
+const getOrganizerEventStatusStats = catchAsync(async (req: Request, res: Response) => {
+  const result = await EventStatsServices.getOrganizerEventStatusStats(
+    (req.user as JwtPayload).authId,
+  )
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Organizer event status statistics fetched successfully',
+    data: result,
+  })
+})
+
+const getOrganizerAppSummary = catchAsync(async (req: Request, res: Response) => {
+  const result = await EventStatsServices.getOrganizerAppSummary(
+    (req.user as JwtPayload).authId,
+  )
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Organizer summary statistics fetched successfully',
+    data: result,
+  })
+})
 
 export const EventStatsController = {
   getAdminDashboardStats,
@@ -119,4 +150,9 @@ export const EventStatsController = {
   getRevenueStats,
   getEventStatusStats,
   getAppSummary,
+  getOrganizerDashboardStats,
+  getOrganizerEventStats,
+  getOrganizerRevenueStats,
+  getOrganizerEventStatusStats,
+  getOrganizerAppSummary,
 }

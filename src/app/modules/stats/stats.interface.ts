@@ -52,3 +52,15 @@ export interface IEventStatusStats {
   archived: number
   rejected: number
 }
+
+export interface IOrganizerStats {
+  totalEvents: number
+  activeEvents: number
+  eventsCreated: number
+  totalFollowers: number
+  totalRevenue: number
+  followersGrowth: number
+  eventGrowth: number
+  eventsCreatedGrowth: number
+  revenueGrowth: number
+}
