@@ -45,7 +45,7 @@ const handleLoginLogic = async (
       otp,
     })
 
-    await emailHelper.sendEmail(otpTemplate)
+    emailHelper.sendEmail(otpTemplate)
 
     // emailQueue.add('emails', otpTemplate)
 
