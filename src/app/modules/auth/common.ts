@@ -76,7 +76,8 @@ const handleLoginLogic = async (
     // Handle restriction expiration
     await User.findByIdAndUpdate(isUserExist._id, {
       $set: {
-        authentication: { restrictionLeftAt: null, wrongLoginAttempts: 0 },
+        'authentication.restrictionLeftAt': null,
+        'authentication.wrongLoginAttempts': 0,
         status: USER_STATUS.ACTIVE,
       },
     })
@@ -100,10 +101,8 @@ const handleLoginLogic = async (
     await User.findByIdAndUpdate(isUserExist._id, {
       $set: {
         status: isUserExist.status,
-        authentication: {
-          restrictionLeftAt: isUserExist.authentication.restrictionLeftAt,
-          wrongLoginAttempts: isUserExist.authentication.wrongLoginAttempts,
-        },
+        'authentication.restrictionLeftAt': isUserExist.authentication.restrictionLeftAt,
+        'authentication.wrongLoginAttempts': isUserExist.authentication.wrongLoginAttempts,
       },
     })
 
@@ -118,10 +117,8 @@ const handleLoginLogic = async (
     {
       $set: {
         deviceToken: payload.deviceToken,
-        authentication: {
-          restrictionLeftAt: null,
-          wrongLoginAttempts: 0,
-        },
+        'authentication.restrictionLeftAt': null,
+        'authentication.wrongLoginAttempts': 0,
       },
     },
     { new: true },
