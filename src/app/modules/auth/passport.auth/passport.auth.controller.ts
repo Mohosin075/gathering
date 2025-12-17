@@ -18,6 +18,15 @@ const login = catchAsync(async (req: Request, res: Response) => {
   )
   const { status, message, accessToken, refreshToken, role } = result
 
+  res.cookie('accessToken', accessToken, {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+  })
+  res.cookie('refreshToken', refreshToken, {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+  })
+
   sendResponse<ILoginResponse>(res, {
     statusCode: status,
     success: true,

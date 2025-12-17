@@ -3,7 +3,7 @@ import { z } from 'zod'
 export const AttendeeValidations = {
   create: z.object({
     body: z.object({
-      eventId: z.string(),
+      // eventId: z.string(),
       ticketId: z.string(),
       specialRequirements: z.string().optional(),
     }),
