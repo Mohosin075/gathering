@@ -14,10 +14,7 @@ const customLogin = catchAsync(async (req: Request, res: Response) => {
   const result = await CustomAuthServices.customLogin(loginData)
   const { status, message, accessToken, refreshToken, role } = result
 
-  res.cookie('accessToken', accessToken, {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-  })
+ 
 
   res.cookie('refreshToken', refreshToken, {
     secure: process.env.NODE_ENV === 'production',
@@ -39,10 +36,7 @@ const adminLogin = catchAsync(async (req: Request, res: Response) => {
   const result = await CustomAuthServices.adminLogin(loginData)
   const { status, message, accessToken, refreshToken, role } = result
 
-  res.cookie('accessToken', accessToken, {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-  })
+ 
 
   res.cookie('refreshToken', refreshToken, {
     secure: process.env.NODE_ENV === 'production',
@@ -91,10 +85,7 @@ const verifyAccount = catchAsync(async (req: Request, res: Response) => {
   const result = await CustomAuthServices.verifyAccount(email, oneTimeCode)
   const { status, message, accessToken, refreshToken, role, token } = result
 
-  res.cookie('accessToken', accessToken, {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-  })
+ 
 
   res.cookie('refreshToken', refreshToken, {
     secure: process.env.NODE_ENV === 'production',
@@ -180,10 +171,7 @@ const socialLogin = catchAsync(async (req: Request, res: Response) => {
   const result = await CustomAuthServices.socialLogin(appId, deviceToken)
   const { status, message, accessToken, refreshToken, role } = result
 
-  res.cookie('accessToken', accessToken, {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-  })
+ 
 
   res.cookie('refreshToken', refreshToken, {
     secure: process.env.NODE_ENV === 'production',
@@ -202,7 +190,6 @@ const logout = catchAsync(async (req: Request, res: Response) => {
   const userId = (req.user as JwtPayload).authId
   const result = await TokenServices.logout(userId)
 
-  res.clearCookie('accessToken')
   res.clearCookie('refreshToken')
 
   sendResponse(res, {
