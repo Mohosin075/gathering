@@ -59,7 +59,9 @@ app.use(
 // Cookie parser
 app.use(cookieParser())
 
-// Logging disabled
+// Logging enabled for troubleshooting
+import morgan from 'morgan'
+app.use(morgan('dev'))
 
 // -------------------- Static Files --------------------
 app.use(express.static('uploads'))

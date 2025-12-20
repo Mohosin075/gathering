@@ -3,6 +3,7 @@ import mongoose from 'mongoose'
 import { Server } from 'socket.io'
 import app from './app'
 import config from './config'
+import os from 'os'
 
 import { Server as SocketServer } from 'socket.io'
 import { UserServices } from './app/modules/user/user.service'
@@ -27,10 +28,23 @@ async function main() {
     const port =
       typeof config.port === 'number' ? config.port : Number(config.port)
 
+    const host = (config.ip_address as string) || '0.0.0.0'
     server = app.listen(port, '0.0.0.0', () => {
-      console.log(
-        colors.yellow(`♻️ Application listening on port: ${config.port}`),
-      )
+      console.log(colors.yellow(`♻️  Server is running on:`))
+      console.log(colors.cyan(`   - Local:    http://localhost:${port}`))
+      
+      const interfaces = os.networkInterfaces()
+      for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]!) {
+          if (iface.family === 'IPv4' && !iface.internal) {
+            console.log(colors.cyan(`   - Network:  http://${iface.address}:${port}`))
+          }
+        }
+      }
+      
+      if (config.ip_address) {
+        console.log(colors.green(`   - Requested IP: http://${config.ip_address}:${port}`))
+      }
     })
 
     // Socket.IO setup
