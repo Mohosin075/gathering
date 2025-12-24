@@ -112,6 +112,43 @@ const refundPayment = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
+// ============================================
+// FLUTTER STRIPE CONTROLLERS
+// ============================================
+
+const createPaymentIntent = catchAsync(
+  async (req: Request, res: Response) => {
+    const user = req.user as JwtPayload
+    const result = await PaymentServices.createPaymentIntent(user, req.body)
+
+    sendResponse(res, {
+      statusCode: StatusCodes.CREATED,
+      success: true,
+      message: 'Payment Intent created successfully',
+      data: result,
+    })
+  },
+)
+
+const createEphemeralKey = catchAsync(
+  async (req: Request, res: Response) => {
+    const user = req.user as JwtPayload
+    const { apiVersion } = req.body
+    const result = await PaymentServices.createEphemeralKey(user, apiVersion)
+
+    sendResponse(res, {
+      statusCode: StatusCodes.OK,
+      success: true,
+      message: 'Ephemeral key created successfully',
+      data: result,
+    })
+  },
+)
+
+// ============================================
+// EXISTING CONTROLLERS
+// ============================================
+
 const getMyPayments = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as JwtPayload
   const paginationOptions = pick(req.query, paginationFields)
@@ -136,4 +173,7 @@ export const PaymentController = {
   getMyPayments,
   createCheckoutSession,
   verifyCheckoutSession,
+  // Flutter Stripe controllers
+  createPaymentIntent,
+  createEphemeralKey,
 }

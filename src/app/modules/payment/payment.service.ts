@@ -11,6 +11,7 @@ import { Ticket } from '../ticket/ticket.model'
 import { Event } from '../event/event.model'
 import stripe from '../../../config/stripe'
 import config from '../../../config'
+import { WebhookService } from './webhook.service'
 
 const createCheckoutSession = async (
   user: any, // Replace with your JwtPayload type
@@ -187,6 +188,202 @@ const verifyCheckoutSession = async (sessionId: string): Promise<IPayment> => {
     )
   }
 }
+
+// ============================================
+// FLUTTER STRIPE INTEGRATION METHODS
+// ============================================
+
+/**
+ * Create Payment Intent for Flutter App
+ * Used by flutter_stripe SDK for native mobile payments
+ */
+const createPaymentIntent = async (
+  user: any,
+  payload: { ticketId: string; currency?: string },
+): Promise<{ clientSecret: string; paymentIntentId: string; amount: number }> => {
+  try {
+    const ticket = await Ticket.findOne({
+      _id: payload.ticketId,
+      attendeeId: user.authId,
+    }).populate('eventId')
+
+    if (!ticket) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Ticket not found')
+    }
+
+    if (ticket.status === 'cancelled') {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Ticket is cancelled')
+    }
+
+    if (ticket.paymentStatus === 'paid') {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Ticket already paid')
+    }
+
+    const event = ticket.eventId as any
+
+    // Create Stripe Payment Intent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(ticket.finalAmount * 100), // Convert to cents
+      currency: payload.currency || 'usd',
+      customer: user.stripeCustomerId, // Optional: if you store customer IDs
+      metadata: {
+        ticketId: payload.ticketId,
+        authId: user.authId,
+        eventId: event._id.toString(),
+        userEmail: user.email,
+      },
+      description: `Ticket for ${event.title} | Type: ${ticket.ticketType} | Qty: ${ticket.quantity}`,
+    })
+
+    // Create payment record
+    await Payment.create({
+      ticketId: payload.ticketId,
+      userId: user.authId,
+      userEmail: user.email,
+      eventId: event._id,
+      amount: ticket.finalAmount,
+      currency: (payload.currency || 'USD').toUpperCase(),
+      paymentMethod: 'stripe',
+      paymentIntentId: paymentIntent.id,
+      status: 'pending',
+      metadata: {
+        ticketId: payload.ticketId,
+        authId: user.authId,
+        eventId: event._id.toString(),
+        paymentType: 'flutter_mobile',
+      },
+    })
+
+    return {
+      clientSecret: paymentIntent.client_secret!,
+      paymentIntentId: paymentIntent.id,
+      amount: ticket.finalAmount,
+    }
+  } catch (error: any) {
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `Payment Intent creation failed: ${error.message}`,
+    )
+  }
+}
+
+/**
+ * Create Ephemeral Key for Flutter Stripe SDK
+ * Required for customer-scoped operations in flutter_stripe
+ */
+const createEphemeralKey = async (
+  user: any,
+  apiVersion: string = '2024-12-18.acacia',
+): Promise<{ ephemeralKey: string }> => {
+  try {
+    let customerId = user.stripeCustomerId
+
+    // Create customer if doesn't exist
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        name: user.name,
+        metadata: {
+          authId: user.authId,
+        },
+      })
+      customerId = customer.id
+      
+      // TODO: Update user record with stripeCustomerId
+      // await User.findByIdAndUpdate(user.authId, { stripeCustomerId: customer.id })
+    }
+
+    // Create ephemeral key
+    const ephemeralKey = await stripe.ephemeralKeys.create(
+      { customer: customerId },
+      { apiVersion: apiVersion },
+    )
+
+    return {
+      ephemeralKey: ephemeralKey.secret!,
+    }
+  } catch (error: any) {
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `Ephemeral key creation failed: ${error.message}`,
+    )
+  }
+}
+
+/**
+ * Handle Payment Intent Webhook Events
+ * Processes payment_intent.succeeded events from Stripe
+ */
+const handlePaymentIntentWebhook = async (
+  paymentIntent: any,
+): Promise<void> => {
+  try {
+    const payment = await Payment.findOne({
+      paymentIntentId: paymentIntent.id,
+    })
+
+    if (!payment) {
+      console.error(`Payment not found for Payment Intent: ${paymentIntent.id}`)
+      return
+    }
+
+    if (payment.status === 'succeeded') {
+      console.log(`Payment already processed: ${paymentIntent.id}`)
+      return
+    }
+
+    // Start MongoDB transaction
+    const session = await Payment.startSession()
+    session.startTransaction()
+
+    try {
+      // Update payment status
+      payment.status = 'succeeded'
+      payment.metadata = {
+        ...payment.metadata,
+        processedAt: new Date().toISOString(),
+      }
+      await payment.save({ session })
+
+      // Update ticket status
+      await Ticket.findByIdAndUpdate(
+        payment.ticketId,
+        {
+          status: 'confirmed',
+          paymentStatus: 'paid',
+        },
+        { session },
+      )
+
+      // Update event tickets sold count
+      const ticket = await Ticket.findById(payment.ticketId).session(session)
+      if (ticket) {
+        await Event.findByIdAndUpdate(
+          ticket.eventId,
+          {
+            $inc: { ticketsSold: ticket.quantity },
+          },
+          { session },
+        )
+      }
+
+      await session.commitTransaction()
+      console.log(`Payment processed successfully: ${paymentIntent.id}`)
+    } catch (error) {
+      await session.abortTransaction()
+      throw error
+    } finally {
+      session.endSession()
+    }
+  } catch (error: any) {
+    console.error(`Webhook processing failed: ${error.message}`)
+    throw error
+  }
+}
+
+// ============================================
+// EXISTING METHODS
+// ============================================
 
 const getAllPayments = async (
   user: JwtPayload,
@@ -405,4 +602,9 @@ export const PaymentServices = {
   getMyPayments,
   createCheckoutSession,
   verifyCheckoutSession,
+  handleWebhook: WebhookService.handleWebhook,
+  // Flutter Stripe methods
+  createPaymentIntent,
+  createEphemeralKey,
+  handlePaymentIntentWebhook,
 }

@@ -64,6 +64,37 @@ router.get(
   PaymentController.verifyCheckoutSession,
 )
 
+// ============================================
+// FLUTTER STRIPE ROUTES
+// ============================================
+
+router.post(
+  '/create-payment-intent',
+  auth(
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.ADMIN,
+    USER_ROLES.ORGANIZER,
+    USER_ROLES.USER,
+  ),
+  validateRequest(PaymentValidations.create),
+  PaymentController.createPaymentIntent,
+)
+
+router.post(
+  '/ephemeral-key',
+  auth(
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.ADMIN,
+    USER_ROLES.ORGANIZER,
+    USER_ROLES.USER,
+  ),
+  PaymentController.createEphemeralKey,
+)
+
+// ============================================
+// EXISTING ROUTES
+// ============================================
+
 
 
 router.patch(
