@@ -79,6 +79,7 @@ const createAdmin = async (): Promise<Partial<IUser> | null> => {
 }
 
 import { Event } from '../event/event.model'
+import { Follow } from '../follow/follow.model'
 
 const getAllUsers = async (
   paginationOptions: IPaginationOptions,
@@ -238,7 +239,7 @@ const deleteProfile = async (
   return 'User deleted successfully.'
 }
 
-const getUserById = async (userId: string): Promise<IUser | null> => {
+const getUserById = async (userId: string): Promise<any> => {
   const isUserExist = await User.findOne({
     _id: userId,
     status: { $nin: [USER_STATUS.DELETED] },
@@ -246,11 +247,26 @@ const getUserById = async (userId: string): Promise<IUser | null> => {
   if (!isUserExist) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'User not found.')
   }
-  const user = await User.findOne({
-    _id: userId,
-    status: { $nin: [USER_STATUS.DELETED] },
-  }).select('-password -authentication -__v')
-  return user
+
+  // Fetch user data and stats in parallel for performance
+  const [user, eventsCount, followersCount, followingCount] = await Promise.all([
+    User.findOne({
+      _id: userId,
+      status: { $nin: [USER_STATUS.DELETED] },
+    }).select('-password -authentication -__v'),
+    Event.countDocuments({ organizerId: userId }),
+    Follow.countDocuments({ following: userId }),
+    Follow.countDocuments({ follower: userId }),
+  ])
+
+  return {
+    ...user?.toObject(),
+    stats: {
+      events: eventsCount,
+      followers: followersCount,
+      following: followingCount,
+    },
+  }
 }
 
 const updateUserStatus = async (userId: string, status: USER_STATUS) => {

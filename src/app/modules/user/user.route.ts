@@ -91,7 +91,7 @@ router
 router
   .route('/:userId')
   .get(
-    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN, USER_ROLES.ORGANIZER, USER_ROLES.USER),
     UserController.getUserById,
   )
   .delete(
