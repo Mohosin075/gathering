@@ -2,6 +2,7 @@ import { Event } from '../event/event.model'
 import { User } from '../user/user.model'
 import { Review } from '../review/review.model'
 import { Follow } from '../follow/follow.model'
+import { SavedEvent } from '../savedEvent/savedEvent.model'
 import {
   IAdminStats,
   IEventStats,
@@ -10,6 +11,7 @@ import {
   IEventStatusStats,
   IOrganizerStats,
   IIndividualEventStats,
+  IEventAnalytics,
 } from './stats.interface'
 import { EVENT_STATUS, EVENT_CATEGORIES } from '../../../enum/event'
 import { USER_ROLES, USER_STATUS } from '../../../enum/user'
@@ -1530,6 +1532,205 @@ export const getIndividualEventStats = async (
 }
 
 
+// Get shared event analytics (Admin & Organizer)
+export const getEventAnalytics = async (
+  eventId: string,
+): Promise<IEventAnalytics> => {
+  const { Ticket } = await import('../ticket/ticket.model')
+
+  // Calculate last 7 days range
+  const days = 7
+  const endDate = new Date()
+  const startDate = new Date()
+  startDate.setDate(startDate.getDate() - days)
+  startDate.setHours(0, 0, 0, 0) // Start of the day 7 days ago
+
+  const [
+    eventData,
+    ticketStats,
+    dailyTicketData,
+    dailyReviewData,
+    dailySavedData,
+  ] = await Promise.all([
+    Event.findById(eventId).select('views'),
+
+    // Total Ticket Stats
+    Ticket.aggregate([
+      {
+        $match: {
+          eventId: new Object(eventId),
+          paymentStatus: 'paid',
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalTickets: { $sum: '$quantity' },
+          totalRevenue: { $sum: '$finalAmount' },
+        },
+      },
+    ]),
+
+    // Daily Ticket Sales
+    Ticket.aggregate([
+      {
+        $match: {
+          eventId: new Object(eventId),
+          paymentStatus: 'paid',
+          createdAt: { $gte: startDate },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' },
+            day: { $dayOfMonth: '$createdAt' },
+          },
+          sales: { $sum: '$quantity' },
+          revenue: { $sum: '$finalAmount' },
+        },
+      },
+    ]),
+
+    // Daily Reviews (Engagement)
+    Review.aggregate([
+      {
+        $match: {
+          eventId: new Object(eventId),
+          createdAt: { $gte: startDate },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' },
+            day: { $dayOfMonth: '$createdAt' },
+          },
+          count: { $sum: 1 },
+        },
+      },
+    ]),
+
+    // Daily Saved Events (Engagement)
+    SavedEvent.aggregate([
+      {
+        $match: {
+          event: new Object(eventId),
+          createdAt: { $gte: startDate },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' },
+            day: { $dayOfMonth: '$createdAt' },
+          },
+          count: { $sum: 1 },
+        },
+      },
+    ]),
+  ])
+
+  if (!eventData) {
+    throw new Error('Event not found')
+  }
+
+  const ticketData = ticketStats[0] || { totalTickets: 0, totalRevenue: 0 }
+  const totalViews = eventData.views || 0
+  const totalSales = ticketData.totalTickets
+  const totalRevenue = ticketData.totalRevenue
+
+  // Calculate total engagement (Saved + Reviews + Sales)
+  // Note: This is an approximation of total lifetime engagement if we don't query all-time aggregate
+  // For now, let's use the all-time counts from event/reviews if available, or just sum the daily ones if that's what we have.
+  // Actually, let's get total counts for engagement separately to be accurate for "Total Engagement"
+  // optimizing: reuse existing queries or add new ones. 
+  // For the sake of performance, let's just use what we have or do a quick count.
+  // "Engagement" usually means interactive actions.
+  const [totalReviews, totalSaved] = await Promise.all([
+    Review.countDocuments({ eventId }),
+    SavedEvent.countDocuments({ event: eventId }),
+  ])
+  const totalEngagement = totalReviews + totalSaved + totalSales
+
+  // Process daily data
+  const processedData = new Map<string, { sales: number; revenue: number; engagement: number }>()
+
+  // Helper to get date string key
+  const getDateKey = (id: { year: number; month: number; day: number }) => {
+    const date = new Date(id.year, id.month - 1, id.day)
+    return date.toISOString().split('T')[0]
+  }
+
+  // Merge Ticket Data
+  dailyTicketData.forEach(item => {
+    const dateStr = getDateKey(item._id)
+    const existing = processedData.get(dateStr) || { sales: 0, revenue: 0, engagement: 0 }
+    existing.sales += item.sales
+    existing.revenue += item.revenue
+    existing.engagement += item.sales // Sales count as engagement
+    processedData.set(dateStr, existing)
+  })
+
+  // Merge Review Data
+  dailyReviewData.forEach(item => {
+    const dateStr = getDateKey(item._id)
+    const existing = processedData.get(dateStr) || { sales: 0, revenue: 0, engagement: 0 }
+    existing.engagement += item.count
+    processedData.set(dateStr, existing)
+  })
+
+  // Merge Saved Data
+  dailySavedData.forEach(item => {
+    const dateStr = getDateKey(item._id)
+    const existing = processedData.get(dateStr) || { sales: 0, revenue: 0, engagement: 0 }
+    existing.engagement += item.count
+    processedData.set(dateStr, existing)
+  })
+
+  // Format result with filled dates
+  const dailyStats = []
+  // Daily views approximation (Total Views / Age of event or just Views / 7 for trend)
+  // Since we don't have daily views, we will distribute total views proportional to engagement or just evenly for the graph shape.
+  // Or simply returning a flat average for the graph to not stay empty.
+  // The image shows a curve, so flat line is boring.
+  // Better approach: Use engagement trend to weight the viewing trend? Or just random variation around average?
+  // Let's stick to even distribution for now to be safe, or 0 if no views.
+  // Actually, commonly if we lack data, we show 0 or flat. 
+  // Let's use: (Total Views / 30) or similar as a baseline, and if created recently, use age.
+  // For the graph "Last 7 Days", we just show the average daily view count based on total.
+  const diffTime = Math.abs(new Date().getTime() - (eventData.createdAt || new Date()).getTime())
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1
+  const avgDailyViews = Math.ceil(totalViews / diffDays)
+
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date()
+    date.setDate(date.getDate() - i)
+    const dateStr = date.toISOString().split('T')[0]
+
+    const dayData = processedData.get(dateStr) || { sales: 0, revenue: 0, engagement: 0 }
+
+    dailyStats.push({
+      date: dateStr,
+      views: avgDailyViews, // Fallback as we don't track daily views
+      engagement: dayData.engagement,
+      sales: dayData.sales,
+      revenue: Math.round(dayData.revenue * 100) / 100,
+    })
+  }
+
+  return {
+    totalViews,
+    totalEngagement,
+    totalSales,
+    totalRevenue: Math.round(totalRevenue * 100) / 100,
+    dailyStats
+  }
+}
+
 export const EventStatsServices = {
   getAdminDashboardStats,
   getEventStats,
@@ -1543,4 +1744,5 @@ export const EventStatsServices = {
   getOrganizerEventStatusStats,
   getOrganizerAppSummary,
   getIndividualEventStats,
+  getEventAnalytics,
 }

@@ -48,6 +48,9 @@ export interface IEvent {
   hasLiveStream: boolean
   liveStreamId?: Types.ObjectId
   isStreamingActive: boolean
+
+  createdAt?: Date
+  updatedAt?: Date
 }
 
 export interface INearbyOptions {

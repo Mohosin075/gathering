@@ -91,4 +91,12 @@ router.get(
   EventStatsController.getIndividualEventStats,
 )
 
+// Shared Analytics Route
+// GET /api/stats/analytics/:eventId - detailed analytics for admin and organizer
+router.get(
+  '/analytics/:eventId',
+  auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN, USER_ROLES.ORGANIZER),
+  EventStatsController.getEventAnalytics,
+)
+
 export const EventStatsRoutes = router

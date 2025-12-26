@@ -80,6 +80,9 @@ const getUserById = catchAsync(async (req: Request, res: Response) => {
 const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.params
   const { status } = req.body
+  if (!status) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Status is required')
+  }
   const result = await UserServices.updateUserStatus(userId, status)
   sendResponse(res, {
     statusCode: StatusCodes.OK,

@@ -7,9 +7,9 @@ import { createSupportSchema, updateSupportSchema } from './support.validation'
 
 const router = express.Router()
 
-router.get('/', auth(USER_ROLES.ADMIN), SupportController.getAllSupports)
+router.get('/', auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), SupportController.getAllSupports)
 
-router.get('/:id', auth(USER_ROLES.ADMIN), SupportController.getSingleSupport)
+router.get('/:id', auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), SupportController.getSingleSupport)
 
 router.post(
   '/',
@@ -27,12 +27,12 @@ router.post(
 
 router.patch(
   '/:id',
-  auth(USER_ROLES.ADMIN),
+  auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
 
   validateRequest(updateSupportSchema),
   SupportController.updateSupport,
 )
 
-router.delete('/:id', auth(USER_ROLES.ADMIN), SupportController.deleteSupport)
+router.delete('/:id', auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), SupportController.deleteSupport)
 
 export const SupportRoutes = router

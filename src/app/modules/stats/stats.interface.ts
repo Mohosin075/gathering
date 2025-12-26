@@ -90,3 +90,17 @@ export interface IIndividualEventStats {
     revenue: number
   }>
 }
+
+export interface IEventAnalytics {
+  totalViews: number
+  totalEngagement: number
+  totalSales: number
+  totalRevenue: number
+  dailyStats: Array<{
+    date: string
+    views: number
+    engagement: number
+    sales: number
+    revenue: number
+  }>
+}
