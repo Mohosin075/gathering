@@ -33,7 +33,7 @@ export type IAddress = {
 export type Point = {
   type: 'Point'
   coordinates: [number, number] // [longitude, latitude]
-  address ?: string[]
+  address?: string[]
 }
 
 // ------------------ USER TYPE ------------------
@@ -59,6 +59,7 @@ export interface IUser {
   subscribe: boolean
   isOnboardingComplete: boolean
   // membership: Membership
+  eventCount?: number
   settings?: {
     pushNotification?: boolean
     emailNotification?: boolean

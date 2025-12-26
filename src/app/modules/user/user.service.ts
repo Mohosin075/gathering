@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes'
 import ApiError from '../../../errors/ApiError'
 import { IUser, IUserFilterables } from './user.interface'
 import { User } from './user.model'
+import { Types } from 'mongoose'
 
 import { InterestCategory, USER_ROLES, USER_STATUS } from '../../../enum/user'
 
@@ -11,11 +12,6 @@ import { IPaginationOptions } from '../../../interfaces/pagination'
 import { S3Helper } from '../../../helpers/image/s3helper'
 import config from '../../../config'
 import { userFilterableFields } from './user.constants'
-import {
-  emailTemplate,
-  staffCreateTemplate,
-} from '../../../shared/emailTemplate'
-import { emailHelper } from '../../../helpers/emailHelper'
 
 const updateProfile = async (user: JwtPayload, payload: Partial<IUser>) => {
   console.log({ payload })
@@ -82,6 +78,8 @@ const createAdmin = async (): Promise<Partial<IUser> | null> => {
   return result[0]
 }
 
+import { Event } from '../event/event.model'
+
 const getAllUsers = async (
   paginationOptions: IPaginationOptions,
   filterables: IUserFilterables = {},
@@ -133,14 +131,45 @@ const getAllUsers = async (
     whereConditions = { $and: filterConditions }
   }
 
-  const [result, total] = await Promise.all([
+  const [users, total] = await Promise.all([
     User.find(whereConditions)
       .skip(skip)
       .limit(limit)
       .sort(sortBy ? { [sortBy]: sortOrder } : { createdAt: -1 })
-      .select('-password -authentication -__v'),
+      .select('-password -authentication -__v')
+      .lean(),
     User.countDocuments(whereConditions),
   ])
+
+  // Aggregate event counts for the fetched users
+  const userIds = users.map(user => user._id)
+  const eventCounts = await Event.aggregate([
+    {
+      $match: {
+        organizerId: { $in: userIds },
+      },
+    },
+    {
+      $group: {
+        _id: '$organizerId',
+        count: { $sum: 1 },
+      },
+    },
+  ])
+
+  const eventCountMap = eventCounts.reduce((acc, curr) => {
+    acc[curr._id.toString()] = curr.count
+    return acc
+  }, {} as Record<string, number>)
+
+  const result = users.map(user => {
+    return {
+      ...user,
+      eventCount: eventCountMap[user._id ? user._id.toString() : ''] || 0,
+    }
+  })
+
+  console.log(result, 'resule')
 
   return {
     meta: {
@@ -152,6 +181,7 @@ const getAllUsers = async (
     data: result,
   }
 }
+
 
 const deleteUser = async (userId: string): Promise<string> => {
   const isUserExist = await User.findOne({
