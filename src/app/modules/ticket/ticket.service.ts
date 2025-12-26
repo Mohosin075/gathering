@@ -9,6 +9,8 @@ import { ticketSearchableFields } from './ticket.constants'
 import { Types } from 'mongoose'
 import { Event } from '../event/event.model'
 import { Promotion } from '../promotion/promotion.model'
+import { emailHelper } from '../../../helpers/emailHelper'
+import { emailTemplate } from '../../../shared/emailTemplate'
 
 const generateTicketNumber = (): string => {
   return `TKT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
@@ -193,6 +195,30 @@ const updateTicket = async (
       StatusCodes.NOT_FOUND,
       'Requested ticket not found, please try again with valid id',
     )
+  }
+
+  // Send email if status is confirmed
+  if (payload.status === 'confirmed' && result.status === 'confirmed') {
+    const event = result.eventId as any
+    const attendee = result.attendeeId as any
+
+    if (attendee && attendee.email) {
+      // Generate basic QR code URL (placeholder or use actual logic if available)
+      // Since the model stores just a string for QR code, we might need to assume it's a value to be rendered or a URL.
+      // For now, I'll pass the stored value.
+
+      await emailHelper.sendEmail(
+        emailTemplate.ticketConfirmed({
+          name: attendee.name,
+          email: attendee.email,
+          eventName: event.title,
+          ticketNumber: result.ticketNumber,
+          ticketType: result.ticketType,
+          quantity: result.quantity,
+          qrCode: result.qrCode,
+        }),
+      )
+    }
   }
 
   return result

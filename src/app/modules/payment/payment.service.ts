@@ -150,15 +150,22 @@ const verifyCheckoutSession = async (sessionId: string): Promise<IPayment> => {
         const userData = user.userId as any
 
         if (userData) {
-          await emailHelper.sendEmail(
-            emailTemplate.paymentSuccess({
-              name: userData.name,
-              email: userData.email,
-              amount: payment.amount,
-              currency: payment.currency,
-              transactionId: payment.paymentIntentId,
-            }),
-          )
+          const ticket = await Ticket.findById(payment.ticketId).populate('eventId')
+          const event = ticket?.eventId as any
+
+          if (ticket && event) {
+            await emailHelper.sendEmail(
+              emailTemplate.ticketConfirmed({
+                name: userData.name,
+                email: userData.email,
+                eventName: event.title,
+                ticketNumber: ticket.ticketNumber,
+                ticketType: ticket.ticketType,
+                quantity: ticket.quantity,
+                qrCode: ticket.qrCode,
+              }),
+            )
+          }
         }
 
         // Update ticket status

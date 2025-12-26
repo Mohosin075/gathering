@@ -87,16 +87,25 @@ const handleCheckoutSessionCompleted = async (
       )
 
       // Send email
+      // Send email
       if (payment.userEmail) {
-        await emailHelper.sendEmail(
-          emailTemplate.paymentSuccess({
-            name: 'User', // stripe session might not have name readily available unless passed in metadata, simplified here or fetch user
-            email: payment.userEmail,
-            amount: payment.amount,
-            currency: payment.currency,
-            transactionId: payment.paymentIntentId,
-          }),
-        )
+
+        const ticket = await Ticket.findById(payment.ticketId).populate('eventId')
+        const event = ticket?.eventId as any
+
+        if (ticket && event) {
+          await emailHelper.sendEmail(
+            emailTemplate.ticketConfirmed({
+              name: 'User', // stripe session might not have name readily available unless passed in metadata, simplified here or fetch user
+              email: payment.userEmail,
+              eventName: event.title,
+              ticketNumber: ticket.ticketNumber,
+              ticketType: ticket.ticketType,
+              quantity: ticket.quantity,
+              qrCode: ticket.qrCode,
+            }),
+          )
+        }
       }
     } catch (error) {
       await mongoSession.abortTransaction()
@@ -224,16 +233,24 @@ const handlePaymentSuccess = async (paymentIntent: any): Promise<void> => {
     console.log(`Successfully processed payment intent: ${paymentIntent.id}`)
 
     // Send email
+    // Send email
     if (payment.userEmail) {
-      await emailHelper.sendEmail(
-        emailTemplate.paymentSuccess({
-          name: 'User',
-          email: payment.userEmail,
-          amount: payment.amount,
-          currency: payment.currency,
-          transactionId: payment.paymentIntentId,
-        }),
-      )
+      const ticket = await Ticket.findById(payment.ticketId).populate('eventId')
+      const event = ticket?.eventId as any
+
+      if (ticket && event) {
+        await emailHelper.sendEmail(
+          emailTemplate.ticketConfirmed({
+            name: 'User',
+            email: payment.userEmail,
+            eventName: event.title,
+            ticketNumber: ticket.ticketNumber,
+            ticketType: ticket.ticketType,
+            quantity: ticket.quantity,
+            qrCode: ticket.qrCode,
+          }),
+        )
+      }
     }
   } catch (error) {
     await mongoSession.abortTransaction()
