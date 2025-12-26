@@ -8,6 +8,8 @@ import { paginationHelper } from '../../../helpers/paginationHelper'
 import { eventSearchableFields } from './event.constants'
 import { Types } from 'mongoose'
 
+import { ActivityServices } from '../activity/activity.service'
+
 const createEvent = async (
   user: JwtPayload,
   payload: IEvent,
@@ -25,6 +27,16 @@ const createEvent = async (
       )
     }
 
+    // Log Activity
+    await ActivityServices.logActivity({
+      action: 'EVENT_CREATE',
+      description: `Event "${result.title}" created`,
+      userId: new Types.ObjectId(user.authId),
+      role: user.role,
+      resourceId: result._id,
+      resourceType: 'Event',
+    })
+
     return result
   } catch (error: any) {
     if (error.code === 11000) {
@@ -39,6 +51,7 @@ const getAllEvents = async (
   filterables: IEventFilterables,
   pagination: IPaginationOptions,
 ) => {
+  // ... (existing implementation)
   const { searchTerm, ...filterData } = filterables
   const { page, skip, limit, sortBy, sortOrder } =
     paginationHelper.calculatePagination(pagination)
@@ -105,6 +118,7 @@ const getMyEvents = async (
   filterables: IEventFilterables,
   pagination: IPaginationOptions,
 ) => {
+  // ... (existing implementation)
   const { searchTerm, ...filterData } = filterables
   const { page, skip, limit, sortBy, sortOrder } =
     paginationHelper.calculatePagination(pagination)
@@ -192,6 +206,7 @@ const getSingleEvent = async (id: string): Promise<IEvent> => {
 const updateEvent = async (
   id: string,
   payload: Partial<IEvent>,
+  user: JwtPayload, // Added user for logging
 ): Promise<IEvent | null> => {
   if (!Types.ObjectId.isValid(id)) {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Event ID')
@@ -213,10 +228,20 @@ const updateEvent = async (
     )
   }
 
+  // Log Activity
+  await ActivityServices.logActivity({
+    action: 'EVENT_UPDATE',
+    description: `Event "${result.title}" updated`,
+    userId: new Types.ObjectId(user.authId),
+    role: user.role,
+    resourceId: result._id,
+    resourceType: 'Event',
+  })
+
   return result
 }
 
-const deleteEvent = async (id: string): Promise<IEvent> => {
+const deleteEvent = async (id: string, user: JwtPayload): Promise<IEvent> => {
   if (!Types.ObjectId.isValid(id)) {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Event ID')
   }
@@ -234,6 +259,16 @@ const deleteEvent = async (id: string): Promise<IEvent> => {
     )
   }
 
+  // Log Activity
+  await ActivityServices.logActivity({
+    action: 'EVENT_DELETE',
+    description: `Event "${result.title}" archived`,
+    userId: new Types.ObjectId(user.authId),
+    role: user.role,
+    resourceId: result._id,
+    resourceType: 'Event',
+  })
+
   return result
 }
 
@@ -243,6 +278,7 @@ const getNearbyEvents = async (
   pagination: IPaginationOptions,
   data: INearbyOptions,
 ) => {
+  // ... (existing implementation of getNearbyEvents remains unchanged)
   const { searchTerm, category, ...otherFilters } = filterables
   const { lat, lng, distance = 10, tags } = data
   const {

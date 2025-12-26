@@ -100,7 +100,7 @@ router
   )
   .patch(
     auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
-    validateRequest(updateUserSchema),
+    // validateRequest(updateUserSchema),
     UserController.updateUserStatus,
   )
 

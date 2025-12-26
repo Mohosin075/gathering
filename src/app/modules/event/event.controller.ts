@@ -24,7 +24,7 @@ const updateEvent = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params
   const eventData = req.body
 
-  const result = await EventServices.updateEvent(id, eventData)
+  const result = await EventServices.updateEvent(id, eventData, req.user!)
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
@@ -83,7 +83,7 @@ const getMyEvents = catchAsync(async (req: Request, res: Response) => {
 
 const deleteEvent = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params
-  const result = await EventServices.deleteEvent(id)
+  const result = await EventServices.deleteEvent(id, req.user!)
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,

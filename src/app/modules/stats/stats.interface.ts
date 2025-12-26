@@ -1,3 +1,11 @@
+export interface IRecentEvent {
+  _id: string
+  title: string
+  startDate: string
+  ticketsSold: number
+  status: string
+}
+
 export interface IAdminStats {
   totalUsers: number
   activeEvents: number
@@ -6,6 +14,7 @@ export interface IAdminStats {
   userGrowth: number
   eventGrowth: number
   eventsCreatedGrowth: number
+  recentActivities: any[]
 }
 
 export interface IEventStats {

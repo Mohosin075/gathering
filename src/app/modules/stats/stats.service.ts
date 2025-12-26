@@ -13,6 +13,7 @@ import {
 } from './stats.interface'
 import { EVENT_STATUS, EVENT_CATEGORIES } from '../../../enum/event'
 import { USER_ROLES, USER_STATUS } from '../../../enum/user'
+import { ActivityServices } from '../activity/activity.service'
 
 // Helper function to get month name
 const getMonthName = (monthIndex: number): string => {
@@ -84,6 +85,7 @@ export const getAdminDashboardStats = async (): Promise<IAdminStats> => {
     lastMonthActiveEvents,
     lastMonthEventsCreated,
     totalEvents,
+    recentActivities,
   ] = await Promise.all([
     // Total Users
     User.countDocuments(),
@@ -119,7 +121,11 @@ export const getAdminDashboardStats = async (): Promise<IAdminStats> => {
     }),
 
     // Total Events for events created percentage
+    // Total Events for events created percentage
     Event.countDocuments(),
+
+    // Recent Activity
+    ActivityServices.getRecentActivities(6),
   ])
 
   // Calculate growth percentages
@@ -140,8 +146,8 @@ export const getAdminDashboardStats = async (): Promise<IAdminStats> => {
   const eventsCreatedGrowth =
     lastMonthEventsCreated > 0
       ? ((eventsCreatedThisMonth - lastMonthEventsCreated) /
-          lastMonthEventsCreated) *
-        100
+        lastMonthEventsCreated) *
+      100
       : eventsCreatedThisMonth > 0
         ? 100
         : 0
@@ -158,6 +164,7 @@ export const getAdminDashboardStats = async (): Promise<IAdminStats> => {
     userGrowth: Math.round(userGrowth * 10) / 10, // Round to 1 decimal
     eventGrowth: Math.round(eventGrowth * 10) / 10,
     eventsCreatedGrowth: Math.round(eventsCreatedGrowth * 10) / 10,
+    recentActivities: recentActivities as any,
   }
 }
 
@@ -694,7 +701,7 @@ export const getRevenueStats = async (
   const revenueGrowth =
     lastMonthRevenue > 0
       ? ((currentRevenue.totalRevenue - lastMonthRevenue) / lastMonthRevenue) *
-        100
+      100
       : currentRevenue.totalRevenue > 0
         ? 100
         : 0
@@ -916,8 +923,8 @@ export const getOrganizerDashboardStats = async (
   const eventsCreatedGrowth =
     lastMonthEventsCreated > 0
       ? ((eventsCreatedThisMonth - lastMonthEventsCreated) /
-          lastMonthEventsCreated) *
-        100
+        lastMonthEventsCreated) *
+      100
       : eventsCreatedThisMonth > 0
         ? 100
         : 0
@@ -1318,7 +1325,7 @@ export const getOrganizerRevenueStats = async (
   const revenueGrowth =
     lastMonthRevenue > 0
       ? ((currentRevenue.totalRevenue - lastMonthRevenue) / lastMonthRevenue) *
-        100
+      100
       : currentRevenue.totalRevenue > 0
         ? 100
         : 0
@@ -1414,7 +1421,7 @@ export const getIndividualEventStats = async (
   days: number = 7,
 ): Promise<IIndividualEventStats> => {
   const { Ticket } = await import('../ticket/ticket.model')
-  
+
   // Calculate date range for daily stats
   const endDate = new Date()
   const startDate = new Date()
@@ -1496,13 +1503,13 @@ export const getIndividualEventStats = async (
     const date = new Date()
     date.setDate(date.getDate() - i)
     const dateStr = date.toISOString().split('T')[0]
-    
+
     const dayData = dailyDataMap.get(dateStr) || { sales: 0, revenue: 0 }
-    
+
     // For views, we'll distribute total views evenly across days (simplified approach)
     // In a real app, you'd track daily views separately
     const dailyViews = Math.floor(totalViews / days)
-    
+
     dailyStats.push({
       date: dateStr,
       views: dailyViews,
