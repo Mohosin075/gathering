@@ -15,6 +15,7 @@ export interface INotification {
   readAt?: Date
   actionUrl?: string
   actionText?: string
+  actionClickedAt?: Date
   isRead: boolean
   isArchived: boolean
   createdAt: Date
@@ -106,4 +107,13 @@ export interface INotificationStats {
   byType: Record<string, number>
   byChannel: Record<string, number>
   byStatus: Record<string, number>
+}
+
+export interface INotificationAnalytics {
+  openRate: number // Percentage of notifications that were opened/read
+  engagement: number // Percentage of notifications that had user interaction (clicked action URL)
+}
+
+export interface INotificationWithAnalytics extends INotification {
+  analytics?: INotificationAnalytics
 }

@@ -69,6 +69,9 @@ const notificationSchema = new Schema<INotification, NotificationModel>(
     actionText: {
       type: String,
     },
+    actionClickedAt: {
+      type: Date,
+    },
     isRead: {
       type: Boolean,
       default: false,

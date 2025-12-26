@@ -9,6 +9,7 @@ import {
   NotificationStatus,
   NotificationPriority,
   INotificationStats,
+  INotificationAnalytics,
 } from './notification.interface'
 import { Notification } from './notification.model'
 import { JwtPayload } from 'jsonwebtoken'
@@ -131,7 +132,7 @@ const sendNotificationEmail = async (
           if (event) {
             const timeUntilEvent = Math.floor(
               (new Date(event.startDate).getTime() - Date.now()) /
-                (1000 * 60 * 60),
+              (1000 * 60 * 60),
             )
             templateData = {
               ...templateData,
@@ -351,7 +352,7 @@ const getAllNotifications = async (
 
   const whereConditions = andConditions.length ? { $and: andConditions } : {}
 
-  const [result, total] = await Promise.all([
+  const [result, total, analyticsData] = await Promise.all([
     Notification.find(whereConditions)
       .skip(skip)
       .limit(limit)
@@ -359,7 +360,52 @@ const getAllNotifications = async (
       .populate('userId', 'name email')
       .lean(),
     Notification.countDocuments(whereConditions),
+    // Get overall analytics for the filtered notifications
+    Notification.aggregate([
+      { $match: whereConditions },
+      {
+        $group: {
+          _id: null,
+          totalNotifications: { $sum: 1 },
+          readNotifications: {
+            $sum: { $cond: [{ $eq: ['$isRead', true] }, 1, 0] },
+          },
+          clickedNotifications: {
+            $sum: { $cond: [{ $ne: ['$actionClickedAt', null] }, 1, 0] },
+          },
+        },
+      },
+    ]),
   ])
+
+  // Calculate overall analytics
+  const stats = analyticsData[0] || {
+    totalNotifications: 0,
+    readNotifications: 0,
+    clickedNotifications: 0,
+  }
+
+  const overallAnalytics: INotificationAnalytics = {
+    openRate:
+      stats.totalNotifications > 0
+        ? Math.round((stats.readNotifications / stats.totalNotifications) * 100)
+        : 0,
+    engagement:
+      stats.totalNotifications > 0
+        ? Math.round(
+          (stats.clickedNotifications / stats.totalNotifications) * 100,
+        )
+        : 0,
+  }
+
+  // Add individual analytics to each notification
+  const notificationsWithAnalytics = result.map(notification => ({
+    ...notification,
+    analytics: {
+      openRate: notification.isRead ? 100 : 0, // Individual notification is either open (100%) or not (0%)
+      engagement: notification.actionClickedAt ? 100 : 0, // Individual notification action is either clicked (100%) or not (0%)
+    } as INotificationAnalytics,
+  }))
 
   return {
     meta: {
@@ -368,7 +414,8 @@ const getAllNotifications = async (
       total,
       totalPages: Math.ceil(total / limit),
     },
-    data: result,
+    analytics: overallAnalytics, // Overall analytics for all notifications matching the query
+    data: notificationsWithAnalytics,
   }
 }
 
