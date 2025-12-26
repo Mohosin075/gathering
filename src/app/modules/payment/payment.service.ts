@@ -12,6 +12,8 @@ import { Event } from '../event/event.model'
 import stripe from '../../../config/stripe'
 import config from '../../../config'
 import { WebhookService } from './webhook.service'
+import { emailHelper } from '../../../helpers/emailHelper'
+import { emailTemplate } from '../../../shared/emailTemplate'
 
 const createCheckoutSession = async (
   user: any, // Replace with your JwtPayload type
@@ -142,6 +144,22 @@ const verifyCheckoutSession = async (sessionId: string): Promise<IPayment> => {
         payment.status = 'succeeded'
         payment.metadata = { ...payment.metadata, session }
         await payment.save({ session })
+
+        // Send email
+        const user = await payment.populate('userId')
+        const userData = user.userId as any
+
+        if (userData) {
+          await emailHelper.sendEmail(
+            emailTemplate.paymentSuccess({
+              name: userData.name,
+              email: userData.email,
+              amount: payment.amount,
+              currency: payment.currency,
+              transactionId: payment.paymentIntentId,
+            }),
+          )
+        }
 
         // Update ticket status
         await Ticket.findByIdAndUpdate(
@@ -288,7 +306,7 @@ const createEphemeralKey = async (
         },
       })
       customerId = customer.id
-      
+
       // TODO: Update user record with stripeCustomerId
       // await User.findByIdAndUpdate(user.authId, { stripeCustomerId: customer.id })
     }

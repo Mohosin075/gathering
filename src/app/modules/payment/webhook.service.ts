@@ -5,6 +5,8 @@ import ApiError from '../../../errors/ApiError'
 import { Ticket } from '../ticket/ticket.model'
 import { Payment } from './payment.model'
 import { Event } from '../event/event.model'
+import { emailHelper } from '../../../helpers/emailHelper'
+import { emailTemplate } from '../../../shared/emailTemplate'
 
 const handleCheckoutSessionCompleted = async (
   sessionData: any,
@@ -83,6 +85,19 @@ const handleCheckoutSessionCompleted = async (
       console.log(
         `Successfully processed payment for session: ${sessionWithDetails.id}`,
       )
+
+      // Send email
+      if (payment.userEmail) {
+        await emailHelper.sendEmail(
+          emailTemplate.paymentSuccess({
+            name: 'User', // stripe session might not have name readily available unless passed in metadata, simplified here or fetch user
+            email: payment.userEmail,
+            amount: payment.amount,
+            currency: payment.currency,
+            transactionId: payment.paymentIntentId,
+          }),
+        )
+      }
     } catch (error) {
       await mongoSession.abortTransaction()
       throw error
@@ -154,11 +169,11 @@ const handlePaymentSuccess = async (paymentIntent: any): Promise<void> => {
         ticketId: paymentIntent.metadata.ticketId,
         status: 'pending',
       }).session(mongoSession)
-       
-       // If we found it via fallback, update the paymentIntentId to the correct one immediately
-       if (payment) {
-         payment.paymentIntentId = paymentIntent.id
-       }
+
+      // If we found it via fallback, update the paymentIntentId to the correct one immediately
+      if (payment) {
+        payment.paymentIntentId = paymentIntent.id
+      }
     }
 
     if (!payment) {
@@ -207,6 +222,19 @@ const handlePaymentSuccess = async (paymentIntent: any): Promise<void> => {
 
     await mongoSession.commitTransaction()
     console.log(`Successfully processed payment intent: ${paymentIntent.id}`)
+
+    // Send email
+    if (payment.userEmail) {
+      await emailHelper.sendEmail(
+        emailTemplate.paymentSuccess({
+          name: 'User',
+          email: payment.userEmail,
+          amount: payment.amount,
+          currency: payment.currency,
+          transactionId: payment.paymentIntentId,
+        }),
+      )
+    }
   } catch (error) {
     await mongoSession.abortTransaction()
     throw error

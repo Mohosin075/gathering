@@ -45,8 +45,25 @@ export interface IStaffCreateEmail {
 
 
 
+const paymentSuccess = (values: {
+  name: string
+  email: string
+  amount: number
+  currency: string
+  transactionId: string
+}) => {
+  return {
+    to: values.email,
+    subject: `Payment Successful`,
+    html: `     <body style="margin:0; padding:0; background-color:#f4f5f7; font-family: Arial, sans-serif;">       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f5f7; padding: 20px 0;">         <tr>           <td align="center">             <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.08);">               <tr>                 <td style="padding: 30px; text-align:center;">                   <img src="/images/logo.png" alt="Company Logo" style="width:140px; height:auto; display:block; margin:0 auto;">                 </td>               </tr>               <tr>                 <td style="padding: 40px; text-align:center;">                   <h1 style="color:#2c3e50; font-size:26px; margin:0 0 20px;">Payment Successful</h1>                   <p style="color:#555555; font-size:16px; margin:0 0 30px;">Hi ${values.name}, your payment of <b>${values.amount} ${values.currency}</b> was successful.</p>                   <p style="color:#777777; font-size:14px; margin:0 0 20px;">Transaction ID: ${values.transactionId}</p>                   <div style="text-align:center; margin-top:30px;">                     <a href="#" style="background-color:#2980b9; color:#ffffff; padding:12px 24px; text-decoration:none; border-radius:6px; font-weight:bold;">View Order</a>                   </div>                 </td>               </tr>               <tr>                 <td style="background:#f9fafc; padding:20px; text-align:center; font-size:12px; color:#999999;">
+                                  </td>               </tr>             </table>           </td>         </tr>       </table>     </body>
+    `,
+  }
+}
+
 export const emailTemplate = {
   createAccount,
   resetPassword,
   resendOtp,
+  paymentSuccess,
 }
