@@ -18,7 +18,7 @@ const getChatFromDB = async (user: any, search: string): Promise<IChat[]> => {
   const chats: any = await Chat.find({ participants: { $in: [user.authId] } })
     .populate({
       path: 'participants',
-      select: '_id name image profession updatedAt',
+      select: '_id name profile profession updatedAt',
       match: {
         _id: { $ne: user.authId },
         ...(search && { name: { $regex: search, $options: 'i' } }),

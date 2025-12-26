@@ -9,6 +9,7 @@ import router from './routes'
 import globalErrorHandler from './app/middleware/globalErrorHandler'
 import config from './config'
 import webhookApp from './webhook'
+import sendResponse from './shared/sendResponse'
 
 const app = express()
 
@@ -104,48 +105,15 @@ router.get('/status', (req: Request, res: Response) => {
 
 // -------------------- Root / Live Response --------------------
 app.get('/', (req: Request, res: Response) => {
-  res.send(`
-    <div style="
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background-color: #0e0525;
-      color: #ffffff;
-      font-family: 'JetBrains Mono', 'Consolas', monospace;
-      text-align: center;
-      overflow: hidden;
-    ">
-      <div style="max-width: 700px; padding: 2rem;">
-        <h1 style="
-          font-size: 2.4rem;
-          margin-bottom: 1.2rem;
-          letter-spacing: 0.5px;
-          color: #00ffe0;
-        ">
-          🚀 Welcome to the API Server
-        </h1>
-        <p style="
-          font-size: 1.1rem;
-          line-height: 1.7;
-          color: #cfcff9;
-          opacity: 0.9;
-        ">
-          This server is up and running successfully. ✅<br><br>
-          To explore available endpoints, please refer to the API documentation.<br>
-          If you’re seeing this page, it means the base route <code style='color:#00ffe0;'>‘/’</code> is not intended for direct access.
-        </p>
-        <p style="
-          margin-top: 2rem;
-          font-size: 0.95rem;
-          opacity: 0.6;
-          color: #aaa;
-        ">
-          © ${new Date().getFullYear()} — All rights reserved.
-        </p>
-      </div>
-    </div>
-  `)
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Welcome to the Gathering API',
+    data: {
+      timestamp: new Date().toISOString(),
+      projectName: 'Gathering',
+    },
+  })
 })
 
 // -------------------- Global Error Handler --------------------

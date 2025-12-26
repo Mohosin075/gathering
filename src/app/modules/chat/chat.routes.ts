@@ -6,12 +6,12 @@ const router = express.Router()
 
 router.post(
   '/:id',
-  auth(USER_ROLES.ORGANIZER, USER_ROLES.USER),
+  auth(USER_ROLES.ORGANIZER, USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
   ChatController.createChat,
 )
 router.get(
   '/',
-  auth(USER_ROLES.ORGANIZER, USER_ROLES.USER),
+  auth(USER_ROLES.ORGANIZER, USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
   ChatController.getChat,
 )
 
