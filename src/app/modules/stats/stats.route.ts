@@ -84,6 +84,13 @@ router.get(
   EventStatsController.getOrganizerAppSummary,
 )
 
+// GET /api/stats/organizer/promotions - Organizer promotion statistics
+router.get(
+  '/organizer/promotions',
+  auth(USER_ROLES.ORGANIZER),
+  EventStatsController.getOrganizerPromotionStats,
+)
+
 // GET /api/stats/organizer/event/:eventId - Individual event statistics
 router.get(
   '/organizer/event/:eventId',

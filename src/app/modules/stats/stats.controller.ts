@@ -169,6 +169,19 @@ const getEventAnalytics = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
+const getOrganizerPromotionStats = catchAsync(async (req: Request, res: Response) => {
+  const result = await EventStatsServices.getOrganizerPromotionStats(
+    (req.user as JwtPayload).authId,
+  )
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Organizer promotion statistics fetched successfully',
+    data: result,
+  })
+})
+
 export const EventStatsController = {
   getAdminDashboardStats,
   getEventStats,
@@ -183,4 +196,5 @@ export const EventStatsController = {
   getOrganizerAppSummary,
   getIndividualEventStats,
   getEventAnalytics,
+  getOrganizerPromotionStats,
 }

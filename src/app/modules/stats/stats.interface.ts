@@ -104,3 +104,9 @@ export interface IEventAnalytics {
     revenue: number
   }>
 }
+
+export interface IPromotionStats {
+  activePromotions: number
+  totalPromotions: number
+  totalRedemptions: number
+}

@@ -12,7 +12,9 @@ import {
   IOrganizerStats,
   IIndividualEventStats,
   IEventAnalytics,
+  IPromotionStats,
 } from './stats.interface'
+import { Promotion } from '../promotion/promotion.model'
 import { EVENT_STATUS, EVENT_CATEGORIES } from '../../../enum/event'
 import { USER_ROLES, USER_STATUS } from '../../../enum/user'
 import { ActivityServices } from '../activity/activity.service'
@@ -1731,6 +1733,37 @@ export const getEventAnalytics = async (
   }
 }
 
+// Get organizer promotion stats
+export const getOrganizerPromotionStats = async (
+  organizerId: string,
+): Promise<IPromotionStats> => {
+  const now = new Date()
+
+  const [activePromotions, totalPromotions, redemptionsResult] = await Promise.all([
+    // Active Promotions: created by organizer, isActive, and not expired
+    Promotion.countDocuments({
+      createdBy: organizerId,
+      isActive: true,
+      validUntil: { $gte: now },
+    }),
+
+    // Total Promotions: created by organizer
+    Promotion.countDocuments({ createdBy: organizerId }),
+
+    // Total Redemptions: sum of usedCount for promotions created by organizer
+    Promotion.aggregate([
+      { $match: { createdBy: organizerId } },
+      { $group: { _id: null, totalRedemptions: { $sum: '$usedCount' } } },
+    ]),
+  ])
+
+  return {
+    activePromotions,
+    totalPromotions,
+    totalRedemptions: redemptionsResult[0]?.totalRedemptions || 0,
+  }
+}
+
 export const EventStatsServices = {
   getAdminDashboardStats,
   getEventStats,
@@ -1745,4 +1778,5 @@ export const EventStatsServices = {
   getOrganizerAppSummary,
   getIndividualEventStats,
   getEventAnalytics,
+  getOrganizerPromotionStats,
 }
