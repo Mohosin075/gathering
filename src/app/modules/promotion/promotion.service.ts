@@ -19,7 +19,6 @@ const promotionSearchableFields = ['code', 'description']
 const createPromotion = async (user: JwtPayload, payload: any) => {
   payload.createdBy = user.authId
 
-  console.log(payload)
 
   const existingPromotion = await Promotion.findOne({
     code: payload.code.toUpperCase(),

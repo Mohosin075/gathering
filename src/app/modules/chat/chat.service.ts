@@ -38,7 +38,7 @@ const getChatFromDB = async (user: any, search: string): Promise<IChat[]> => {
     filteredChats.map(async (chat: any) => {
       const lastMessage = await Message.findOne(
         { chatId: chat._id },
-        { text: 1, image: 1 },
+        { text: 1, image: 1, createdAt: 1 },
       )
         .sort({ createdAt: -1 })
         .limit(1)

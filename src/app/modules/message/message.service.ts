@@ -5,6 +5,7 @@ import { Message } from './message.model';
 import ApiError from '../../../errors/ApiError';
 import { StatusCodes } from 'http-status-codes';
 import { User } from '../user/user.model';
+import { Chat } from '../chat/chat.model';
 
 const sendMessageToDB = async (payload: any): Promise<IMessage> => {
 
@@ -18,6 +19,11 @@ const sendMessageToDB = async (payload: any): Promise<IMessage> => {
 
   // save to DB
   const response = await Message.create(payload);
+
+  // Update Chat's updatedAt to bring it to the top
+  await Chat.findByIdAndUpdate(payload.chatId, {
+    $set: { updatedAt: new Date() },
+  });
 
   //@ts-ignore
   const io = global.io;
