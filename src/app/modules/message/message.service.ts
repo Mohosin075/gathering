@@ -29,6 +29,9 @@ const sendMessageToDB = async (payload: any): Promise<IMessage> => {
   const io = global.io;
   if (io) {
     io.emit(`getMessage::${payload?.chatId}`, response);
+    io.emit(`updateChatList::${payload?.sender}`);
+    io.emit(`updateChatList::${payload?.receiver}`);
+
     const data = {
       text: `${sender?.name} send you message.`,
       title: "Received Message",
