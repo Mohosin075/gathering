@@ -30,6 +30,17 @@ router.get(
 )
 
 router.get(
+  '/event/:eventId',
+  auth(
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.ADMIN,
+    USER_ROLES.ORGANIZER,
+    USER_ROLES.USER,
+  ),
+  TicketController.getMyTicketForEvent,
+)
+
+router.get(
   '/:id',
   auth(
     USER_ROLES.SUPER_ADMIN,

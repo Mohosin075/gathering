@@ -8,6 +8,7 @@ import { paginationHelper } from '../../../helpers/paginationHelper'
 import { ticketSearchableFields } from './ticket.constants'
 import { Types } from 'mongoose'
 import { Event } from '../event/event.model'
+import { Attendee } from '../attendee/attendee.model'
 import { Promotion } from '../promotion/promotion.model'
 import { emailHelper } from '../../../helpers/emailHelper'
 import { emailTemplate } from '../../../shared/emailTemplate'
@@ -60,6 +61,7 @@ const createTicket = async (
     const ticketData = {
       ...payload,
       attendeeId: user.authId,
+      userId: user.authId,
       totalAmount: payload.price * payload.quantity,
       discountAmount,
       finalAmount,
@@ -284,6 +286,19 @@ const checkInTicket = async (ticketId: string): Promise<ITicket> => {
     .populate('eventId')
     .populate('attendeeId', 'name email')
 
+  if (result) {
+    // Sync with Attendee record if it exists
+    await Attendee.findOneAndUpdate(
+      { ticketId: result._id },
+      {
+        checkInStatus: true,
+        checkInTime: result.checkedInAt,
+        // Since we don't have the checker in this context, we'll leave checkInBy as is or set it to attendeeId if appropriate.
+        // Usually, check-in is done by an organizer/admin.
+      },
+    )
+  }
+
   return result!
 }
 
@@ -315,6 +330,26 @@ const getMyTickets = async (
   }
 }
 
+const getMyTicketForEvent = async (
+  user: JwtPayload,
+  eventId: string,
+): Promise<ITicket | null> => {
+  console.log({eventId})
+  if (!Types.ObjectId.isValid(eventId)) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Event ID')
+  }
+
+  const result = await Ticket.findOne({
+    attendeeId: new Types.ObjectId(user.authId),
+    eventId: new Types.ObjectId(eventId),
+    status: 'confirmed',
+  })
+    .populate('eventId')
+    .populate('attendeeId', 'name email')
+
+  return result
+}
+
 export const TicketServices = {
   createTicket,
   getAllTickets,
@@ -323,4 +358,5 @@ export const TicketServices = {
   deleteTicket,
   checkInTicket,
   getMyTickets,
+  getMyTicketForEvent,
 }

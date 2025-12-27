@@ -457,7 +457,7 @@ const getAllPayments = async (
       .limit(limit)
       .sort({ [sortBy]: sortOrder })
       .populate('ticketId')
-      .populate('authId', 'name email')
+      .populate('userId', 'name email')
       .populate('eventId', 'title startDate'),
     Payment.countDocuments(whereConditions),
   ])

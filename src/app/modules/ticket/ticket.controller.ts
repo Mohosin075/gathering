@@ -104,6 +104,20 @@ const getMyTickets = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
+const getMyTicketForEvent = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user as JwtPayload
+  const { eventId } = req.params
+
+  const result = await TicketServices.getMyTicketForEvent(user, eventId)
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Ticket for event retrieved successfully',
+    data: result,
+  })
+})
+
 export const TicketController = {
   createTicket,
   getAllTickets,
@@ -112,4 +126,5 @@ export const TicketController = {
   deleteTicket,
   checkInTicket,
   getMyTickets,
+  getMyTicketForEvent,
 }

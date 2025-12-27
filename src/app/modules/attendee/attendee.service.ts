@@ -233,6 +233,14 @@ const checkInAttendee = async (
     .populate('paymentId', 'amount currency')
     .populate('checkInBy', 'name')
 
+  if (result) {
+    // Sync with Ticket record
+    await Ticket.findByIdAndUpdate(result.ticketId, {
+      checkedIn: true,
+      checkedInAt: result.checkInTime,
+    })
+  }
+
   return result!
 }
 

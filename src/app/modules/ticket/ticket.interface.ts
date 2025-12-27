@@ -13,6 +13,7 @@ export interface ITicket {
   _id: Types.ObjectId
   eventId: Types.ObjectId
   attendeeId: Types.ObjectId
+  userId: Types.ObjectId
   ticketType: 'regular' | 'vip' | 'early_bird'
   price: number
   quantity: number

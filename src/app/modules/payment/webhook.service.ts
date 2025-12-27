@@ -5,6 +5,7 @@ import ApiError from '../../../errors/ApiError'
 import { Ticket } from '../ticket/ticket.model'
 import { Payment } from './payment.model'
 import { Event } from '../event/event.model'
+import { Attendee } from '../attendee/attendee.model'
 import { emailHelper } from '../../../helpers/emailHelper'
 import { emailTemplate } from '../../../shared/emailTemplate'
 
@@ -77,6 +78,19 @@ const handleCheckoutSessionCompleted = async (
           {
             $inc: { ticketsSold: ticket.quantity },
           },
+          { session: mongoSession },
+        )
+
+        // Create Attendee record automatically
+        await Attendee.create(
+          [
+            {
+              eventId: ticket.eventId,
+              userId: ticket.attendeeId,
+              ticketId: ticket._id,
+              paymentId: payment._id,
+            },
+          ],
           { session: mongoSession },
         )
       }
@@ -225,6 +239,19 @@ const handlePaymentSuccess = async (paymentIntent: any): Promise<void> => {
         {
           $inc: { ticketsSold: ticket.quantity },
         },
+        { session: mongoSession },
+      )
+
+      // Create Attendee record automatically
+      await Attendee.create(
+        [
+          {
+            eventId: ticket.eventId,
+            userId: ticket.attendeeId,
+            ticketId: ticket._id,
+            paymentId: payment._id,
+          },
+        ],
         { session: mongoSession },
       )
     }
