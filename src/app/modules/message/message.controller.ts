@@ -16,13 +16,14 @@ const sendMessage = catchAsync(async (req: Request, res: Response) => {
   if (!chat) throw new ApiError(StatusCodes.NOT_FOUND, 'Chat not found')
 
   // find the receiver (the participant that is NOT the sender)
-  const receiverId = chat.participants.find(
-    id => id.toString() !== user.authId.toString(),
+  const receiver = chat.participants.find(
+    (p: any) => p._id.toString() !== user.authId.toString(),
   )
 
-  if (!receiverId)
+  if (!receiver)
     throw new ApiError(StatusCodes.BAD_REQUEST, 'No receiver found')
 
+  const receiverId = (receiver as any)._id
   payload.receiver = receiverId // now you have a valid receiver ID
 
   const data = {
