@@ -13,13 +13,17 @@ const messageSchema = new Schema<IMessage, MessageModel>(
       required: true,
       ref: 'User',
     },
-    text: { 
+    text: {
       type: String,
-      required: false 
+      required: false
     },
-    image: { 
+    image: {
       type: String,
-      required: false 
+      required: false
+    },
+    seen: {
+      type: Boolean,
+      default: false,
     },
   },
   {

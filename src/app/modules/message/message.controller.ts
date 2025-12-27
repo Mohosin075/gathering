@@ -43,9 +43,10 @@ const sendMessage = catchAsync(async (req: Request, res: Response) => {
 })
 
 const getMessage = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user as JwtPayload
   const id = req.params.id
   console.log({ id }, 'chatId')
-  const messages = await MessageService.getMessageFromDB(id)
+  const messages = await MessageService.getMessageFromDB(id, user)
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
