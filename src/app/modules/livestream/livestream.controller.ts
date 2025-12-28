@@ -42,7 +42,7 @@ const getAgoraToken = catchAsync(async (req: Request, res: Response) => {
 // Get All Live Streams
 const getAllLiveStreams = catchAsync(async (req: Request, res: Response) => {
   const query = req.query as unknown as IStreamListQueryDTO
-  
+
   const result = await LiveStreamService.getAllLiveStreamsFromDB(query)
 
   sendResponse(res, {
@@ -146,6 +146,40 @@ const endLiveStream = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
+// Get Live Stream by Event ID
+const getLiveStreamByEventId = catchAsync(async (req: Request, res: Response) => {
+  const { eventId } = req.params
+  const user = req.user as JwtPayload
+  const result = await LiveStreamService.getLiveStreamByEventIdFromDB(
+    eventId,
+    user,
+  )
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Live stream retrieved successfully',
+    data: result,
+  })
+})
+
+// Get Live Stream by Ticket ID
+const getLiveStreamByTicketId = catchAsync(async (req: Request, res: Response) => {
+  const { ticketId } = req.params
+  const user = req.user as JwtPayload
+  const result = await LiveStreamService.getLiveStreamByTicketIdFromDB(
+    ticketId,
+    user,
+  )
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Live stream retrieved successfully',
+    data: result,
+  })
+})
+
 export const LiveStreamController = {
   createLiveStream,
   getAgoraToken,
@@ -156,4 +190,6 @@ export const LiveStreamController = {
   deleteLiveStream,
   startLiveStream,
   endLiveStream,
+  getLiveStreamByEventId,
+  getLiveStreamByTicketId,
 }

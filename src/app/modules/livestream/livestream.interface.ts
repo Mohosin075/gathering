@@ -196,6 +196,7 @@ export interface IStreamListQueryDTO {
   tags?: string[]
   sortBy?: 'createdAt' | 'scheduledStartTime' | 'currentViewers'
   sortOrder?: 'asc' | 'desc'
+  eventId?: string
 }
 
 // Stream Update Status DTO

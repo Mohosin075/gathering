@@ -83,7 +83,7 @@ router.delete(
 
 router.post(
   '/check-in',
-  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER),
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER, USER_ROLES.USER),
   validateRequest(TicketValidations.checkIn),
   TicketController.checkInTicket,
 )
