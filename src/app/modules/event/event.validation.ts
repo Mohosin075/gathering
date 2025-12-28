@@ -62,23 +62,15 @@ export const EventValidations = {
           .optional(),
         visibility: z.enum(['public', 'private', 'unlisted']).optional(),
         startDate: z.string().optional(),
+        category: z.string().optional(),
         startTime: z.string().optional(),
         timezone: z.string().optional(),
         locationType: z.enum(['physical', 'online']).optional(),
-        location: z
-          .object({
-            type: z.literal('Point'),
-            coordinates: z.array(z.number()).length(2),
-          })
-          .optional(),
         address: z.string().optional(),
         meetingLink: z.string().optional(),
         capacity: z.number().optional(),
-        ticketsSold: z.number().optional(),
         ticketPrice: z.number().optional(),
         images: z.array(z.string()).optional(),
-        gallery: z.array(z.string()).optional(),
-        views: z.number().optional(),
         favorites: z.number().optional(),
       })
       .strict(),

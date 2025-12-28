@@ -230,6 +230,23 @@ const updateEvent = async (
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Event ID')
   }
 
+  if (payload.address) {
+    const location = await geocodeAddress(payload.address)
+
+    if (!location) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        'Failed to update Event, please try again with valid address.',
+      )
+    }
+
+    payload.location = {
+      type: 'Point',
+      coordinates: [location.lng, location.lat],
+    }
+    payload.address = location.formattedAddress
+  }
+
   const result = await Event.findByIdAndUpdate(
     new Types.ObjectId(id),
     { $set: payload },
