@@ -38,7 +38,6 @@ const eventSchema = new Schema<IEvent, EventModel>(
         type: [Number],
         default: [0, 0],
       },
-      address: { type: String },
     },
     address: { type: String, required: true },
     meetingLink: { type: String },

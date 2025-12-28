@@ -8,6 +8,7 @@ import os from 'os'
 import { Server as SocketServer } from 'socket.io'
 import { UserServices } from './app/modules/user/user.service'
 import { socketHelper } from './helpers/socketHelper'
+import { geocodeAddress } from './utils/geocodeAddress'
 
 // Uncaught exceptions
 process.on('uncaughtException', error => {
@@ -25,6 +26,7 @@ async function main() {
     await mongoose.connect(config.database_url as string)
     console.log(colors.green('🚀 Database connected successfully'))
 
+
     const port =
       typeof config.port === 'number' ? config.port : Number(config.port)
 
@@ -32,7 +34,10 @@ async function main() {
     server = app.listen(port, '0.0.0.0', () => {
       console.log(colors.yellow(`♻️  Server is running on:`))
       console.log(colors.cyan(`   - Local:    http://localhost:${port}`))
-      
+
+      const location = geocodeAddress("aqua tower dhaka 1212");
+      console.log("location", location);
+
       const interfaces = os.networkInterfaces()
       for (const name of Object.keys(interfaces)) {
         for (const iface of interfaces[name]!) {
@@ -41,7 +46,7 @@ async function main() {
           }
         }
       }
-      
+
       if (config.ip_address) {
         console.log(colors.green(`   - Requested IP: http://${config.ip_address}:${port}`))
       }

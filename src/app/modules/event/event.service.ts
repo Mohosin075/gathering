@@ -9,11 +9,29 @@ import { eventSearchableFields } from './event.constants'
 import { Types } from 'mongoose'
 
 import { ActivityServices } from '../activity/activity.service'
+import { geocodeAddress } from '../../../utils/geocodeAddress'
 
 const createEvent = async (
   user: JwtPayload,
   payload: IEvent,
 ): Promise<IEvent> => {
+  const location = await geocodeAddress(payload.address);
+
+
+  if (!location) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      'Failed to create Event, please try again with valid data.',
+    )
+  }
+
+  console.log(location.formattedAddress)
+
+  payload.location = {
+    type: 'Point',
+    coordinates: [location.lng, location.lat],
+  }
+  payload.address = location.formattedAddress
   try {
     const result = await Event.create({
       ...payload,

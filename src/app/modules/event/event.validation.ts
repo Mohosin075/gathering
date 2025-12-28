@@ -26,11 +26,11 @@ export const EventValidations = {
       startTime: z.string(),
       timezone: z.string().optional(),
       locationType: z.enum(['physical', 'online']).default('online'),
-      location: z.object({
-        type: z.literal('Point').default('Point'),
-        coordinates: z.array(z.number()).length(2).default([0, 0]), // [longitude, latitude]
-        address: z.string().optional(),
-      }),
+      // location: z.object({
+      //   type: z.literal('Point').default('Point'),
+      //   coordinates: z.array(z.number()).length(2).default([0, 0]), // [longitude, latitude]
+      //   address: z.string().optional(),
+      // }),
       address: z.string(),
       meetingLink: z.string().optional(),
       capacity: z.number(),
