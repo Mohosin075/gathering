@@ -182,6 +182,17 @@ const getOrganizerPromotionStats = catchAsync(async (req: Request, res: Response
   })
 })
 
+const getTopThreeRevenueEvents = catchAsync(async (req: Request, res: Response) => {
+  const result = await EventStatsServices.getTopThreeRevenueEvents()
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Top three revenue events fetched successfully',
+    data: result,
+  })
+})
+
 export const EventStatsController = {
   getAdminDashboardStats,
   getEventStats,
@@ -197,4 +208,5 @@ export const EventStatsController = {
   getIndividualEventStats,
   getEventAnalytics,
   getOrganizerPromotionStats,
+  getTopThreeRevenueEvents,
 }

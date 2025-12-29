@@ -99,6 +99,13 @@ router.get(
 )
 
 // Shared Analytics Route
+// GET /api/stats/organizer/top-revenue-events - top three revenue events
+router.get(
+  '/organizer/top-revenue-events',
+  auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN, USER_ROLES.ORGANIZER),
+  EventStatsController.getTopThreeRevenueEvents,
+)
+
 // GET /api/stats/analytics/:eventId - detailed analytics for admin and organizer
 router.get(
   '/analytics/:eventId',

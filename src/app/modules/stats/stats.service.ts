@@ -1733,6 +1733,49 @@ export const getEventAnalytics = async (
   }
 }
 
+// Get top three revenue events
+const getTopThreeRevenueEvents = async (): Promise<any> => {
+  const result = await Event.aggregate([
+    {
+      $match: {
+        status: {
+          $in: [
+            EVENT_STATUS.COMPLETED,
+            EVENT_STATUS.PUBLISHED,
+            EVENT_STATUS.APPROVED,
+          ],
+        },
+      },
+    },
+    {
+      $project: {
+        title: 1,
+        images: 1,
+        ticketPrice: 1,
+        ticketsSold: 1,
+        category: 1,
+        totalRevenue: { $multiply: ['$ticketPrice', '$ticketsSold'] },
+      },
+    },
+    { $sort: { totalRevenue: -1 } },
+    { $limit: 3 },
+    {
+      $project: {
+        _id: 0,
+        eventId: '$_id',
+        title: 1,
+        images: 1,
+        ticketPrice: 1,
+        ticketsSold: 1,
+        category: 1,
+        totalRevenue: { $round: ['$totalRevenue', 2] },
+      },
+    },
+  ])
+
+  return result
+}
+
 // Get organizer promotion stats
 export const getOrganizerPromotionStats = async (
   organizerId: string,
@@ -1779,4 +1822,5 @@ export const EventStatsServices = {
   getIndividualEventStats,
   getEventAnalytics,
   getOrganizerPromotionStats,
+  getTopThreeRevenueEvents,
 }
