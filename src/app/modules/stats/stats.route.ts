@@ -41,6 +41,13 @@ router.get(
   EventStatsController.getEventStatusStats,
 )
 
+// GET /api/stats/admin/content-moderation - Content moderation status distribution
+router.get(
+  '/admin/content-moderation',
+  auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+  EventStatsController.getContentModerationStats,
+)
+
 // GET /api/stats/admin/summary - All statistics in one endpoint
 router.get(
   '/admin/summary',

@@ -13,8 +13,11 @@ import {
   IIndividualEventStats,
   IEventAnalytics,
   IPromotionStats,
+  IContentModerationStats,
 } from './stats.interface'
 import { Promotion } from '../promotion/promotion.model'
+import { Support } from '../support/support.model'
+import { SUPPORT_STATUS } from '../../../enum/support'
 import { EVENT_STATUS, EVENT_CATEGORIES } from '../../../enum/event'
 import { USER_ROLES, USER_STATUS } from '../../../enum/user'
 import { ActivityServices } from '../activity/activity.service'
@@ -1832,6 +1835,35 @@ export const getOrganizerPromotionStats = async (
   }
 }
 
+// Get content moderation stats (support tickets)
+export const getContentModerationStats =
+  async (): Promise<IContentModerationStats> => {
+    const result = await Support.aggregate([
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+        },
+      },
+    ])
+
+    // Convert array to object with default values
+    const statusStats: IContentModerationStats = {
+      deleted: 0,
+      solved: 0,
+      in_progress: 0,
+      dismissed: 0,
+    }
+
+    result.forEach(item => {
+      if (item._id && statusStats.hasOwnProperty(item._id)) {
+        statusStats[item._id as keyof IContentModerationStats] = item.count
+      }
+    })
+
+    return statusStats
+  }
+
 export const EventStatsServices = {
   getAdminDashboardStats,
   getEventStats,
@@ -1849,4 +1881,5 @@ export const EventStatsServices = {
   getOrganizerPromotionStats,
   getTopThreeRevenueEvents,
   getOrganizerUpcomingEvents,
+  getContentModerationStats,
 }

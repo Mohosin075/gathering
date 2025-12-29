@@ -110,3 +110,10 @@ export interface IPromotionStats {
   totalPromotions: number
   totalRedemptions: number
 }
+
+export interface IContentModerationStats {
+  deleted: number
+  solved: number
+  in_progress: number
+  dismissed: number
+}

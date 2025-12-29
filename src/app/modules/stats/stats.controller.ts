@@ -206,6 +206,17 @@ const getOrganizerUpcomingEvents = catchAsync(async (req: Request, res: Response
   })
 })
 
+const getContentModerationStats = catchAsync(async (req: Request, res: Response) => {
+  const result = await EventStatsServices.getContentModerationStats()
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Content moderation statistics fetched successfully',
+    data: result,
+  })
+})
+
 export const EventStatsController = {
   getAdminDashboardStats,
   getEventStats,
@@ -223,4 +234,5 @@ export const EventStatsController = {
   getOrganizerPromotionStats,
   getTopThreeRevenueEvents,
   getOrganizerUpcomingEvents,
+  getContentModerationStats,
 }
