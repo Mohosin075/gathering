@@ -193,6 +193,19 @@ const getTopThreeRevenueEvents = catchAsync(async (req: Request, res: Response) 
   })
 })
 
+const getOrganizerUpcomingEvents = catchAsync(async (req: Request, res: Response) => {
+  const result = await EventStatsServices.getOrganizerUpcomingEvents(
+    (req.user as JwtPayload).authId,
+  )
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Organizer upcoming events fetched successfully',
+    data: result,
+  })
+})
+
 export const EventStatsController = {
   getAdminDashboardStats,
   getEventStats,
@@ -209,4 +222,5 @@ export const EventStatsController = {
   getEventAnalytics,
   getOrganizerPromotionStats,
   getTopThreeRevenueEvents,
+  getOrganizerUpcomingEvents,
 }

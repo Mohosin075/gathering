@@ -1776,6 +1776,22 @@ const getTopThreeRevenueEvents = async (): Promise<any> => {
   return result
 }
 
+// Get organizer upcoming events
+const getOrganizerUpcomingEvents = async (organizerId: string): Promise<any> => {
+  const currentDate = new Date().toISOString().split('T')[0]
+
+  const result = await Event.find({
+    organizerId,
+    startDate: { $gte: currentDate },
+    status: { $in: [EVENT_STATUS.APPROVED, EVENT_STATUS.PUBLISHED] },
+  })
+    .sort({ startDate: 1, startTime: 1 })
+    .select('title images startDate startTime location address category ticketPrice ticketsSold capacity')
+    .limit(10)
+
+  return result
+}
+
 // Get organizer promotion stats
 export const getOrganizerPromotionStats = async (
   organizerId: string,
@@ -1823,4 +1839,5 @@ export const EventStatsServices = {
   getEventAnalytics,
   getOrganizerPromotionStats,
   getTopThreeRevenueEvents,
+  getOrganizerUpcomingEvents,
 }

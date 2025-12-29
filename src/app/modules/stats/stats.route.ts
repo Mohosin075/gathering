@@ -56,6 +56,13 @@ router.get(
   EventStatsController.getOrganizerDashboardStats,
 )
 
+// GET /api/stats/organizer/upcoming-events - organizer specific upcoming events
+router.get(
+  '/organizer/upcoming-events',
+  auth(USER_ROLES.ORGANIZER),
+  EventStatsController.getOrganizerUpcomingEvents,
+)
+
 // GET /api/stats/organizer/events - Organizer event statistics
 router.get(
   '/organizer/events',
