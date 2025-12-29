@@ -32,7 +32,7 @@ export const updateUserSchema = z.object({
   body: z
     .object({
       name: z.string().optional(),
-      profile: z.string().url().optional(),
+      profile: z.string().optional(),
       phone: z.string().optional(),
       description: z.string().optional(),
       specialty: z.string().optional(),
@@ -42,8 +42,8 @@ export const updateUserSchema = z.object({
 
       appId: z.string().optional(),
       deviceToken: z.string().optional(),
+
     })
-    .strict(),
 })
 
 export const STAFF_SPECIALTY = z.enum([

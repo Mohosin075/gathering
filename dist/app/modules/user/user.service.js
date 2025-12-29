@@ -9,7 +9,6 @@ const ApiError_1 = __importDefault(require("../../../errors/ApiError"));
 const user_model_1 = require("./user.model");
 const user_1 = require("../../../enum/user");
 const paginationHelper_1 = require("../../../helpers/paginationHelper");
-const s3helper_1 = require("../../../helpers/image/s3helper");
 const config_1 = __importDefault(require("../../../config"));
 const user_constants_1 = require("./user.constants");
 const updateProfile = async (user, payload) => {
@@ -21,11 +20,11 @@ const updateProfile = async (user, payload) => {
     if (!isUserExist) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'User not found.');
     }
-    if (isUserExist.profile) {
-        const url = new URL(isUserExist.profile);
-        const key = url.pathname.substring(1);
-        await s3helper_1.S3Helper.deleteFromS3(key);
-    }
+    // if (isUserExist.profile) {
+    //   const url = new URL(isUserExist.profile)
+    //   const key = url.pathname.substring(1)
+    //   await S3Helper.deleteFromS3(key)
+    // }
     const updatedProfile = await user_model_1.User.findOneAndUpdate({ _id: user.authId, status: { $nin: [user_1.USER_STATUS.DELETED] } }, {
         $set: payload,
     }, { new: true });
@@ -64,6 +63,8 @@ const createAdmin = async () => {
     }
     return result[0];
 };
+const event_model_1 = require("../event/event.model");
+const follow_model_1 = require("../follow/follow.model");
 const getAllUsers = async (paginationOptions, filterables = {}) => {
     const { searchTerm, ...filterData } = filterables;
     const { page, skip, limit, sortBy, sortOrder } = paginationHelper_1.paginationHelper.calculatePagination(paginationOptions);
@@ -106,14 +107,41 @@ const getAllUsers = async (paginationOptions, filterables = {}) => {
     else if (filterConditions.length > 0) {
         whereConditions = { $and: filterConditions };
     }
-    const [result, total] = await Promise.all([
+    const [users, total] = await Promise.all([
         user_model_1.User.find(whereConditions)
             .skip(skip)
             .limit(limit)
             .sort(sortBy ? { [sortBy]: sortOrder } : { createdAt: -1 })
-            .select('-password -authentication -__v'),
+            .select('-password -authentication -__v')
+            .lean(),
         user_model_1.User.countDocuments(whereConditions),
     ]);
+    // Aggregate event counts for the fetched users
+    const userIds = users.map(user => user._id);
+    const eventCounts = await event_model_1.Event.aggregate([
+        {
+            $match: {
+                organizerId: { $in: userIds },
+            },
+        },
+        {
+            $group: {
+                _id: '$organizerId',
+                count: { $sum: 1 },
+            },
+        },
+    ]);
+    const eventCountMap = eventCounts.reduce((acc, curr) => {
+        acc[curr._id.toString()] = curr.count;
+        return acc;
+    }, {});
+    const result = users.map(user => {
+        return {
+            ...user,
+            eventCount: eventCountMap[user._id ? user._id.toString() : ''] || 0,
+        };
+    });
+    console.log(result, 'resule');
     return {
         meta: {
             page,
@@ -164,11 +192,24 @@ const getUserById = async (userId) => {
     if (!isUserExist) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'User not found.');
     }
-    const user = await user_model_1.User.findOne({
-        _id: userId,
-        status: { $nin: [user_1.USER_STATUS.DELETED] },
-    }).select('-password -authentication -__v');
-    return user;
+    // Fetch user data and stats in parallel for performance
+    const [user, eventsCount, followersCount, followingCount] = await Promise.all([
+        user_model_1.User.findOne({
+            _id: userId,
+            status: { $nin: [user_1.USER_STATUS.DELETED] },
+        }).select('-password -authentication -__v'),
+        event_model_1.Event.countDocuments({ organizerId: userId }),
+        follow_model_1.Follow.countDocuments({ following: userId }),
+        follow_model_1.Follow.countDocuments({ follower: userId }),
+    ]);
+    return {
+        ...user === null || user === void 0 ? void 0 : user.toObject(),
+        stats: {
+            events: eventsCount,
+            followers: followersCount,
+            following: followingCount,
+        },
+    };
 };
 const updateUserStatus = async (userId, status) => {
     const isUserExist = await user_model_1.User.findOne({

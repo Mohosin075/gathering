@@ -10,6 +10,7 @@ const ApiError_1 = __importDefault(require("../../../errors/ApiError"));
 const ticket_model_1 = require("../ticket/ticket.model");
 const payment_model_1 = require("./payment.model");
 const event_model_1 = require("../event/event.model");
+const attendee_model_1 = require("../attendee/attendee.model");
 const emailHelper_1 = require("../../../helpers/emailHelper");
 const emailTemplate_1 = require("../../../shared/emailTemplate");
 const handleCheckoutSessionCompleted = async (sessionData) => {
@@ -61,18 +62,34 @@ const handleCheckoutSessionCompleted = async (sessionData) => {
                 await event_model_1.Event.findByIdAndUpdate(ticket.eventId, {
                     $inc: { ticketsSold: ticket.quantity },
                 }, { session: mongoSession });
+                // Create Attendee record automatically
+                await attendee_model_1.Attendee.create([
+                    {
+                        eventId: ticket.eventId,
+                        userId: ticket.attendeeId,
+                        ticketId: ticket._id,
+                        paymentId: payment._id,
+                    },
+                ], { session: mongoSession });
             }
             await mongoSession.commitTransaction();
             console.log(`Successfully processed payment for session: ${sessionWithDetails.id}`);
             // Send email
+            // Send email
             if (payment.userEmail) {
-                await emailHelper_1.emailHelper.sendEmail(emailTemplate_1.emailTemplate.paymentSuccess({
-                    name: 'User', // stripe session might not have name readily available unless passed in metadata, simplified here or fetch user
-                    email: payment.userEmail,
-                    amount: payment.amount,
-                    currency: payment.currency,
-                    transactionId: payment.paymentIntentId,
-                }));
+                const ticket = await ticket_model_1.Ticket.findById(payment.ticketId).populate('eventId');
+                const event = ticket === null || ticket === void 0 ? void 0 : ticket.eventId;
+                if (ticket && event) {
+                    await emailHelper_1.emailHelper.sendEmail(emailTemplate_1.emailTemplate.ticketConfirmed({
+                        name: 'User', // stripe session might not have name readily available unless passed in metadata, simplified here or fetch user
+                        email: payment.userEmail,
+                        eventName: event.title,
+                        ticketNumber: ticket.ticketNumber,
+                        ticketType: ticket.ticketType,
+                        quantity: ticket.quantity,
+                        qrCode: ticket.qrCode,
+                    }));
+                }
             }
         }
         catch (error) {
@@ -168,18 +185,34 @@ const handlePaymentSuccess = async (paymentIntent) => {
             await event_model_1.Event.findByIdAndUpdate(ticket.eventId, {
                 $inc: { ticketsSold: ticket.quantity },
             }, { session: mongoSession });
+            // Create Attendee record automatically
+            await attendee_model_1.Attendee.create([
+                {
+                    eventId: ticket.eventId,
+                    userId: ticket.attendeeId,
+                    ticketId: ticket._id,
+                    paymentId: payment._id,
+                },
+            ], { session: mongoSession });
         }
         await mongoSession.commitTransaction();
         console.log(`Successfully processed payment intent: ${paymentIntent.id}`);
         // Send email
+        // Send email
         if (payment.userEmail) {
-            await emailHelper_1.emailHelper.sendEmail(emailTemplate_1.emailTemplate.paymentSuccess({
-                name: 'User',
-                email: payment.userEmail,
-                amount: payment.amount,
-                currency: payment.currency,
-                transactionId: payment.paymentIntentId,
-            }));
+            const ticket = await ticket_model_1.Ticket.findById(payment.ticketId).populate('eventId');
+            const event = ticket === null || ticket === void 0 ? void 0 : ticket.eventId;
+            if (ticket && event) {
+                await emailHelper_1.emailHelper.sendEmail(emailTemplate_1.emailTemplate.ticketConfirmed({
+                    name: 'User',
+                    email: payment.userEmail,
+                    eventName: event.title,
+                    ticketNumber: ticket.ticketNumber,
+                    ticketType: ticket.ticketType,
+                    quantity: ticket.quantity,
+                    qrCode: ticket.qrCode,
+                }));
+            }
         }
     }
     catch (error) {

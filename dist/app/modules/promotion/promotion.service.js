@@ -12,7 +12,6 @@ const ApiError_1 = __importDefault(require("../../../errors/ApiError"));
 const promotionSearchableFields = ['code', 'description'];
 const createPromotion = async (user, payload) => {
     payload.createdBy = user.authId;
-    console.log(payload);
     const existingPromotion = await promotion_model_1.Promotion.findOne({
         code: payload.code.toUpperCase(),
     });

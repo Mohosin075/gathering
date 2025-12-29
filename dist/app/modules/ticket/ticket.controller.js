@@ -86,6 +86,17 @@ const getMyTickets = (0, catchAsync_1.default)(async (req, res) => {
         data: result.data,
     });
 });
+const getMyTicketForEvent = (0, catchAsync_1.default)(async (req, res) => {
+    const user = req.user;
+    const { eventId } = req.params;
+    const result = await ticket_service_1.TicketServices.getMyTicketForEvent(user, eventId);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_codes_1.StatusCodes.OK,
+        success: true,
+        message: 'Ticket for event retrieved successfully',
+        data: result,
+    });
+});
 exports.TicketController = {
     createTicket,
     getAllTickets,
@@ -94,4 +105,5 @@ exports.TicketController = {
     deleteTicket,
     checkInTicket,
     getMyTickets,
+    getMyTicketForEvent,
 };

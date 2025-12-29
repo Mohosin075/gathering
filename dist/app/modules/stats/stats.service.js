@@ -33,13 +33,16 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EventStatsServices = exports.getIndividualEventStats = exports.getAppSummary = exports.getOrganizerAppSummary = exports.getOrganizerEventStatusStats = exports.getOrganizerRevenueStats = exports.getOrganizerEventStats = exports.getOrganizerDashboardStats = exports.getEventStatusStats = exports.getRevenueStats = exports.getUserStats = exports.getEventStats = exports.getAdminDashboardStats = void 0;
+exports.EventStatsServices = exports.getOrganizerPromotionStats = exports.getEventAnalytics = exports.getIndividualEventStats = exports.getAppSummary = exports.getOrganizerAppSummary = exports.getOrganizerEventStatusStats = exports.getOrganizerRevenueStats = exports.getOrganizerEventStats = exports.getOrganizerDashboardStats = exports.getEventStatusStats = exports.getRevenueStats = exports.getUserStats = exports.getEventStats = exports.getAdminDashboardStats = void 0;
 const event_model_1 = require("../event/event.model");
 const user_model_1 = require("../user/user.model");
 const review_model_1 = require("../review/review.model");
 const follow_model_1 = require("../follow/follow.model");
+const savedEvent_model_1 = require("../savedEvent/savedEvent.model");
+const promotion_model_1 = require("../promotion/promotion.model");
 const event_1 = require("../../../enum/event");
 const user_1 = require("../../../enum/user");
+const activity_service_1 = require("../activity/activity.service");
 // Helper function to get month name
 const getMonthName = (monthIndex) => {
     const months = [
@@ -83,7 +86,7 @@ const getAdminDashboardStats = async () => {
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
     // Get all stats in parallel
-    const [totalUsers, activeEvents, eventsCreatedThisMonth, pendingReviews, lastMonthUsers, lastMonthActiveEvents, lastMonthEventsCreated, totalEvents,] = await Promise.all([
+    const [totalUsers, activeEvents, eventsCreatedThisMonth, pendingReviews, lastMonthUsers, lastMonthActiveEvents, lastMonthEventsCreated, totalEvents, recentActivities,] = await Promise.all([
         // Total Users
         user_model_1.User.countDocuments(),
         // Active Events (events happening now or in future)
@@ -113,7 +116,10 @@ const getAdminDashboardStats = async () => {
             },
         }),
         // Total Events for events created percentage
+        // Total Events for events created percentage
         event_model_1.Event.countDocuments(),
+        // Recent Activity
+        activity_service_1.ActivityServices.getRecentActivities(6),
     ]);
     // Calculate growth percentages
     const userGrowth = lastMonthUsers > 0
@@ -143,6 +149,7 @@ const getAdminDashboardStats = async () => {
         userGrowth: Math.round(userGrowth * 10) / 10, // Round to 1 decimal
         eventGrowth: Math.round(eventGrowth * 10) / 10,
         eventsCreatedGrowth: Math.round(eventsCreatedGrowth * 10) / 10,
+        recentActivities: recentActivities,
     };
 };
 exports.getAdminDashboardStats = getAdminDashboardStats;
@@ -1336,6 +1343,258 @@ const getIndividualEventStats = async (eventId, days = 7) => {
     };
 };
 exports.getIndividualEventStats = getIndividualEventStats;
+// Get shared event analytics (Admin & Organizer)
+const getEventAnalytics = async (eventId) => {
+    const { Ticket } = await Promise.resolve().then(() => __importStar(require('../ticket/ticket.model')));
+    // Calculate last 7 days range
+    const days = 7;
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    startDate.setHours(0, 0, 0, 0); // Start of the day 7 days ago
+    const [eventData, ticketStats, dailyTicketData, dailyReviewData, dailySavedData,] = await Promise.all([
+        event_model_1.Event.findById(eventId).select('views'),
+        // Total Ticket Stats
+        Ticket.aggregate([
+            {
+                $match: {
+                    eventId: new Object(eventId),
+                    paymentStatus: 'paid',
+                },
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalTickets: { $sum: '$quantity' },
+                    totalRevenue: { $sum: '$finalAmount' },
+                },
+            },
+        ]),
+        // Daily Ticket Sales
+        Ticket.aggregate([
+            {
+                $match: {
+                    eventId: new Object(eventId),
+                    paymentStatus: 'paid',
+                    createdAt: { $gte: startDate },
+                },
+            },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: '$createdAt' },
+                        month: { $month: '$createdAt' },
+                        day: { $dayOfMonth: '$createdAt' },
+                    },
+                    sales: { $sum: '$quantity' },
+                    revenue: { $sum: '$finalAmount' },
+                },
+            },
+        ]),
+        // Daily Reviews (Engagement)
+        review_model_1.Review.aggregate([
+            {
+                $match: {
+                    eventId: new Object(eventId),
+                    createdAt: { $gte: startDate },
+                },
+            },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: '$createdAt' },
+                        month: { $month: '$createdAt' },
+                        day: { $dayOfMonth: '$createdAt' },
+                    },
+                    count: { $sum: 1 },
+                },
+            },
+        ]),
+        // Daily Saved Events (Engagement)
+        savedEvent_model_1.SavedEvent.aggregate([
+            {
+                $match: {
+                    event: new Object(eventId),
+                    createdAt: { $gte: startDate },
+                },
+            },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: '$createdAt' },
+                        month: { $month: '$createdAt' },
+                        day: { $dayOfMonth: '$createdAt' },
+                    },
+                    count: { $sum: 1 },
+                },
+            },
+        ]),
+    ]);
+    if (!eventData) {
+        throw new Error('Event not found');
+    }
+    const ticketData = ticketStats[0] || { totalTickets: 0, totalRevenue: 0 };
+    const totalViews = eventData.views || 0;
+    const totalSales = ticketData.totalTickets;
+    const totalRevenue = ticketData.totalRevenue;
+    // Calculate total engagement (Saved + Reviews + Sales)
+    // Note: This is an approximation of total lifetime engagement if we don't query all-time aggregate
+    // For now, let's use the all-time counts from event/reviews if available, or just sum the daily ones if that's what we have.
+    // Actually, let's get total counts for engagement separately to be accurate for "Total Engagement"
+    // optimizing: reuse existing queries or add new ones. 
+    // For the sake of performance, let's just use what we have or do a quick count.
+    // "Engagement" usually means interactive actions.
+    const [totalReviews, totalSaved] = await Promise.all([
+        review_model_1.Review.countDocuments({ eventId }),
+        savedEvent_model_1.SavedEvent.countDocuments({ event: eventId }),
+    ]);
+    const totalEngagement = totalReviews + totalSaved + totalSales;
+    // Process daily data
+    const processedData = new Map();
+    // Helper to get date string key
+    const getDateKey = (id) => {
+        const date = new Date(id.year, id.month - 1, id.day);
+        return date.toISOString().split('T')[0];
+    };
+    // Merge Ticket Data
+    dailyTicketData.forEach(item => {
+        const dateStr = getDateKey(item._id);
+        const existing = processedData.get(dateStr) || { sales: 0, revenue: 0, engagement: 0 };
+        existing.sales += item.sales;
+        existing.revenue += item.revenue;
+        existing.engagement += item.sales; // Sales count as engagement
+        processedData.set(dateStr, existing);
+    });
+    // Merge Review Data
+    dailyReviewData.forEach(item => {
+        const dateStr = getDateKey(item._id);
+        const existing = processedData.get(dateStr) || { sales: 0, revenue: 0, engagement: 0 };
+        existing.engagement += item.count;
+        processedData.set(dateStr, existing);
+    });
+    // Merge Saved Data
+    dailySavedData.forEach(item => {
+        const dateStr = getDateKey(item._id);
+        const existing = processedData.get(dateStr) || { sales: 0, revenue: 0, engagement: 0 };
+        existing.engagement += item.count;
+        processedData.set(dateStr, existing);
+    });
+    // Format result with filled dates
+    const dailyStats = [];
+    // Daily views approximation (Total Views / Age of event or just Views / 7 for trend)
+    // Since we don't have daily views, we will distribute total views proportional to engagement or just evenly for the graph shape.
+    // Or simply returning a flat average for the graph to not stay empty.
+    // The image shows a curve, so flat line is boring.
+    // Better approach: Use engagement trend to weight the viewing trend? Or just random variation around average?
+    // Let's stick to even distribution for now to be safe, or 0 if no views.
+    // Actually, commonly if we lack data, we show 0 or flat. 
+    // Let's use: (Total Views / 30) or similar as a baseline, and if created recently, use age.
+    // For the graph "Last 7 Days", we just show the average daily view count based on total.
+    const diffTime = Math.abs(new Date().getTime() - (eventData.createdAt || new Date()).getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+    const avgDailyViews = Math.ceil(totalViews / diffDays);
+    for (let i = days - 1; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        const dayData = processedData.get(dateStr) || { sales: 0, revenue: 0, engagement: 0 };
+        dailyStats.push({
+            date: dateStr,
+            views: avgDailyViews, // Fallback as we don't track daily views
+            engagement: dayData.engagement,
+            sales: dayData.sales,
+            revenue: Math.round(dayData.revenue * 100) / 100,
+        });
+    }
+    return {
+        totalViews,
+        totalEngagement,
+        totalSales,
+        totalRevenue: Math.round(totalRevenue * 100) / 100,
+        dailyStats
+    };
+};
+exports.getEventAnalytics = getEventAnalytics;
+// Get top three revenue events
+const getTopThreeRevenueEvents = async () => {
+    const result = await event_model_1.Event.aggregate([
+        {
+            $match: {
+                status: {
+                    $in: [
+                        event_1.EVENT_STATUS.COMPLETED,
+                        event_1.EVENT_STATUS.PUBLISHED,
+                        event_1.EVENT_STATUS.APPROVED,
+                    ],
+                },
+            },
+        },
+        {
+            $project: {
+                title: 1,
+                images: 1,
+                ticketPrice: 1,
+                ticketsSold: 1,
+                category: 1,
+                totalRevenue: { $multiply: ['$ticketPrice', '$ticketsSold'] },
+            },
+        },
+        { $sort: { totalRevenue: -1 } },
+        { $limit: 3 },
+        {
+            $project: {
+                _id: 0,
+                eventId: '$_id',
+                title: 1,
+                images: 1,
+                ticketPrice: 1,
+                ticketsSold: 1,
+                category: 1,
+                totalRevenue: { $round: ['$totalRevenue', 2] },
+            },
+        },
+    ]);
+    return result;
+};
+// Get organizer upcoming events
+const getOrganizerUpcomingEvents = async (organizerId) => {
+    const currentDate = new Date().toISOString().split('T')[0];
+    const result = await event_model_1.Event.find({
+        organizerId,
+        startDate: { $gte: currentDate },
+        status: { $in: [event_1.EVENT_STATUS.APPROVED, event_1.EVENT_STATUS.PUBLISHED] },
+    })
+        .sort({ startDate: 1, startTime: 1 })
+        .select('title images startDate startTime location address category ticketPrice ticketsSold capacity')
+        .limit(10);
+    return result;
+};
+// Get organizer promotion stats
+const getOrganizerPromotionStats = async (organizerId) => {
+    var _a;
+    const now = new Date();
+    const [activePromotions, totalPromotions, redemptionsResult] = await Promise.all([
+        // Active Promotions: created by organizer, isActive, and not expired
+        promotion_model_1.Promotion.countDocuments({
+            createdBy: organizerId,
+            isActive: true,
+            validUntil: { $gte: now },
+        }),
+        // Total Promotions: created by organizer
+        promotion_model_1.Promotion.countDocuments({ createdBy: organizerId }),
+        // Total Redemptions: sum of usedCount for promotions created by organizer
+        promotion_model_1.Promotion.aggregate([
+            { $match: { createdBy: organizerId } },
+            { $group: { _id: null, totalRedemptions: { $sum: '$usedCount' } } },
+        ]),
+    ]);
+    return {
+        activePromotions,
+        totalPromotions,
+        totalRedemptions: ((_a = redemptionsResult[0]) === null || _a === void 0 ? void 0 : _a.totalRedemptions) || 0,
+    };
+};
+exports.getOrganizerPromotionStats = getOrganizerPromotionStats;
 exports.EventStatsServices = {
     getAdminDashboardStats: exports.getAdminDashboardStats,
     getEventStats: exports.getEventStats,
@@ -1349,4 +1608,8 @@ exports.EventStatsServices = {
     getOrganizerEventStatusStats: exports.getOrganizerEventStatusStats,
     getOrganizerAppSummary: exports.getOrganizerAppSummary,
     getIndividualEventStats: exports.getIndividualEventStats,
+    getEventAnalytics: exports.getEventAnalytics,
+    getOrganizerPromotionStats: exports.getOrganizerPromotionStats,
+    getTopThreeRevenueEvents,
+    getOrganizerUpcomingEvents,
 };

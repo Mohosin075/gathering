@@ -70,7 +70,7 @@ const fileAndBodyProcessor = () => {
                             const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
                             const filePath = `/${fieldName}/${filename}`;
                             // Apply Sharp optimization for images
-                            if (fieldName === 'image' && file.mimetype.startsWith('image/')) {
+                            if (fieldName === 'images' && file.mimetype.startsWith('image/')) {
                                 try {
                                     // Create Sharp instance
                                     let sharpInstance = (0, sharp_1.default)(file.buffer).resize(800);
@@ -182,7 +182,7 @@ const fileAndBodyProcessorUsingDiskStorage = () => {
                         for (const file of fileArray) {
                             const filePath = `/${fieldName}/${file.filename}`;
                             // Apply Sharp optimization for images
-                            if (fieldName === 'image' && file.mimetype.startsWith('image/')) {
+                            if (fieldName === 'images' && file.mimetype.startsWith('image/')) {
                                 try {
                                     const fullPath = path_1.default.join(uploadsDir, fieldName, file.filename);
                                     // Create Sharp instance

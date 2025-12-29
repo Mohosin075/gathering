@@ -279,7 +279,7 @@ const getAllNotifications = async (user, filterables, pagination) => {
         });
     }
     const whereConditions = andConditions.length ? { $and: andConditions } : {};
-    const [result, total] = await Promise.all([
+    const [result, total, analyticsData] = await Promise.all([
         notification_model_1.Notification.find(whereConditions)
             .skip(skip)
             .limit(limit)
@@ -287,7 +287,45 @@ const getAllNotifications = async (user, filterables, pagination) => {
             .populate('userId', 'name email')
             .lean(),
         notification_model_1.Notification.countDocuments(whereConditions),
+        // Get overall analytics for the filtered notifications
+        notification_model_1.Notification.aggregate([
+            { $match: whereConditions },
+            {
+                $group: {
+                    _id: null,
+                    totalNotifications: { $sum: 1 },
+                    readNotifications: {
+                        $sum: { $cond: [{ $eq: ['$isRead', true] }, 1, 0] },
+                    },
+                    clickedNotifications: {
+                        $sum: { $cond: [{ $ne: ['$actionClickedAt', null] }, 1, 0] },
+                    },
+                },
+            },
+        ]),
     ]);
+    // Calculate overall analytics
+    const stats = analyticsData[0] || {
+        totalNotifications: 0,
+        readNotifications: 0,
+        clickedNotifications: 0,
+    };
+    const overallAnalytics = {
+        openRate: stats.totalNotifications > 0
+            ? Math.round((stats.readNotifications / stats.totalNotifications) * 100)
+            : 0,
+        engagement: stats.totalNotifications > 0
+            ? Math.round((stats.clickedNotifications / stats.totalNotifications) * 100)
+            : 0,
+    };
+    // Add individual analytics to each notification
+    const notificationsWithAnalytics = result.map(notification => ({
+        ...notification,
+        analytics: {
+            openRate: notification.isRead ? 100 : 0, // Individual notification is either open (100%) or not (0%)
+            engagement: notification.actionClickedAt ? 100 : 0, // Individual notification action is either clicked (100%) or not (0%)
+        },
+    }));
     return {
         meta: {
             page,
@@ -295,7 +333,8 @@ const getAllNotifications = async (user, filterables, pagination) => {
             total,
             totalPages: Math.ceil(total / limit),
         },
-        data: result,
+        analytics: overallAnalytics, // Overall analytics for all notifications matching the query
+        data: notificationsWithAnalytics,
     };
 };
 const getNotificationById = async (id) => {

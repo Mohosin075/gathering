@@ -93,7 +93,7 @@ export const fileAndBodyProcessor = () => {
               const filePath = `/${fieldName}/${filename}`
 
               // Apply Sharp optimization for images
-              if (fieldName === 'image' && file.mimetype.startsWith('image/')) {
+              if (fieldName === 'images' && file.mimetype.startsWith('image/')) {
                 try {
                   // Create Sharp instance
                   let sharpInstance = sharp(file.buffer).resize(800)
@@ -233,7 +233,7 @@ export const fileAndBodyProcessorUsingDiskStorage = () => {
               const filePath = `/${fieldName}/${file.filename}`
 
               // Apply Sharp optimization for images
-              if (fieldName === 'image' && file.mimetype.startsWith('image/')) {
+              if (fieldName === 'images' && file.mimetype.startsWith('image/')) {
                 try {
                   const fullPath = path.join(
                     uploadsDir,

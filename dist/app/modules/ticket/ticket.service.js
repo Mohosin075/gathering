@@ -11,7 +11,10 @@ const paginationHelper_1 = require("../../../helpers/paginationHelper");
 const ticket_constants_1 = require("./ticket.constants");
 const mongoose_1 = require("mongoose");
 const event_model_1 = require("../event/event.model");
+const attendee_model_1 = require("../attendee/attendee.model");
 const promotion_model_1 = require("../promotion/promotion.model");
+const emailHelper_1 = require("../../../helpers/emailHelper");
+const emailTemplate_1 = require("../../../shared/emailTemplate");
 const generateTicketNumber = () => {
     return `TKT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 };
@@ -51,6 +54,7 @@ const createTicket = async (user, payload) => {
         const ticketData = {
             ...payload,
             attendeeId: user.authId,
+            userId: user.authId,
             totalAmount: payload.price * payload.quantity,
             discountAmount,
             finalAmount,
@@ -148,6 +152,25 @@ const updateTicket = async (id, payload) => {
     if (!result) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Requested ticket not found, please try again with valid id');
     }
+    // Send email if status is confirmed
+    if (payload.status === 'confirmed' && result.status === 'confirmed') {
+        const event = result.eventId;
+        const attendee = result.attendeeId;
+        if (attendee && attendee.email) {
+            // Generate basic QR code URL (placeholder or use actual logic if available)
+            // Since the model stores just a string for QR code, we might need to assume it's a value to be rendered or a URL.
+            // For now, I'll pass the stored value.
+            await emailHelper_1.emailHelper.sendEmail(emailTemplate_1.emailTemplate.ticketConfirmed({
+                name: attendee.name,
+                email: attendee.email,
+                eventName: event.title,
+                ticketNumber: result.ticketNumber,
+                ticketType: result.ticketType,
+                quantity: result.quantity,
+                qrCode: result.qrCode,
+            }));
+        }
+    }
     return result;
 };
 const deleteTicket = async (id) => {
@@ -189,6 +212,15 @@ const checkInTicket = async (ticketId) => {
     }, { new: true, runValidators: true })
         .populate('eventId')
         .populate('attendeeId', 'name email');
+    if (result) {
+        // Sync with Attendee record if it exists
+        await attendee_model_1.Attendee.findOneAndUpdate({ ticketId: result._id }, {
+            checkInStatus: true,
+            checkInTime: result.checkedInAt,
+            // Since we don't have the checker in this context, we'll leave checkInBy as is or set it to attendeeId if appropriate.
+            // Usually, check-in is done by an organizer/admin.
+        });
+    }
     return result;
 };
 const getMyTickets = async (user, pagination) => {
@@ -212,6 +244,20 @@ const getMyTickets = async (user, pagination) => {
         data: result,
     };
 };
+const getMyTicketForEvent = async (user, eventId) => {
+    console.log({ eventId });
+    if (!mongoose_1.Types.ObjectId.isValid(eventId)) {
+        throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Invalid Event ID');
+    }
+    const result = await ticket_model_1.Ticket.findOne({
+        attendeeId: new mongoose_1.Types.ObjectId(user.authId),
+        eventId: new mongoose_1.Types.ObjectId(eventId),
+        status: 'confirmed',
+    })
+        .populate('eventId')
+        .populate('attendeeId', 'name email');
+    return result;
+};
 exports.TicketServices = {
     createTicket,
     getAllTickets,
@@ -220,4 +266,5 @@ exports.TicketServices = {
     deleteTicket,
     checkInTicket,
     getMyTickets,
+    getMyTicketForEvent,
 };

@@ -17,9 +17,10 @@ const sendMessage = (0, catchAsync_1.default)(async (req, res) => {
     if (!chat)
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Chat not found');
     // find the receiver (the participant that is NOT the sender)
-    const receiverId = chat.participants.find(id => id.toString() !== user.authId.toString());
-    if (!receiverId)
+    const receiver = chat.participants.find((p) => p._id.toString() !== user.authId.toString());
+    if (!receiver)
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'No receiver found');
+    const receiverId = receiver._id;
     payload.receiver = receiverId; // now you have a valid receiver ID
     const data = {
         ...req.body,
@@ -36,9 +37,10 @@ const sendMessage = (0, catchAsync_1.default)(async (req, res) => {
     });
 });
 const getMessage = (0, catchAsync_1.default)(async (req, res) => {
+    const user = req.user;
     const id = req.params.id;
     console.log({ id }, 'chatId');
-    const messages = await message_service_1.MessageService.getMessageFromDB(id);
+    const messages = await message_service_1.MessageService.getMessageFromDB(id, user);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_codes_1.StatusCodes.OK,
         success: true,

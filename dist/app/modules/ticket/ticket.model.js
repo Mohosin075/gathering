@@ -13,6 +13,11 @@ const ticketSchema = new mongoose_1.Schema({
         ref: 'User',
         required: true,
     },
+    userId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+    },
     ticketType: {
         type: String,
         enum: ['regular', 'vip', 'early_bird'],

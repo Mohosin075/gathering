@@ -31,7 +31,7 @@ exports.updateUserSchema = zod_1.z.object({
     body: zod_1.z
         .object({
         name: zod_1.z.string().optional(),
-        profile: zod_1.z.string().url().optional(),
+        profile: zod_1.z.string().optional(),
         phone: zod_1.z.string().optional(),
         description: zod_1.z.string().optional(),
         specialty: zod_1.z.string().optional(),
@@ -40,7 +40,6 @@ exports.updateUserSchema = zod_1.z.object({
         appId: zod_1.z.string().optional(),
         deviceToken: zod_1.z.string().optional(),
     })
-        .strict(),
 });
 exports.STAFF_SPECIALTY = zod_1.z.enum([
     'Cleaning',

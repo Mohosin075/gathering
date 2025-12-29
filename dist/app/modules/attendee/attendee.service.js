@@ -173,6 +173,13 @@ const checkInAttendee = async (user, data) => {
         .populate('ticketId', 'ticketType ticketNumber')
         .populate('paymentId', 'amount currency')
         .populate('checkInBy', 'name');
+    if (result) {
+        // Sync with Ticket record
+        await ticket_model_1.Ticket.findByIdAndUpdate(result.ticketId, {
+            checkedIn: true,
+            checkedInAt: result.checkInTime,
+        });
+    }
     return result;
 };
 const deleteAttendee = async (id) => {

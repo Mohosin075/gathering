@@ -24,6 +24,8 @@ router.get('/admin/summary', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1
 // Organizer Routes
 // GET /api/stats/organizer/dashboard - Main organizer dashboard stats
 router.get('/organizer/dashboard', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER), stats_controller_1.EventStatsController.getOrganizerDashboardStats);
+// GET /api/stats/organizer/upcoming-events - organizer specific upcoming events
+router.get('/organizer/upcoming-events', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER), stats_controller_1.EventStatsController.getOrganizerUpcomingEvents);
 // GET /api/stats/organizer/events - Organizer event statistics
 router.get('/organizer/events', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER), stats_controller_1.EventStatsController.getOrganizerEventStats);
 // GET /api/stats/organizer/revenue - Organizer revenue statistics
@@ -32,6 +34,13 @@ router.get('/organizer/revenue', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER
 router.get('/organizer/event-status', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER), stats_controller_1.EventStatsController.getOrganizerEventStatusStats);
 // GET /api/stats/organizer/summary - All organizer statistics
 router.get('/organizer/summary', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER), stats_controller_1.EventStatsController.getOrganizerAppSummary);
+// GET /api/stats/organizer/promotions - Organizer promotion statistics
+router.get('/organizer/promotions', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER), stats_controller_1.EventStatsController.getOrganizerPromotionStats);
 // GET /api/stats/organizer/event/:eventId - Individual event statistics
 router.get('/organizer/event/:eventId', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER), stats_controller_1.EventStatsController.getIndividualEventStats);
+// Shared Analytics Route
+// GET /api/stats/organizer/top-revenue-events - top three revenue events
+router.get('/organizer/top-revenue-events', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ORGANIZER), stats_controller_1.EventStatsController.getTopThreeRevenueEvents);
+// GET /api/stats/analytics/:eventId - detailed analytics for admin and organizer
+router.get('/analytics/:eventId', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ORGANIZER), stats_controller_1.EventStatsController.getEventAnalytics);
 exports.EventStatsRoutes = router;

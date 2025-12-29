@@ -12,6 +12,7 @@ const config_1 = __importDefault(require("./config"));
 const os_1 = __importDefault(require("os"));
 const user_service_1 = require("./app/modules/user/user.service");
 const socketHelper_1 = require("./helpers/socketHelper");
+const geocodeAddress_1 = require("./utils/geocodeAddress");
 // Uncaught exceptions
 process.on('uncaughtException', error => {
     console.error('🔥 UncaughtException Detected:', error);
@@ -28,6 +29,8 @@ async function main() {
         server = app_1.default.listen(port, '0.0.0.0', () => {
             console.log(colors_1.default.yellow(`♻️  Server is running on:`));
             console.log(colors_1.default.cyan(`   - Local:    http://localhost:${port}`));
+            const location = (0, geocodeAddress_1.geocodeAddress)("aqua tower dhaka 1212");
+            console.log("location", location);
             const interfaces = os_1.default.networkInterfaces();
             for (const name of Object.keys(interfaces)) {
                 for (const iface of interfaces[name]) {

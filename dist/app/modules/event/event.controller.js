@@ -24,7 +24,7 @@ const createEvent = (0, catchAsync_1.default)(async (req, res) => {
 const updateEvent = (0, catchAsync_1.default)(async (req, res) => {
     const { id } = req.params;
     const eventData = req.body;
-    const result = await event_service_1.EventServices.updateEvent(id, eventData);
+    const result = await event_service_1.EventServices.updateEvent(id, eventData, req.user);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_codes_1.StatusCodes.OK,
         success: true,
@@ -66,7 +66,7 @@ const getMyEvents = (0, catchAsync_1.default)(async (req, res) => {
 });
 const deleteEvent = (0, catchAsync_1.default)(async (req, res) => {
     const { id } = req.params;
-    const result = await event_service_1.EventServices.deleteEvent(id);
+    const result = await event_service_1.EventServices.deleteEvent(id, req.user);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_codes_1.StatusCodes.OK,
         success: true,

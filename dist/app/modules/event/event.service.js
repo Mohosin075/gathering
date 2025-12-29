@@ -10,7 +10,19 @@ const event_model_1 = require("./event.model");
 const paginationHelper_1 = require("../../../helpers/paginationHelper");
 const event_constants_1 = require("./event.constants");
 const mongoose_1 = require("mongoose");
+const activity_service_1 = require("../activity/activity.service");
+const geocodeAddress_1 = require("../../../utils/geocodeAddress");
 const createEvent = async (user, payload) => {
+    const location = await (0, geocodeAddress_1.geocodeAddress)(payload.address);
+    if (!location) {
+        throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Failed to create Event, please try again with valid data.');
+    }
+    console.log(location.formattedAddress);
+    payload.location = {
+        type: 'Point',
+        coordinates: [location.lng, location.lat],
+    };
+    payload.address = location.formattedAddress;
     try {
         const result = await event_model_1.Event.create({
             ...payload,
@@ -19,6 +31,15 @@ const createEvent = async (user, payload) => {
         if (!result) {
             throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Failed to create Event, please try again with valid data.');
         }
+        // Log Activity
+        await activity_service_1.ActivityServices.logActivity({
+            action: 'EVENT_CREATE',
+            description: `Event "${result.title}" created`,
+            userId: new mongoose_1.Types.ObjectId(user.authId),
+            role: user.role,
+            resourceId: result._id,
+            resourceType: 'Event',
+        });
         return result;
     }
     catch (error) {
@@ -29,6 +50,7 @@ const createEvent = async (user, payload) => {
     }
 };
 const getAllEvents = async (user, filterables, pagination) => {
+    // ... (existing implementation)
     const { searchTerm, ...filterData } = filterables;
     const { page, skip, limit, sortBy, sortOrder } = paginationHelper_1.paginationHelper.calculatePagination(pagination);
     let whereConditions = {};
@@ -85,6 +107,7 @@ const getAllEvents = async (user, filterables, pagination) => {
     };
 };
 const getMyEvents = async (user, filterables, pagination) => {
+    // ... (existing implementation)
     const { searchTerm, ...filterData } = filterables;
     const { page, skip, limit, sortBy, sortOrder } = paginationHelper_1.paginationHelper.calculatePagination(pagination);
     let whereConditions = {};
@@ -155,9 +178,20 @@ const getSingleEvent = async (id) => {
     }
     return result;
 };
-const updateEvent = async (id, payload) => {
+const updateEvent = async (id, payload, user) => {
     if (!mongoose_1.Types.ObjectId.isValid(id)) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Invalid Event ID');
+    }
+    if (payload.address) {
+        const location = await (0, geocodeAddress_1.geocodeAddress)(payload.address);
+        if (!location) {
+            throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Failed to update Event, please try again with valid address.');
+        }
+        payload.location = {
+            type: 'Point',
+            coordinates: [location.lng, location.lat],
+        };
+        payload.address = location.formattedAddress;
     }
     const result = await event_model_1.Event.findByIdAndUpdate(new mongoose_1.Types.ObjectId(id), { $set: payload }, {
         new: true,
@@ -166,9 +200,18 @@ const updateEvent = async (id, payload) => {
     if (!result) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Requested event not found, please try again with valid id');
     }
+    // Log Activity
+    await activity_service_1.ActivityServices.logActivity({
+        action: 'EVENT_UPDATE',
+        description: `Event "${result.title}" updated`,
+        userId: new mongoose_1.Types.ObjectId(user.authId),
+        role: user.role,
+        resourceId: result._id,
+        resourceType: 'Event',
+    });
     return result;
 };
-const deleteEvent = async (id) => {
+const deleteEvent = async (id, user) => {
     if (!mongoose_1.Types.ObjectId.isValid(id)) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Invalid Event ID');
     }
@@ -177,10 +220,20 @@ const deleteEvent = async (id) => {
     if (!result) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Event not found or could not be archived, please try again with a valid ID.');
     }
+    // Log Activity
+    await activity_service_1.ActivityServices.logActivity({
+        action: 'EVENT_DELETE',
+        description: `Event "${result.title}" archived`,
+        userId: new mongoose_1.Types.ObjectId(user.authId),
+        role: user.role,
+        resourceId: result._id,
+        resourceType: 'Event',
+    });
     return result;
 };
 const getNearbyEvents = async (user, filterables, pagination, data) => {
     var _a;
+    // ... (existing implementation of getNearbyEvents remains unchanged)
     const { searchTerm, category, ...otherFilters } = filterables;
     const { lat, lng, distance = 10, tags } = data;
     const { page, limit, sortBy = 'startDate', sortOrder = 'asc', } = paginationHelper_1.paginationHelper.calculatePagination(pagination);

@@ -38,9 +38,19 @@ const paymentSuccess = (values) => {
     `,
     };
 };
+const ticketConfirmed = (values) => {
+    return {
+        to: values.email,
+        subject: `Ticket Confirmed for ${values.eventName}`,
+        html: `     <body style="margin:0; padding:0; background-color:#f4f5f7; font-family: Arial, sans-serif;">       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f5f7; padding: 20px 0;">         <tr>           <td align="center">             <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.08);">               <tr>                 <td style="padding: 30px; text-align:center;">                   <img src="/images/logo.png" alt="Company Logo" style="width:140px; height:auto; display:block; margin:0 auto;">                 </td>               </tr>               <tr>                 <td style="padding: 40px; text-align:center;">                   <h1 style="color:#2c3e50; font-size:26px; margin:0 0 20px;">Your Ticket is Confirmed!</h1>                   <p style="color:#555555; font-size:16px; margin:0 0 30px;">Hi ${values.name}, you are all set for <b>${values.eventName}</b>.</p>                   <div style="background:#f9fafc; padding:20px; border-radius:8px; text-align:left; margin-bottom:30px;">                     <p style="margin:5px 0; color:#555;"><strong>Ticket Number:</strong> ${values.ticketNumber}</p>                     <p style="margin:5px 0; color:#555;"><strong>Type:</strong> ${values.ticketType}</p>                     <p style="margin:5px 0; color:#555;"><strong>Quantity:</strong> ${values.quantity}</p>                     <div style="margin-top:15px; text-align:center;">                       <img src="${values.qrCode}" alt="QR Code" style="width:150px; height:150px;">                     </div>                   </div>                   <p style="color:#777777; font-size:14px; margin:0;">Please show the QR code at the entrance.</p>                 </td>               </tr>               <tr>                 <td style="background:#f9fafc; padding:20px; text-align:center; font-size:12px; color:#999999;">
+                                  </td>               </tr>             </table>           </td>         </tr>       </table>     </body>
+    `,
+    };
+};
 exports.emailTemplate = {
     createAccount,
     resetPassword,
     resendOtp,
     paymentSuccess,
+    ticketConfirmed,
 };

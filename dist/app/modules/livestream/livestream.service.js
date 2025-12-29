@@ -129,10 +129,13 @@ const getAgoraTokenFromDB = async (user, streamId, role) => {
 // Get All Live Streams
 const getAllLiveStreamsFromDB = async (query) => {
     console.log({ query });
-    const { page = 1, limit = 10, search, streamType, streamStatus, isLive, tags, sortBy = 'createdAt', sortOrder = 'desc', } = query;
+    const { page = 1, limit = 10, search, streamType, streamStatus, isLive, tags, sortBy = 'createdAt', sortOrder = 'desc', eventId, } = query;
     const skip = (page - 1) * limit;
     // Build filter
     const filter = {};
+    if (eventId) {
+        filter.event = eventId;
+    }
     if (search) {
         filter.$or = [
             { title: { $regex: search, $options: 'i' } },
@@ -479,6 +482,112 @@ const updateViewerCountToDB = async (streamId, action) => {
         peakViewers: updatedStream.peakViewers,
     };
 };
+// Get Live Stream by Event ID
+const getLiveStreamByEventIdFromDB = async (eventId, user) => {
+    var _a;
+    const stream = await livestream_model_1.LiveStream.findOne({ event: eventId })
+        .populate('event', 'title description')
+        .populate('streamer', 'name email profile')
+        .lean();
+    if (!stream) {
+        throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Live stream not found for this event');
+    }
+    // Check authorization for private/ticketed streams
+    const userId = user === null || user === void 0 ? void 0 : user.userId;
+    const canView = await livestream_model_1.LiveStream.canViewStream(stream._id.toString(), userId);
+    if (!canView) {
+        throw new ApiError_1.default(http_status_codes_1.StatusCodes.FORBIDDEN, 'You are not authorized to view this stream');
+    }
+    // Proper transform for lean objects (mimicking the map in getAll)
+    return {
+        id: stream._id.toString(),
+        event: {
+            id: stream.event._id.toString(),
+            title: stream.event.title,
+            description: stream.event.description,
+        },
+        streamer: {
+            id: stream.streamer._id.toString(),
+            name: stream.streamer.name,
+            email: stream.streamer.email,
+            avatar: (_a = stream.streamer.profile) === null || _a === void 0 ? void 0 : _a.avatar,
+        },
+        title: stream.title,
+        description: stream.description,
+        channelName: stream.channelName,
+        streamStatus: stream.streamStatus,
+        isLive: stream.isLive,
+        currentViewers: stream.currentViewers,
+        maxViewers: stream.maxViewers,
+        streamType: stream.streamType,
+        chatEnabled: stream.chatEnabled,
+        thumbnail: stream.thumbnail,
+        playbackUrl: stream.playbackUrl,
+        hlsUrl: stream.hlsUrl,
+        scheduledStartTime: stream.scheduledStartTime,
+        liveStartedAt: stream.liveStartedAt,
+        createdAt: stream.createdAt,
+        updatedAt: stream.updatedAt,
+        isUpcoming: stream.streamStatus === 'scheduled' || stream.streamStatus === 'starting',
+        isActive: stream.streamStatus === 'starting' || stream.streamStatus === 'live',
+        requiresApproval: stream.requiresApproval,
+        tags: stream.tags,
+    };
+};
+// Get Live Stream by Ticket ID
+const getLiveStreamByTicketIdFromDB = async (ticketId, user) => {
+    var _a;
+    const ticket = await livestream_model_1.LiveStream.db.model('Ticket').findById(ticketId);
+    if (!ticket) {
+        throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Ticket not found');
+    }
+    // Check if ticket belongs to user
+    // if (String(ticket.attendeeId) !== String(user.authId)) {
+    //   throw new ApiError(StatusCodes.FORBIDDEN, 'Unauthorized access to this ticket')
+    // }
+    // Find livestream for the event associated with the ticket
+    const stream = await livestream_model_1.LiveStream.findOne({ event: ticket.eventId })
+        .populate('event', 'title description')
+        .populate('streamer', 'name email profile')
+        .lean();
+    if (!stream) {
+        throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Live stream not found for this ticketed event');
+    }
+    return {
+        id: stream._id.toString(),
+        event: {
+            id: stream.event._id.toString(),
+            title: stream.event.title,
+            description: stream.event.description,
+        },
+        streamer: {
+            id: stream.streamer._id.toString(),
+            name: stream.streamer.name,
+            email: stream.streamer.email,
+            avatar: (_a = stream.streamer.profile) === null || _a === void 0 ? void 0 : _a.avatar,
+        },
+        title: stream.title,
+        description: stream.description,
+        channelName: stream.channelName,
+        streamStatus: stream.streamStatus,
+        isLive: stream.isLive,
+        currentViewers: stream.currentViewers,
+        maxViewers: stream.maxViewers,
+        streamType: stream.streamType,
+        chatEnabled: stream.chatEnabled,
+        thumbnail: stream.thumbnail,
+        playbackUrl: stream.playbackUrl,
+        hlsUrl: stream.hlsUrl,
+        scheduledStartTime: stream.scheduledStartTime,
+        liveStartedAt: stream.liveStartedAt,
+        createdAt: stream.createdAt,
+        updatedAt: stream.updatedAt,
+        isUpcoming: stream.streamStatus === 'scheduled' || stream.streamStatus === 'starting',
+        isActive: stream.streamStatus === 'starting' || stream.streamStatus === 'live',
+        requiresApproval: stream.requiresApproval,
+        tags: stream.tags,
+    };
+};
 exports.LiveStreamService = {
     createLiveStreamToDB,
     getAgoraTokenFromDB,
@@ -490,4 +599,6 @@ exports.LiveStreamService = {
     startLiveStreamToDB,
     endLiveStreamToDB,
     updateViewerCountToDB,
+    getLiveStreamByEventIdFromDB,
+    getLiveStreamByTicketIdFromDB,
 };

@@ -123,6 +123,43 @@ const getIndividualEventStats = (0, catchAsync_1.default)(async (req, res) => {
         data: result,
     });
 });
+const getEventAnalytics = (0, catchAsync_1.default)(async (req, res) => {
+    const { eventId } = req.params;
+    const result = await stats_service_1.EventStatsServices.getEventAnalytics(eventId);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_codes_1.StatusCodes.OK,
+        success: true,
+        message: 'Event analytics fetched successfully',
+        data: result,
+    });
+});
+const getOrganizerPromotionStats = (0, catchAsync_1.default)(async (req, res) => {
+    const result = await stats_service_1.EventStatsServices.getOrganizerPromotionStats(req.user.authId);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_codes_1.StatusCodes.OK,
+        success: true,
+        message: 'Organizer promotion statistics fetched successfully',
+        data: result,
+    });
+});
+const getTopThreeRevenueEvents = (0, catchAsync_1.default)(async (req, res) => {
+    const result = await stats_service_1.EventStatsServices.getTopThreeRevenueEvents();
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_codes_1.StatusCodes.OK,
+        success: true,
+        message: 'Top three revenue events fetched successfully',
+        data: result,
+    });
+});
+const getOrganizerUpcomingEvents = (0, catchAsync_1.default)(async (req, res) => {
+    const result = await stats_service_1.EventStatsServices.getOrganizerUpcomingEvents(req.user.authId);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_codes_1.StatusCodes.OK,
+        success: true,
+        message: 'Organizer upcoming events fetched successfully',
+        data: result,
+    });
+});
 exports.EventStatsController = {
     getAdminDashboardStats,
     getEventStats,
@@ -136,4 +173,8 @@ exports.EventStatsController = {
     getOrganizerEventStatusStats,
     getOrganizerAppSummary,
     getIndividualEventStats,
+    getEventAnalytics,
+    getOrganizerPromotionStats,
+    getTopThreeRevenueEvents,
+    getOrganizerUpcomingEvents,
 };

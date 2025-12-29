@@ -133,13 +133,19 @@ const verifyCheckoutSession = async (sessionId) => {
                 const user = await payment.populate('userId');
                 const userData = user.userId;
                 if (userData) {
-                    await emailHelper_1.emailHelper.sendEmail(emailTemplate_1.emailTemplate.paymentSuccess({
-                        name: userData.name,
-                        email: userData.email,
-                        amount: payment.amount,
-                        currency: payment.currency,
-                        transactionId: payment.paymentIntentId,
-                    }));
+                    const ticket = await ticket_model_1.Ticket.findById(payment.ticketId).populate('eventId');
+                    const event = ticket === null || ticket === void 0 ? void 0 : ticket.eventId;
+                    if (ticket && event) {
+                        await emailHelper_1.emailHelper.sendEmail(emailTemplate_1.emailTemplate.ticketConfirmed({
+                            name: userData.name,
+                            email: userData.email,
+                            eventName: event.title,
+                            ticketNumber: ticket.ticketNumber,
+                            ticketType: ticket.ticketType,
+                            quantity: ticket.quantity,
+                            qrCode: ticket.qrCode,
+                        }));
+                    }
                 }
                 // Update ticket status
                 await ticket_model_1.Ticket.findByIdAndUpdate(payment.ticketId, {
@@ -363,7 +369,7 @@ const getAllPayments = async (user, filterables, pagination) => {
             .limit(limit)
             .sort({ [sortBy]: sortOrder })
             .populate('ticketId')
-            .populate('authId', 'name email')
+            .populate('userId', 'name email')
             .populate('eventId', 'title startDate'),
         payment_model_1.Payment.countDocuments(whereConditions),
     ]);

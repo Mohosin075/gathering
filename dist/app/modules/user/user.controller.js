@@ -13,8 +13,11 @@ const pagination_1 = require("../../../interfaces/pagination");
 const ApiError_1 = __importDefault(require("../../../errors/ApiError"));
 const user_constants_1 = require("./user.constants");
 const updateProfile = (0, catchAsync_1.default)(async (req, res) => {
-    const { imageUrl, ...userData } = req.body;
-    imageUrl && (userData.profile = imageUrl);
+    console.log(req.body);
+    const { images, ...userData } = req.body;
+    if (images) {
+        userData.profile = Array.isArray(images) ? images[0] : images;
+    }
     const result = await user_service_1.UserServices.updateProfile(req.user, userData);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_codes_1.StatusCodes.OK,
@@ -31,7 +34,8 @@ const getAllUsers = (0, catchAsync_1.default)(async (req, res) => {
         statusCode: http_status_codes_1.StatusCodes.OK,
         success: true,
         message: 'Users retrieved successfully',
-        data: result,
+        meta: result.meta,
+        data: result.data,
     });
 });
 const deleteUser = (0, catchAsync_1.default)(async (req, res) => {
@@ -71,6 +75,9 @@ const getUserById = (0, catchAsync_1.default)(async (req, res) => {
 const updateUserStatus = (0, catchAsync_1.default)(async (req, res) => {
     const { userId } = req.params;
     const { status } = req.body;
+    if (!status) {
+        throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Status is required');
+    }
     const result = await user_service_1.UserServices.updateUserStatus(userId, status);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_codes_1.StatusCodes.OK,

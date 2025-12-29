@@ -28,11 +28,11 @@ exports.EventValidations = {
             startTime: zod_1.z.string(),
             timezone: zod_1.z.string().optional(),
             locationType: zod_1.z.enum(['physical', 'online']).default('online'),
-            location: zod_1.z.object({
-                type: zod_1.z.literal('Point').default('Point'),
-                coordinates: zod_1.z.array(zod_1.z.number()).length(2).default([0, 0]), // [longitude, latitude]
-                address: zod_1.z.string().optional(),
-            }),
+            // location: z.object({
+            //   type: z.literal('Point').default('Point'),
+            //   coordinates: z.array(z.number()).length(2).default([0, 0]), // [longitude, latitude]
+            //   address: z.string().optional(),
+            // }),
             address: zod_1.z.string(),
             meetingLink: zod_1.z.string().optional(),
             capacity: zod_1.z.number(),
@@ -63,23 +63,15 @@ exports.EventValidations = {
                 .optional(),
             visibility: zod_1.z.enum(['public', 'private', 'unlisted']).optional(),
             startDate: zod_1.z.string().optional(),
+            category: zod_1.z.string().optional(),
             startTime: zod_1.z.string().optional(),
             timezone: zod_1.z.string().optional(),
             locationType: zod_1.z.enum(['physical', 'online']).optional(),
-            location: zod_1.z
-                .object({
-                type: zod_1.z.literal('Point'),
-                coordinates: zod_1.z.array(zod_1.z.number()).length(2),
-            })
-                .optional(),
             address: zod_1.z.string().optional(),
             meetingLink: zod_1.z.string().optional(),
             capacity: zod_1.z.number().optional(),
-            ticketsSold: zod_1.z.number().optional(),
             ticketPrice: zod_1.z.number().optional(),
             images: zod_1.z.array(zod_1.z.string()).optional(),
-            gallery: zod_1.z.array(zod_1.z.string()).optional(),
-            views: zod_1.z.number().optional(),
             favorites: zod_1.z.number().optional(),
         })
             .strict(),
