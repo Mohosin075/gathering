@@ -18,6 +18,7 @@ import { Promotion } from '../promotion/promotion.model'
 import { EVENT_STATUS, EVENT_CATEGORIES } from '../../../enum/event'
 import { USER_ROLES, USER_STATUS } from '../../../enum/user'
 import { ActivityServices } from '../activity/activity.service'
+import { NotificationServices } from '../notification/notification.service'
 
 // Helper function to get month name
 const getMonthName = (monthIndex: number): string => {
@@ -128,8 +129,12 @@ export const getAdminDashboardStats = async (): Promise<IAdminStats> => {
     // Total Events for events created percentage
     Event.countDocuments(),
 
-    // Recent Activity
-    ActivityServices.getRecentActivities(6),
+    // Recent Activity (Notifications with analytics)
+    NotificationServices.getAllNotifications(
+      { role: USER_ROLES.SUPER_ADMIN } as any, // Admin view
+      {},
+      { limit: 6, sortBy: 'createdAt', sortOrder: 'desc' },
+    ),
   ])
 
   // Calculate growth percentages
@@ -168,7 +173,11 @@ export const getAdminDashboardStats = async (): Promise<IAdminStats> => {
     userGrowth: Math.round(userGrowth * 10) / 10, // Round to 1 decimal
     eventGrowth: Math.round(eventGrowth * 10) / 10,
     eventsCreatedGrowth: Math.round(eventsCreatedGrowth * 10) / 10,
-    recentActivities: recentActivities as any,
+    recentActivities: recentActivities.data.map((notification: any) => ({
+      ...notification,
+      openRate: notification.analytics?.openRate || 0,
+      engagement: notification.analytics?.engagement || 0,
+    })),
   }
 }
 
