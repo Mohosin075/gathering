@@ -83,6 +83,9 @@ export interface IIndividualEventStats {
   totalRevenue: number
   averageTicketPrice: number
   conversionRate: number
+  address: string
+  startDate: string
+  category: string
   dailyStats: Array<{
     date: string
     views: number
