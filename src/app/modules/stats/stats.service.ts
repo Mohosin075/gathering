@@ -1,4 +1,5 @@
 import { Event } from '../event/event.model'
+import { Types } from 'mongoose'
 import { User } from '../user/user.model'
 import { Review } from '../review/review.model'
 import { Follow } from '../follow/follow.model'
@@ -812,7 +813,7 @@ export const getOrganizerDashboardStats = async (
     Event.aggregate([
       {
         $match: {
-          organizerId: new Object(organizerId), // Ensure ObjectId match if needed, but mongoose auto-casts usually
+          organizerId: new Types.ObjectId(organizerId), // Ensure ObjectId match if needed, but mongoose auto-casts usually
           status: {
             $in: [
               EVENT_STATUS.COMPLETED,
@@ -883,7 +884,7 @@ export const getOrganizerDashboardStats = async (
     Event.aggregate([
       {
         $match: {
-          organizerId: new Object(organizerId),
+          organizerId: new Types.ObjectId(organizerId),
         },
       },
       {
@@ -1054,7 +1055,7 @@ export const getOrganizerEventStats = async (
     Event.aggregate([
       {
         $match: {
-          organizerId: new Object(organizerId),
+          organizerId: new Types.ObjectId(organizerId),
           createdAt: { $gte: startDate },
         },
       },
@@ -1101,7 +1102,7 @@ export const getOrganizerEventStats = async (
       },
     ]),
     Event.aggregate([
-      { $match: { organizerId: new Object(organizerId) } },
+      { $match: { organizerId: new Types.ObjectId(organizerId) } },
       {
         $group: {
           _id: '$category',
@@ -1368,7 +1369,7 @@ export const getOrganizerEventStatusStats = async (
 ): Promise<IEventStatusStats> => {
   const result = await Event.aggregate([
     {
-      $match: { organizerId: new Object(organizerId) },
+      $match: { organizerId: new Types.ObjectId(organizerId) },
     },
     {
       $group: {
@@ -1631,7 +1632,7 @@ export const getEventAnalytics = async (
     SavedEvent.aggregate([
       {
         $match: {
-          event: new Object(eventId),
+          event: new Types.ObjectId(eventId),
           createdAt: { $gte: startDate },
         },
       },
