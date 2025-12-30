@@ -1447,7 +1447,7 @@ export const getIndividualEventStats = async (
   // Get event details and ticket data in parallel
   const [eventData, ticketStats, dailyTicketData] = await Promise.all([
     Event.findById(eventId).select(
-      'capacity views ticketPrice ticketsSold address startDate category',
+      'capacity views ticketPrice ticketsSold address startDate category title',
     ),
 
     // Get ticket statistics
@@ -1544,6 +1544,7 @@ export const getIndividualEventStats = async (
     averageTicketPrice: Math.round(averageTicketPrice * 100) / 100,
     conversionRate: Math.round(conversionRate * 100) / 100,
     address: eventData.address,
+    title: eventData.title,
     startDate: eventData.startDate,
     category: eventData.category,
     dailyStats,
