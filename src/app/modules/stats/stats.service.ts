@@ -15,6 +15,7 @@ import {
   IEventAnalytics,
   IPromotionStats,
   IContentModerationStats,
+  IWeeklyEventStats,
 } from './stats.interface'
 import { Promotion } from '../promotion/promotion.model'
 import { Support } from '../support/support.model'
@@ -1870,6 +1871,59 @@ export const getContentModerationStats =
     return statusStats
   }
 
+// Get event created this week count per day
+export const getWeeklyEventCreatedStats = async (): Promise<
+  IWeeklyEventStats[]
+> => {
+  const now = new Date()
+  const startOfWeek = new Date(now)
+  // Set to current week's Sunday 00:00:00
+  startOfWeek.setDate(now.getDate() - now.getDay())
+  startOfWeek.setHours(0, 0, 0, 0)
+
+  const endOfWeek = new Date(startOfWeek)
+  endOfWeek.setDate(startOfWeek.getDate() + 6)
+  endOfWeek.setHours(23, 59, 59, 999)
+
+  const result = await Event.aggregate([
+    {
+      $match: {
+        createdAt: {
+          $gte: startOfWeek,
+          $lte: endOfWeek,
+        },
+      },
+    },
+    {
+      $group: {
+        _id: { $dayOfWeek: '$createdAt' },
+        count: { $sum: 1 },
+      },
+    },
+  ])
+
+  const days = [
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+  ]
+
+  const stats = days.map((day, index) => {
+    // MongoDB $dayOfWeek returns 1 for Sunday, 2 for Monday, etc.
+    const dayData = result.find(item => item._id === index + 1)
+    return {
+      day,
+      count: dayData ? dayData.count : 0,
+    }
+  })
+
+  return stats
+}
+
 export const EventStatsServices = {
   getAdminDashboardStats,
   getEventStats,
@@ -1888,4 +1942,5 @@ export const EventStatsServices = {
   getTopThreeRevenueEvents,
   getOrganizerUpcomingEvents,
   getContentModerationStats,
+  getWeeklyEventCreatedStats,
 }

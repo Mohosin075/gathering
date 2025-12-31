@@ -127,4 +127,11 @@ router.get(
   EventStatsController.getEventAnalytics,
 )
 
+// GET /api/stats/admin/events-this-week - admin event created this week. event count per day
+router.get(
+  '/admin/events-this-week',
+  auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+  EventStatsController.getWeeklyEventCreatedStats,
+)
+
 export const EventStatsRoutes = router

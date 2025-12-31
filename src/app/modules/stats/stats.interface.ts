@@ -121,3 +121,7 @@ export interface IContentModerationStats {
   in_progress: number
   dismissed: number
 }
+export interface IWeeklyEventStats {
+  day: string
+  count: number
+}

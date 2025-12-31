@@ -4,6 +4,7 @@ import catchAsync from '../../../shared/catchAsync'
 import sendResponse from '../../../shared/sendResponse'
 import { StatusCodes } from 'http-status-codes'
 import { JwtPayload } from 'jsonwebtoken'
+import { IWeeklyEventStats } from './stats.interface'
 
 const getAdminDashboardStats = catchAsync(async (req: Request, res: Response) => {
   const result = await EventStatsServices.getAdminDashboardStats()
@@ -217,6 +218,19 @@ const getContentModerationStats = catchAsync(async (req: Request, res: Response)
   })
 })
 
+const getWeeklyEventCreatedStats = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await EventStatsServices.getWeeklyEventCreatedStats()
+
+    sendResponse(res, {
+      statusCode: StatusCodes.OK,
+      success: true,
+      message: 'Weekly event statistics fetched successfully',
+      data: result,
+    })
+  },
+)
+
 export const EventStatsController = {
   getAdminDashboardStats,
   getEventStats,
@@ -235,4 +249,5 @@ export const EventStatsController = {
   getTopThreeRevenueEvents,
   getOrganizerUpcomingEvents,
   getContentModerationStats,
+  getWeeklyEventCreatedStats,
 }
