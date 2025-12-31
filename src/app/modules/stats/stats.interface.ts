@@ -125,3 +125,9 @@ export interface IWeeklyEventStats {
   day: string
   count: number
 }
+
+export interface IUserEngagementStats {
+  month: string
+  highlyActive: number
+  inactive: number
+}

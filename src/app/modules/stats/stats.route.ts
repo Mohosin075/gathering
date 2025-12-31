@@ -134,4 +134,11 @@ router.get(
   EventStatsController.getWeeklyEventCreatedStats,
 )
 
+// GET /api/stats/admin/user-engagement - user engagement breakdown (Highly Active vs Inactive)
+router.get(
+  '/admin/user-engagement',
+  auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+  EventStatsController.getUserEngagementStats,
+)
+
 export const EventStatsRoutes = router

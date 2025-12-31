@@ -16,9 +16,11 @@ import {
   IPromotionStats,
   IContentModerationStats,
   IWeeklyEventStats,
+  IUserEngagementStats,
 } from './stats.interface'
 import { Promotion } from '../promotion/promotion.model'
 import { Support } from '../support/support.model'
+import { Activity } from '../activity/activity.model'
 import { SUPPORT_STATUS } from '../../../enum/support'
 import { EVENT_STATUS, EVENT_CATEGORIES } from '../../../enum/event'
 import { USER_ROLES, USER_STATUS } from '../../../enum/user'
@@ -1924,6 +1926,48 @@ export const getWeeklyEventCreatedStats = async (): Promise<
   return stats
 }
 
+// Get user engagement breakdown (Highly Active vs Inactive) trend for 12 months
+export const getUserEngagementStats = async (): Promise<
+  IUserEngagementStats[]
+> => {
+  const result: IUserEngagementStats[] = []
+  const now = new Date()
+
+  for (let i = 11; i >= 0; i--) {
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 0)
+    endOfMonth.setHours(23, 59, 59, 999)
+
+    // A user is considered "Highly Active" if they have at least one activity in the last 30 days from that month's end point
+    // For historical data, we simplify: In that month, how many users were active?
+    // Based on user request image, we need a trend.
+    // Let's define:
+    // Highly Active: Users who had activity in that specific month.
+    // Inactive: Users who were registered but had no activity in that specific month.
+
+    const [activeCount, totalUsersAtPoint] = await Promise.all([
+      // Users who had activity in this month
+      Activity.distinct('userId', {
+        timestamp: { $gte: startOfMonth, $lte: endOfMonth },
+      }).then(users => users.length),
+
+      // Total users registered up to the end of this month
+      User.countDocuments({
+        createdAt: { $lte: endOfMonth },
+        role: USER_ROLES.USER, // Focusing on regular users
+      }),
+    ])
+
+    result.push({
+      month: getMonthName(startOfMonth.getMonth()),
+      highlyActive: activeCount,
+      inactive: Math.max(0, totalUsersAtPoint - activeCount),
+    })
+  }
+
+  return result
+}
+
 export const EventStatsServices = {
   getAdminDashboardStats,
   getEventStats,
@@ -1943,4 +1987,5 @@ export const EventStatsServices = {
   getOrganizerUpcomingEvents,
   getContentModerationStats,
   getWeeklyEventCreatedStats,
+  getUserEngagementStats,
 }
