@@ -9,7 +9,7 @@ const router = express.Router()
 
 router.get(
   '/',
-  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER),
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER, USER_ROLES.USER),
   validateRequest(NotificationValidations.filter),
   NotificationController.getAllNotifications,
 )
@@ -49,7 +49,7 @@ router.get(
 
 router.post(
   '/',
-  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER, USER_ROLES.USER),
   validateRequest(NotificationValidations.create),
   NotificationController.createNotification,
 )
@@ -114,7 +114,7 @@ router.patch(
 
 router.delete(
   '/:id',
-  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER, USER_ROLES.USER),
   NotificationController.deleteNotification,
 )
 
