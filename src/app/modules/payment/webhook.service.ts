@@ -68,19 +68,11 @@ const handleCheckoutSessionCompleted = async (
         { session: mongoSession },
       )
 
-      // Update event tickets sold
       const ticket = await Ticket.findById(payment.ticketId).session(
         mongoSession,
       )
-      if (ticket) {
-        await Event.findByIdAndUpdate(
-          ticket.eventId,
-          {
-            $inc: { ticketsSold: ticket.quantity },
-          },
-          { session: mongoSession },
-        )
 
+      if (ticket) {
         // Create Attendee record automatically
         await Attendee.create(
           [
@@ -160,6 +152,20 @@ const handleCheckoutSessionExpired = async (session: any): Promise<void> => {
         },
         { session: mongoSession },
       )
+
+      // Release reserved capacity
+      const ticket = await Ticket.findById(payment.ticketId).session(
+        mongoSession,
+      )
+      if (ticket) {
+        await Event.findByIdAndUpdate(
+          ticket.eventId,
+          {
+            $inc: { ticketsSold: -ticket.quantity },
+          },
+          { session: mongoSession },
+        )
+      }
     }
 
     await mongoSession.commitTransaction()
@@ -234,14 +240,6 @@ const handlePaymentSuccess = async (paymentIntent: any): Promise<void> => {
     // Update event
     const ticket = await Ticket.findById(payment.ticketId).session(mongoSession)
     if (ticket) {
-      await Event.findByIdAndUpdate(
-        ticket.eventId,
-        {
-          $inc: { ticketsSold: ticket.quantity },
-        },
-        { session: mongoSession },
-      )
-
       // Create Attendee record automatically
       await Attendee.create(
         [
@@ -309,6 +307,20 @@ const handlePaymentFailure = async (paymentIntent: any): Promise<void> => {
         },
         { session: mongoSession },
       )
+
+      // Release reserved capacity
+      const ticket = await Ticket.findById(payment.ticketId).session(
+        mongoSession,
+      )
+      if (ticket) {
+        await Event.findByIdAndUpdate(
+          ticket.eventId,
+          {
+            $inc: { ticketsSold: -ticket.quantity },
+          },
+          { session: mongoSession },
+        )
+      }
     }
 
     await mongoSession.commitTransaction()
