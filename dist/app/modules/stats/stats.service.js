@@ -33,16 +33,19 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EventStatsServices = exports.getOrganizerPromotionStats = exports.getEventAnalytics = exports.getIndividualEventStats = exports.getAppSummary = exports.getOrganizerAppSummary = exports.getOrganizerEventStatusStats = exports.getOrganizerRevenueStats = exports.getOrganizerEventStats = exports.getOrganizerDashboardStats = exports.getEventStatusStats = exports.getRevenueStats = exports.getUserStats = exports.getEventStats = exports.getAdminDashboardStats = void 0;
+exports.EventStatsServices = exports.getUserEngagementStats = exports.getWeeklyEventCreatedStats = exports.getContentModerationStats = exports.getOrganizerPromotionStats = exports.getEventAnalytics = exports.getIndividualEventStats = exports.getAppSummary = exports.getOrganizerAppSummary = exports.getOrganizerEventStatusStats = exports.getOrganizerRevenueStats = exports.getOrganizerEventStats = exports.getOrganizerDashboardStats = exports.getEventStatusStats = exports.getRevenueStats = exports.getUserStats = exports.getEventStats = exports.getAdminDashboardStats = void 0;
 const event_model_1 = require("../event/event.model");
+const mongoose_1 = require("mongoose");
 const user_model_1 = require("../user/user.model");
 const review_model_1 = require("../review/review.model");
 const follow_model_1 = require("../follow/follow.model");
 const savedEvent_model_1 = require("../savedEvent/savedEvent.model");
 const promotion_model_1 = require("../promotion/promotion.model");
+const support_model_1 = require("../support/support.model");
+const activity_model_1 = require("../activity/activity.model");
 const event_1 = require("../../../enum/event");
 const user_1 = require("../../../enum/user");
-const activity_service_1 = require("../activity/activity.service");
+const notification_service_1 = require("../notification/notification.service");
 // Helper function to get month name
 const getMonthName = (monthIndex) => {
     const months = [
@@ -118,8 +121,9 @@ const getAdminDashboardStats = async () => {
         // Total Events for events created percentage
         // Total Events for events created percentage
         event_model_1.Event.countDocuments(),
-        // Recent Activity
-        activity_service_1.ActivityServices.getRecentActivities(6),
+        // Recent Activity (Notifications with analytics)
+        notification_service_1.NotificationServices.getAllNotifications({ role: user_1.USER_ROLES.SUPER_ADMIN }, // Admin view
+        {}, { limit: 6, sortBy: 'createdAt', sortOrder: 'desc' }),
     ]);
     // Calculate growth percentages
     const userGrowth = lastMonthUsers > 0
@@ -149,7 +153,14 @@ const getAdminDashboardStats = async () => {
         userGrowth: Math.round(userGrowth * 10) / 10, // Round to 1 decimal
         eventGrowth: Math.round(eventGrowth * 10) / 10,
         eventsCreatedGrowth: Math.round(eventsCreatedGrowth * 10) / 10,
-        recentActivities: recentActivities,
+        recentActivities: recentActivities.data.map((notification) => {
+            var _a, _b;
+            return ({
+                ...notification,
+                openRate: ((_a = notification.analytics) === null || _a === void 0 ? void 0 : _a.openRate) || 0,
+                engagement: ((_b = notification.analytics) === null || _b === void 0 ? void 0 : _b.engagement) || 0,
+            });
+        }),
     };
 };
 exports.getAdminDashboardStats = getAdminDashboardStats;
@@ -690,7 +701,7 @@ const getOrganizerDashboardStats = async (organizerId) => {
         event_model_1.Event.aggregate([
             {
                 $match: {
-                    organizerId: new Object(organizerId), // Ensure ObjectId match if needed, but mongoose auto-casts usually
+                    organizerId: new mongoose_1.Types.ObjectId(organizerId), // Ensure ObjectId match if needed, but mongoose auto-casts usually
                     status: {
                         $in: [
                             event_1.EVENT_STATUS.COMPLETED,
@@ -759,7 +770,7 @@ const getOrganizerDashboardStats = async (organizerId) => {
         event_model_1.Event.aggregate([
             {
                 $match: {
-                    organizerId: new Object(organizerId),
+                    organizerId: new mongoose_1.Types.ObjectId(organizerId),
                 },
             },
             {
@@ -904,7 +915,7 @@ const getOrganizerEventStats = async (organizerId, months = 6) => {
         event_model_1.Event.aggregate([
             {
                 $match: {
-                    organizerId: new Object(organizerId),
+                    organizerId: new mongoose_1.Types.ObjectId(organizerId),
                     createdAt: { $gte: startDate },
                 },
             },
@@ -951,7 +962,7 @@ const getOrganizerEventStats = async (organizerId, months = 6) => {
             },
         ]),
         event_model_1.Event.aggregate([
-            { $match: { organizerId: new Object(organizerId) } },
+            { $match: { organizerId: new mongoose_1.Types.ObjectId(organizerId) } },
             {
                 $group: {
                     _id: '$category',
@@ -1186,7 +1197,7 @@ exports.getOrganizerRevenueStats = getOrganizerRevenueStats;
 const getOrganizerEventStatusStats = async (organizerId) => {
     const result = await event_model_1.Event.aggregate([
         {
-            $match: { organizerId: new Object(organizerId) },
+            $match: { organizerId: new mongoose_1.Types.ObjectId(organizerId) },
         },
         {
             $group: {
@@ -1253,8 +1264,7 @@ const getIndividualEventStats = async (eventId, days = 7) => {
     startDate.setDate(startDate.getDate() - days);
     // Get event details and ticket data in parallel
     const [eventData, ticketStats, dailyTicketData] = await Promise.all([
-        // Get event details
-        event_model_1.Event.findById(eventId).select('capacity views ticketPrice ticketsSold'),
+        event_model_1.Event.findById(eventId).select('capacity views ticketPrice ticketsSold address startDate category title'),
         // Get ticket statistics
         Ticket.aggregate([
             {
@@ -1339,6 +1349,10 @@ const getIndividualEventStats = async (eventId, days = 7) => {
         totalRevenue: Math.round(totalRevenue * 100) / 100,
         averageTicketPrice: Math.round(averageTicketPrice * 100) / 100,
         conversionRate: Math.round(conversionRate * 100) / 100,
+        address: eventData.address,
+        title: eventData.title,
+        startDate: eventData.startDate,
+        category: eventData.category,
         dailyStats,
     };
 };
@@ -1414,7 +1428,7 @@ const getEventAnalytics = async (eventId) => {
         savedEvent_model_1.SavedEvent.aggregate([
             {
                 $match: {
-                    event: new Object(eventId),
+                    event: new mongoose_1.Types.ObjectId(eventId),
                     createdAt: { $gte: startDate },
                 },
             },
@@ -1595,6 +1609,111 @@ const getOrganizerPromotionStats = async (organizerId) => {
     };
 };
 exports.getOrganizerPromotionStats = getOrganizerPromotionStats;
+// Get content moderation stats (support tickets)
+const getContentModerationStats = async () => {
+    const result = await support_model_1.Support.aggregate([
+        {
+            $group: {
+                _id: '$status',
+                count: { $sum: 1 },
+            },
+        },
+    ]);
+    // Convert array to object with default values
+    const statusStats = {
+        deleted: 0,
+        solved: 0,
+        in_progress: 0,
+        dismissed: 0,
+    };
+    result.forEach(item => {
+        if (item._id && statusStats.hasOwnProperty(item._id)) {
+            statusStats[item._id] = item.count;
+        }
+    });
+    return statusStats;
+};
+exports.getContentModerationStats = getContentModerationStats;
+// Get event created this week count per day
+const getWeeklyEventCreatedStats = async () => {
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    // Set to current week's Sunday 00:00:00
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+    const result = await event_model_1.Event.aggregate([
+        {
+            $match: {
+                createdAt: {
+                    $gte: startOfWeek,
+                    $lte: endOfWeek,
+                },
+            },
+        },
+        {
+            $group: {
+                _id: { $dayOfWeek: '$createdAt' },
+                count: { $sum: 1 },
+            },
+        },
+    ]);
+    const days = [
+        'Sunday',
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+    ];
+    const stats = days.map((day, index) => {
+        // MongoDB $dayOfWeek returns 1 for Sunday, 2 for Monday, etc.
+        const dayData = result.find(item => item._id === index + 1);
+        return {
+            day,
+            count: dayData ? dayData.count : 0,
+        };
+    });
+    return stats;
+};
+exports.getWeeklyEventCreatedStats = getWeeklyEventCreatedStats;
+// Get user engagement breakdown (Highly Active vs Inactive) trend for 12 months
+const getUserEngagementStats = async () => {
+    const result = [];
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+        endOfMonth.setHours(23, 59, 59, 999);
+        // A user is considered "Highly Active" if they have at least one activity in the last 30 days from that month's end point
+        // For historical data, we simplify: In that month, how many users were active?
+        // Based on user request image, we need a trend.
+        // Let's define:
+        // Highly Active: Users who had activity in that specific month.
+        // Inactive: Users who were registered but had no activity in that specific month.
+        const [activeCount, totalUsersAtPoint] = await Promise.all([
+            // Users who had activity in this month
+            activity_model_1.Activity.distinct('userId', {
+                timestamp: { $gte: startOfMonth, $lte: endOfMonth },
+            }).then(users => users.length),
+            // Total users registered up to the end of this month
+            user_model_1.User.countDocuments({
+                createdAt: { $lte: endOfMonth },
+                role: user_1.USER_ROLES.USER, // Focusing on regular users
+            }),
+        ]);
+        result.push({
+            month: getMonthName(startOfMonth.getMonth()),
+            highlyActive: activeCount,
+            inactive: Math.max(0, totalUsersAtPoint - activeCount),
+        });
+    }
+    return result;
+};
+exports.getUserEngagementStats = getUserEngagementStats;
 exports.EventStatsServices = {
     getAdminDashboardStats: exports.getAdminDashboardStats,
     getEventStats: exports.getEventStats,
@@ -1612,4 +1731,7 @@ exports.EventStatsServices = {
     getOrganizerPromotionStats: exports.getOrganizerPromotionStats,
     getTopThreeRevenueEvents,
     getOrganizerUpcomingEvents,
+    getContentModerationStats: exports.getContentModerationStats,
+    getWeeklyEventCreatedStats: exports.getWeeklyEventCreatedStats,
+    getUserEngagementStats: exports.getUserEngagementStats,
 };

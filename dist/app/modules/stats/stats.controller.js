@@ -160,6 +160,33 @@ const getOrganizerUpcomingEvents = (0, catchAsync_1.default)(async (req, res) =>
         data: result,
     });
 });
+const getContentModerationStats = (0, catchAsync_1.default)(async (req, res) => {
+    const result = await stats_service_1.EventStatsServices.getContentModerationStats();
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_codes_1.StatusCodes.OK,
+        success: true,
+        message: 'Content moderation statistics fetched successfully',
+        data: result,
+    });
+});
+const getWeeklyEventCreatedStats = (0, catchAsync_1.default)(async (req, res) => {
+    const result = await stats_service_1.EventStatsServices.getWeeklyEventCreatedStats();
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_codes_1.StatusCodes.OK,
+        success: true,
+        message: 'Weekly event statistics fetched successfully',
+        data: result,
+    });
+});
+const getUserEngagementStats = (0, catchAsync_1.default)(async (req, res) => {
+    const result = await stats_service_1.EventStatsServices.getUserEngagementStats();
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_codes_1.StatusCodes.OK,
+        success: true,
+        message: 'User engagement statistics fetched successfully',
+        data: result,
+    });
+});
 exports.EventStatsController = {
     getAdminDashboardStats,
     getEventStats,
@@ -177,4 +204,7 @@ exports.EventStatsController = {
     getOrganizerPromotionStats,
     getTopThreeRevenueEvents,
     getOrganizerUpcomingEvents,
+    getContentModerationStats,
+    getWeeklyEventCreatedStats,
+    getUserEngagementStats,
 };

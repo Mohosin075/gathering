@@ -16,9 +16,9 @@ export class NotificationIntegration {
     ticketId: Types.ObjectId | string,
   ): Promise<void> {
     try {
-      const ticket = await Ticket.findById(ticketId)
+      const ticket = (await Ticket.findById(ticketId)
         .populate('eventId', 'title')
-        .populate('attendeeId', 'email name')
+        .populate('attendeeId', 'email name')) as any
 
       if (!ticket || !ticket.attendeeId) return
 
@@ -49,9 +49,9 @@ export class NotificationIntegration {
     paymentId: Types.ObjectId | string,
   ): Promise<void> {
     try {
-      const payment = await Payment.findById(paymentId)
+      const payment = (await Payment.findById(paymentId)
         .populate('userId', 'email name')
-        .populate('eventId', 'title')
+        .populate('eventId', 'title')) as any
 
       if (!payment) return
 
@@ -81,9 +81,9 @@ export class NotificationIntegration {
     paymentId: Types.ObjectId | string,
   ): Promise<void> {
     try {
-      const payment = await Payment.findById(paymentId)
+      const payment = (await Payment.findById(paymentId)
         .populate('userId', 'email name')
-        .populate('eventId', 'title')
+        .populate('eventId', 'title')) as any
 
       if (!payment) return
 
@@ -111,17 +111,17 @@ export class NotificationIntegration {
 
   static async onEventCreated(eventId: Types.ObjectId | string): Promise<void> {
     try {
-      const event = await Event.findById(eventId).populate(
+      const event = (await Event.findById(eventId).populate(
         'organizerId',
         'email name',
-      )
+      )) as any
 
       if (!event) return
 
       // Notify organizer
       await NotificationServices.createNotification(
         {
-          userId: (event as any).organizerId?._id || (event as any).organizerId,
+          userId: event.organizerId?._id || event.organizerId,
           title: 'Event Published Successfully',
           content: `Your event "${event.title}" is now live and visible to attendees.`,
           type: NotificationType.EVENT_CREATED,
@@ -157,7 +157,7 @@ export class NotificationIntegration {
       for (const attendee of attendees) {
         await NotificationServices.createNotification(
           {
-            userId: attendee.userId._id,
+            userId: (attendee as any).userId._id,
             title: 'Event Updated',
             content: `"${event.title}" has been updated. Changes: ${changes.join(', ')}.`,
             type: NotificationType.EVENT_UPDATED,
@@ -184,10 +184,10 @@ export class NotificationIntegration {
     checkedInBy: Types.ObjectId,
   ): Promise<void> {
     try {
-      const attendee = await Attendee.findById(attendeeId)
+      const attendee = (await Attendee.findById(attendeeId)
         .populate('userId', 'email name')
         .populate('eventId', 'title')
-        .populate('checkInBy', 'name')
+        .populate('checkInBy', 'name')) as any
 
       if (!attendee) return
 
@@ -202,8 +202,7 @@ export class NotificationIntegration {
           priority: NotificationPriority.MEDIUM,
           metadata: {
             attendeeId: attendee._id,
-            eventId:
-              (attendee as any).eventId?._id || (attendee as any).eventId,
+            eventId: attendee.eventId?._id || attendee.eventId,
             checkedInBy: checkedInBy,
           },
           actionUrl: `${process.env.CLIENT_URL}/tickets/${attendee.ticketId}`,
@@ -212,19 +211,19 @@ export class NotificationIntegration {
         true,
       )
 
-      const event = await Event.findById(
-        (attendee as any).eventId?._id || (attendee as any).eventId,
-      ).populate('organizerId', 'email name')
+      const event = (await Event.findById(
+        attendee.eventId?._id || attendee.eventId,
+      ).populate('organizerId', 'email name')) as any
 
       if (
         event &&
-        (event as any).organizerId &&
-        (event as any).organizerId._id.toString() !== checkedInBy.toString()
+        event.organizerId &&
+        event.organizerId._id.toString() !== checkedInBy.toString()
       ) {
         await NotificationServices.createNotification({
-          userId: (event as any).organizerId._id,
+          userId: event.organizerId._id,
           title: 'Attendee Checked In',
-          content: `${(attendee as any).userId?.name} has been checked in to "${event.title}".`,
+          content: `${attendee.userId?.name} has been checked in to "${event.title}".`,
           type: NotificationType.ATTENDEE_CHECKED_IN,
           channel: NotificationChannel.IN_APP,
           priority: NotificationPriority.LOW,

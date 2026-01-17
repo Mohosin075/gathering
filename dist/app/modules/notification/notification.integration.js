@@ -11,9 +11,9 @@ const user_model_1 = require("../user/user.model");
 class NotificationIntegration {
     static async onTicketPurchase(ticketId) {
         try {
-            const ticket = await ticket_model_1.Ticket.findById(ticketId)
+            const ticket = (await ticket_model_1.Ticket.findById(ticketId)
                 .populate('eventId', 'title')
-                .populate('attendeeId', 'email name');
+                .populate('attendeeId', 'email name'));
             if (!ticket || !ticket.attendeeId)
                 return;
             // Create ticket confirmation notification
@@ -38,9 +38,9 @@ class NotificationIntegration {
     }
     static async onPaymentSuccess(paymentId) {
         try {
-            const payment = await payment_model_1.Payment.findById(paymentId)
+            const payment = (await payment_model_1.Payment.findById(paymentId)
                 .populate('userId', 'email name')
-                .populate('eventId', 'title');
+                .populate('eventId', 'title'));
             if (!payment)
                 return;
             await notification_service_1.NotificationServices.createNotification({
@@ -64,9 +64,9 @@ class NotificationIntegration {
     }
     static async onPaymentFailed(paymentId) {
         try {
-            const payment = await payment_model_1.Payment.findById(paymentId)
+            const payment = (await payment_model_1.Payment.findById(paymentId)
                 .populate('userId', 'email name')
-                .populate('eventId', 'title');
+                .populate('eventId', 'title'));
             if (!payment)
                 return;
             await notification_service_1.NotificationServices.createNotification({
@@ -91,7 +91,7 @@ class NotificationIntegration {
     static async onEventCreated(eventId) {
         var _a;
         try {
-            const event = await event_model_1.Event.findById(eventId).populate('organizerId', 'email name');
+            const event = (await event_model_1.Event.findById(eventId).populate('organizerId', 'email name'));
             if (!event)
                 return;
             // Notify organizer
@@ -145,10 +145,10 @@ class NotificationIntegration {
     static async onAttendeeCheckIn(attendeeId, checkedInBy) {
         var _a, _b, _c;
         try {
-            const attendee = await attendee_model_1.Attendee.findById(attendeeId)
+            const attendee = (await attendee_model_1.Attendee.findById(attendeeId)
                 .populate('userId', 'email name')
                 .populate('eventId', 'title')
-                .populate('checkInBy', 'name');
+                .populate('checkInBy', 'name'));
             if (!attendee)
                 return;
             // Notify attendee
@@ -167,7 +167,7 @@ class NotificationIntegration {
                 actionUrl: `${process.env.CLIENT_URL}/tickets/${attendee.ticketId}`,
                 actionText: 'View Ticket',
             }, true);
-            const event = await event_model_1.Event.findById(((_b = attendee.eventId) === null || _b === void 0 ? void 0 : _b._id) || attendee.eventId).populate('organizerId', 'email name');
+            const event = (await event_model_1.Event.findById(((_b = attendee.eventId) === null || _b === void 0 ? void 0 : _b._id) || attendee.eventId).populate('organizerId', 'email name'));
             if (event &&
                 event.organizerId &&
                 event.organizerId._id.toString() !== checkedInBy.toString()) {

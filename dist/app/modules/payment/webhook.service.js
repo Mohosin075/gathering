@@ -56,12 +56,8 @@ const handleCheckoutSessionCompleted = async (sessionData) => {
                 status: 'confirmed',
                 paymentStatus: 'paid',
             }, { session: mongoSession });
-            // Update event tickets sold
             const ticket = await ticket_model_1.Ticket.findById(payment.ticketId).session(mongoSession);
             if (ticket) {
-                await event_model_1.Event.findByIdAndUpdate(ticket.eventId, {
-                    $inc: { ticketsSold: ticket.quantity },
-                }, { session: mongoSession });
                 // Create Attendee record automatically
                 await attendee_model_1.Attendee.create([
                     {
@@ -122,6 +118,13 @@ const handleCheckoutSessionExpired = async (session) => {
                 paymentStatus: 'failed',
                 status: 'cancelled',
             }, { session: mongoSession });
+            // Release reserved capacity
+            const ticket = await ticket_model_1.Ticket.findById(payment.ticketId).session(mongoSession);
+            if (ticket) {
+                await event_model_1.Event.findByIdAndUpdate(ticket.eventId, {
+                    $inc: { ticketsSold: -ticket.quantity },
+                }, { session: mongoSession });
+            }
         }
         await mongoSession.commitTransaction();
     }
@@ -182,9 +185,6 @@ const handlePaymentSuccess = async (paymentIntent) => {
         // Update event
         const ticket = await ticket_model_1.Ticket.findById(payment.ticketId).session(mongoSession);
         if (ticket) {
-            await event_model_1.Event.findByIdAndUpdate(ticket.eventId, {
-                $inc: { ticketsSold: ticket.quantity },
-            }, { session: mongoSession });
             // Create Attendee record automatically
             await attendee_model_1.Attendee.create([
                 {
@@ -238,6 +238,13 @@ const handlePaymentFailure = async (paymentIntent) => {
                 paymentStatus: 'failed',
                 status: 'cancelled',
             }, { session: mongoSession });
+            // Release reserved capacity
+            const ticket = await ticket_model_1.Ticket.findById(payment.ticketId).session(mongoSession);
+            if (ticket) {
+                await event_model_1.Event.findByIdAndUpdate(ticket.eventId, {
+                    $inc: { ticketsSold: -ticket.quantity },
+                }, { session: mongoSession });
+            }
         }
         await mongoSession.commitTransaction();
     }

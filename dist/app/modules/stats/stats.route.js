@@ -19,6 +19,8 @@ router.get('/admin/users', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.U
 router.get('/admin/revenue', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), stats_controller_1.EventStatsController.getRevenueStats);
 // GET /api/stats/admin/event-status - Event status distribution
 router.get('/admin/event-status', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), stats_controller_1.EventStatsController.getEventStatusStats);
+// GET /api/stats/admin/content-moderation - Content moderation status distribution
+router.get('/admin/content-moderation', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), stats_controller_1.EventStatsController.getContentModerationStats);
 // GET /api/stats/admin/summary - All statistics in one endpoint
 router.get('/admin/summary', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), stats_controller_1.EventStatsController.getAppSummary);
 // Organizer Routes
@@ -43,4 +45,8 @@ router.get('/organizer/event/:eventId', (0, auth_1.default)(user_1.USER_ROLES.OR
 router.get('/organizer/top-revenue-events', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ORGANIZER), stats_controller_1.EventStatsController.getTopThreeRevenueEvents);
 // GET /api/stats/analytics/:eventId - detailed analytics for admin and organizer
 router.get('/analytics/:eventId', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ORGANIZER), stats_controller_1.EventStatsController.getEventAnalytics);
+// GET /api/stats/admin/events-this-week - admin event created this week. event count per day
+router.get('/admin/events-this-week', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), stats_controller_1.EventStatsController.getWeeklyEventCreatedStats);
+// GET /api/stats/admin/user-engagement - user engagement breakdown (Highly Active vs Inactive)
+router.get('/admin/user-engagement', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), stats_controller_1.EventStatsController.getUserEngagementStats);
 exports.EventStatsRoutes = router;
