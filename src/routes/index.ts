@@ -17,9 +17,9 @@ import { AttendeeRoutes } from '../app/modules/attendee/attendee.route'
 import { MeetingRoutes } from '../app/modules/meeting/meeting.route'
 import { LiveStreamRoutes } from '../app/modules/livestream/livestream.route'
 import { ChatmessageRoutes } from '../app/modules/chatmessage/chatmessage.route'
-import { LiveStreamWebhookRoutes } from '../app/modules/livestream/livestream.webhook.routes'
 import { FollowRoutes } from '../app/modules/follow/follow.route'
 import { EventStatsRoutes } from '../app/modules/stats/stats.route'
+import { LiveStreamWebhookRoutes } from '../app/modules/livestream/livestream.webhook.routes'
 
 const router = express.Router()
 

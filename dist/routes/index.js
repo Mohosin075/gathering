@@ -22,9 +22,9 @@ const attendee_route_1 = require("../app/modules/attendee/attendee.route");
 const meeting_route_1 = require("../app/modules/meeting/meeting.route");
 const livestream_route_1 = require("../app/modules/livestream/livestream.route");
 const chatmessage_route_1 = require("../app/modules/chatmessage/chatmessage.route");
-const livestream_webhook_routes_1 = require("../app/modules/livestream/livestream.webhook.routes");
 const follow_route_1 = require("../app/modules/follow/follow.route");
 const stats_route_1 = require("../app/modules/stats/stats.route");
+const livestream_webhook_routes_1 = require("../app/modules/livestream/livestream.webhook.routes");
 const router = express_1.default.Router();
 const apiRoutes = [
     { path: '/user', route: user_route_1.UserRoutes },
