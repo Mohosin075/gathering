@@ -4,11 +4,12 @@ import {
   NotificationPriority,
 } from './notification.interface'
 
-export const notificationSearchableFields = ['title', 'content']
+export const notificationSearchableFields = ['title', 'content', 'targetAudience']
 
 export const notificationFilterableFields = [
   'searchTerm',
   'userId',
+  'targetAudience',
   'type',
   'channel',
   'status',

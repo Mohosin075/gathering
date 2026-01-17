@@ -61,6 +61,13 @@ router.post(
 )
 
 router.post(
+  '/manual',
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
+  validateRequest(NotificationValidations.sendManual),
+  NotificationController.sendManualNotification,
+)
+
+router.post(
   '/test-email',
   auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
   validateRequest(NotificationValidations.sendEmail),

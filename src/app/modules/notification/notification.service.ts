@@ -10,6 +10,7 @@ import {
   NotificationPriority,
   INotificationStats,
   INotificationAnalytics,
+  TARGET_AUDIENCE,
 } from './notification.interface'
 import { Notification } from './notification.model'
 import { JwtPayload } from 'jsonwebtoken'
@@ -51,22 +52,24 @@ const createNotification = async (
     const notification = await Notification.create(notificationData)
 
     // Send real-time notification via socket
-    if (notification.channel !== NotificationChannel.EMAIL) {
+    if (notification.channel !== NotificationChannel.EMAIL && notification.userId) {
       // Emit socket event for real-time notification
-      // const io = (global as any).io
-
       if (io) {
         io.to(notification.userId.toString()).emit('notification', {
           type: 'NEW_NOTIFICATION',
           data: notification,
         })
-        console.log({ notification })
       }
     }
 
     // Send email if requested
     if (sendEmail && notification.channel !== NotificationChannel.IN_APP) {
-      await sendNotificationEmail(notification)
+      // Ensure notification.userId exists before sending email
+      if (notification.userId) {
+        await sendNotificationEmail(notification)
+      } else {
+        console.warn('Cannot send email for notification without userId:', notification._id)
+      }
     }
 
     return notification
@@ -344,9 +347,23 @@ const getAllNotifications = async (
   }
 
   // User-specific filtering (unless admin)
+  // User-specific filtering (unless admin)
   if ((user as any).role === 'user') {
     andConditions.push({
-      userId: new Types.ObjectId((user as any).authId as string),
+      $or: [
+        { userId: new Types.ObjectId((user as any).authId as string) },
+        { targetAudience: TARGET_AUDIENCE.ALL_USER },
+        { targetAudience: TARGET_AUDIENCE.ACTIVE_USER },
+      ],
+    })
+  } else if ((user as any).role === 'organizer') {
+    andConditions.push({
+      $or: [
+        { userId: new Types.ObjectId((user as any).authId as string) },
+        { targetAudience: TARGET_AUDIENCE.ALL_USER },
+        { targetAudience: TARGET_AUDIENCE.ACTIVE_USER },
+        { targetAudience: TARGET_AUDIENCE.ORGANIZER },
+      ],
     })
   }
 
@@ -541,7 +558,16 @@ const getNotificationStats = async (
   const query: any = {}
 
   if (user.role === 'user') {
-    query.userId = user.authId
+    query.$or = [
+      { userId: user.authId },
+      { targetAudience: TARGET_AUDIENCE.ALL_USER },
+    ]
+  } else if (user.role === 'organizer') {
+    query.$or = [
+      { userId: user.authId },
+      { targetAudience: TARGET_AUDIENCE.ALL_USER },
+      { targetAudience: TARGET_AUDIENCE.ORGANIZER },
+    ]
   }
 
   const [total, unread, byType, byChannel, byStatus] = await Promise.all([
@@ -585,13 +611,28 @@ const getNotificationStats = async (
 }
 
 const getMyNotifications = async (
-  user: JwtPayload & { authId: string },
+  user: JwtPayload & { authId: string; role?: string },
   pagination: IPaginationOptions,
 ) => {
   const { page, skip, limit, sortBy, sortOrder } =
     paginationHelper.calculatePagination(pagination)
 
-  const query = { userId: user.authId, isArchived: false }
+  const query: any = {
+    $or: [
+      { userId: new Types.ObjectId(user.authId) },
+      { targetAudience: TARGET_AUDIENCE.ALL_USER },
+    ],
+    isArchived: false,
+  }
+
+  // Add role-specific broadcast logic
+  if (user.role === 'organizer') {
+    query.$or.push({ targetAudience: TARGET_AUDIENCE.ORGANIZER })
+  }
+
+  // Active status logic (assuming active users have specific status in JWT or we fetch it)
+  // For now, including active user broadcasts for everyone since they are 'active' if logged in
+  query.$or.push({ targetAudience: TARGET_AUDIENCE.ACTIVE_USER })
 
   const [result, total] = await Promise.all([
     Notification.find(query)
@@ -652,6 +693,80 @@ const sendTestEmail = async (
   }
 }
 
+const sendManualNotification = async (
+  payload: CreateNotificationDto,
+): Promise<{ success: boolean }> => {
+  try {
+    // Create a single broadcast notification record
+    const notificationData = {
+      title: payload.title,
+      content: payload.content,
+      type: payload.type || NotificationType.SYSTEM_ALERT,
+      channel: payload.channel || NotificationChannel.IN_APP,
+      priority: payload.priority || NotificationPriority.MEDIUM,
+      targetAudience: payload.targetAudience || TARGET_AUDIENCE.ACTIVE_USER,
+      actionUrl: payload.actionUrl,
+      actionText: payload.actionText,
+      status: NotificationStatus.SENT, // Broadcasts are usually sent immediately
+      sentAt: new Date(),
+    }
+
+    const notification = await Notification.create(notificationData)
+
+    // Emit broadcast socket event based on target audience
+    if (payload.channel !== NotificationChannel.EMAIL) {
+      if (io) {
+        // We can emit to specific rooms based on role if needed, 
+        // but for now, we'll use a generic broadcast or specific room logic.
+        
+        let eventName = 'notification'
+        let roomName: string | null = null
+
+        switch (payload.targetAudience) {
+          case TARGET_AUDIENCE.ALL_USER:
+            // Broadcast to everyone
+            io.emit(eventName, {
+              type: 'BROADCAST_NOTIFICATION',
+              data: notification,
+            })
+            break
+          case TARGET_AUDIENCE.ACTIVE_USER:
+            // This would require users to join an 'active' room on connection
+            io.to('active_users').emit(eventName, {
+              type: 'BROADCAST_NOTIFICATION',
+              data: notification,
+            })
+            break
+          case TARGET_AUDIENCE.ORGANIZER:
+            io.to('organizers').emit(eventName, {
+              type: 'BROADCAST_NOTIFICATION',
+              data: notification,
+            })
+            break
+          default:
+            io.emit(eventName, {
+              type: 'BROADCAST_NOTIFICATION',
+              data: notification,
+            })
+        }
+      }
+    }
+
+    // Note: Email delivery for 10k users would still need batching in the background scheduler
+    // For now, we set the status to SENT for the broadcast record.
+
+    console.log(
+      `Broadcast notification created for audience: ${payload.targetAudience}`,
+    )
+    return { success: true }
+  } catch (error: any) {
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `Failed to send manual notification: ${error.message}`,
+    )
+  }
+}
+
 export const NotificationServices = {
   createNotification,
   sendNotificationEmail,
@@ -666,4 +781,5 @@ export const NotificationServices = {
   getNotificationStats,
   getMyNotifications,
   sendTestEmail,
+  sendManualNotification,
 }

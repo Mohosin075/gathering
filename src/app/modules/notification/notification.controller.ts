@@ -194,6 +194,17 @@ const createEventNotification = catchAsync(
   },
 )
 
+const sendManualNotification = catchAsync(async (req: Request, res: Response) => {
+  const result = await NotificationServices.sendManualNotification(req.body)
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Manual notifications sent successfully',
+    data: result,
+  })
+})
+
 export const NotificationController = {
   createNotification,
   getAllNotifications,
@@ -207,4 +218,5 @@ export const NotificationController = {
   getNotificationStats,
   sendTestEmail,
   createEventNotification,
+  sendManualNotification,
 }

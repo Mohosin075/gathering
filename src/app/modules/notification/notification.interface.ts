@@ -1,8 +1,11 @@
 import { Model, Types } from 'mongoose'
+import { TARGET_AUDIENCE } from '../../../enum/notification'
+export { TARGET_AUDIENCE }
 
 export interface INotification {
   _id: Types.ObjectId
-  userId: Types.ObjectId
+  userId?: Types.ObjectId
+  targetAudience?: TARGET_AUDIENCE
   title: string
   content: string
   type: NotificationType
@@ -87,7 +90,8 @@ export interface EmailNotificationData {
 }
 
 export interface CreateNotificationDto {
-  userId: string | Types.ObjectId
+  userId?: string | Types.ObjectId
+  targetAudience?: TARGET_AUDIENCE
   title: string
   content: string
   type: NotificationType

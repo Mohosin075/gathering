@@ -6,6 +6,7 @@ import {
   NotificationChannel,
   NotificationStatus,
   NotificationPriority,
+  TARGET_AUDIENCE,
 } from './notification.interface'
 
 const notificationSchema = new Schema<INotification, NotificationModel>(
@@ -13,7 +14,12 @@ const notificationSchema = new Schema<INotification, NotificationModel>(
     userId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      required: false,
+      index: true,
+    },
+    targetAudience: {
+      type: String,
+      enum: Object.values(TARGET_AUDIENCE),
       index: true,
     },
     title: {
@@ -101,6 +107,7 @@ const notificationSchema = new Schema<INotification, NotificationModel>(
 // Indexes for efficient querying
 notificationSchema.index({ userId: 1, isRead: 1, createdAt: -1 })
 notificationSchema.index({ userId: 1, type: 1, createdAt: -1 })
+notificationSchema.index({ targetAudience: 1, createdAt: -1 })
 notificationSchema.index({ status: 1, scheduledAt: 1 })
 notificationSchema.index({ createdAt: -1 })
 

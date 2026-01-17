@@ -4,9 +4,32 @@ import {
   NotificationChannel,
   NotificationPriority,
   NotificationStatus,
+  TARGET_AUDIENCE,
 } from './notification.interface'
 
 export const NotificationValidations = {
+  sendManual: z.object({
+    body: z.object({
+      targetAudience: z.nativeEnum(TARGET_AUDIENCE),
+      title: z.string().min(1, 'Title is required').max(200),
+      content: z.string().min(1, 'Content is required'),
+      type: z
+        .nativeEnum(NotificationType)
+        .optional()
+        .default(NotificationType.SYSTEM_ALERT),
+      channel: z
+        .nativeEnum(NotificationChannel)
+        .optional()
+        .default(NotificationChannel.BOTH),
+      priority: z
+        .nativeEnum(NotificationPriority)
+        .optional()
+        .default(NotificationPriority.MEDIUM),
+      actionUrl: z.string().url().optional(),
+      actionText: z.string().max(50).optional(),
+    }),
+  }),
+
   create: z.object({
     body: z.object({
       userId: z.string().optional(),
