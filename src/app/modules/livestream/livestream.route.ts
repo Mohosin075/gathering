@@ -5,7 +5,7 @@ import { USER_ROLES } from '../../../enum/user'
 import validateRequest from '../../middleware/validateRequest'
 import { LiveStreamController } from './livestream.controller'
 import { LiveStreamValidations } from './livestream.validation'
-import { LiveStreamWebhookController } from './livestream.webhook.controller'
+import { LiveStreamWebhookController } from './liveStream.webhook.controller'
 
 const router = express.Router()
 

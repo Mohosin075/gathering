@@ -11,7 +11,7 @@ const user_1 = require("../../../enum/user");
 const validateRequest_1 = __importDefault(require("../../middleware/validateRequest"));
 const livestream_controller_1 = require("./livestream.controller");
 const livestream_validation_1 = require("./livestream.validation");
-const livestream_webhook_controller_1 = require("./livestream.webhook.controller");
+const liveStream_webhook_controller_1 = require("./liveStream.webhook.controller");
 const router = express_1.default.Router();
 // Public routes
 router.get('/', livestream_controller_1.LiveStreamController.getAllLiveStreams);
@@ -32,5 +32,5 @@ router.delete('/:streamId', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER, use
 router.post('/:streamId/start', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.USER), livestream_controller_1.LiveStreamController.startLiveStream);
 router.post('/:streamId/end', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.USER), livestream_controller_1.LiveStreamController.endLiveStream);
 // Agora webhook (no auth required)
-router.post('/webhook/agora', livestream_webhook_controller_1.LiveStreamWebhookController.agoraWebhook);
+router.post('/webhook/agora', liveStream_webhook_controller_1.LiveStreamWebhookController.agoraWebhook);
 exports.LiveStreamRoutes = router;
