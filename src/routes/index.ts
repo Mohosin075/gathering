@@ -19,7 +19,7 @@ import { LiveStreamRoutes } from '../app/modules/livestream/livestream.route'
 import { ChatmessageRoutes } from '../app/modules/chatmessage/chatmessage.route'
 import { FollowRoutes } from '../app/modules/follow/follow.route'
 import { EventStatsRoutes } from '../app/modules/stats/stats.route'
-import { LiveStreamWebhookRoutes } from '../app/modules/livestream/livestream.webhook.routes'
+import { LiveStreamWebhookRoutes } from '../app/modules/livestream/livestream.webhook.route'
 
 const router = express.Router()
 

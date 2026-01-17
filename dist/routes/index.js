@@ -24,7 +24,7 @@ const livestream_route_1 = require("../app/modules/livestream/livestream.route")
 const chatmessage_route_1 = require("../app/modules/chatmessage/chatmessage.route");
 const follow_route_1 = require("../app/modules/follow/follow.route");
 const stats_route_1 = require("../app/modules/stats/stats.route");
-const livestream_webhook_routes_1 = require("../app/modules/livestream/livestream.webhook.routes");
+const livestream_webhook_route_1 = require("../app/modules/livestream/livestream.webhook.route");
 const router = express_1.default.Router();
 const apiRoutes = [
     { path: '/user', route: user_route_1.UserRoutes },
@@ -45,7 +45,7 @@ const apiRoutes = [
     { path: '/attendee', route: attendee_route_1.AttendeeRoutes },
     { path: '/meetings', route: meeting_route_1.MeetingRoutes },
     { path: '/livestream', route: livestream_route_1.LiveStreamRoutes },
-    { path: '/livestream/webhook', route: livestream_webhook_routes_1.LiveStreamWebhookRoutes },
+    { path: '/livestream/webhook', route: livestream_webhook_route_1.LiveStreamWebhookRoutes },
     { path: '/chatmessage', route: chatmessage_route_1.ChatmessageRoutes },
     { path: '/follow', route: follow_route_1.FollowRoutes },
 ];
