@@ -89,6 +89,7 @@ export interface IIndividualEventStats {
   category: string
   dailyStats: Array<{
     date: string
+    dayName: string
     views: number
     sales: number
     revenue: number
@@ -102,6 +103,7 @@ export interface IEventAnalytics {
   totalRevenue: number
   dailyStats: Array<{
     date: string
+    dayName: string
     views: number
     engagement: number
     sales: number

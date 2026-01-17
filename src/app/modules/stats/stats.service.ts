@@ -46,6 +46,20 @@ const getMonthName = (monthIndex: number): string => {
   return months[monthIndex]
 }
 
+// Helper function to get day name
+const getDayName = (date: Date): string => {
+  const days = [
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+  ]
+  return days[date.getDay()]
+}
+
 // Helper function to ensure all months are included
 const fillMissingMonths = (
   data: Array<{ month: string; count?: number; revenue?: number }>,
@@ -1533,6 +1547,7 @@ export const getIndividualEventStats = async (
 
     dailyStats.push({
       date: dateStr,
+      dayName: getDayName(date),
       views: dailyViews,
       sales: dayData.sales,
       revenue: Math.round(dayData.revenue * 100) / 100,
@@ -1738,6 +1753,7 @@ export const getEventAnalytics = async (
 
     dailyStats.push({
       date: dateStr,
+      dayName: getDayName(date),
       views: avgDailyViews, // Fallback as we don't track daily views
       engagement: dayData.engagement,
       sales: dayData.sales,
