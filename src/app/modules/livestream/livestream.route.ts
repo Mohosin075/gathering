@@ -5,6 +5,7 @@ import { USER_ROLES } from '../../../enum/user'
 import validateRequest from '../../middleware/validateRequest'
 import { LiveStreamController } from './livestream.controller'
 import { LiveStreamValidations } from './livestream.validation'
+import { LiveStreamWebhookController } from './livestream.webhook.controller'
 
 const router = express.Router()
 
@@ -68,5 +69,8 @@ router.post(
   auth(USER_ROLES.ORGANIZER, USER_ROLES.USER),
   LiveStreamController.endLiveStream,
 )
+
+// Agora webhook (no auth required)
+router.post('/webhook/agora', LiveStreamWebhookController.agoraWebhook)
 
 export const LiveStreamRoutes = router
