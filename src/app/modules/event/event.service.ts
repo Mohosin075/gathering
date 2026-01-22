@@ -15,6 +15,7 @@ const createEvent = async (
   user: JwtPayload,
   payload: IEvent,
 ): Promise<IEvent> => {
+  // console.log({payload})
   const location = await geocodeAddress(payload.address);
 
 
@@ -25,13 +26,15 @@ const createEvent = async (
     )
   }
 
-  console.log(location.formattedAddress)
+  // console.log(location.formattedAddress)
 
   payload.location = {
     type: 'Point',
     coordinates: [location.lng, location.lat],
   }
   payload.address = location.formattedAddress
+
+
   try {
     const result = await Event.create({
       ...payload,

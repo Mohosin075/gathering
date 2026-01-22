@@ -20,7 +20,7 @@ export const NotificationValidations = {
       channel: z
         .nativeEnum(NotificationChannel)
         .optional()
-        .default(NotificationChannel.BOTH),
+        .default(NotificationChannel.IN_APP),
       priority: z
         .nativeEnum(NotificationPriority)
         .optional()
