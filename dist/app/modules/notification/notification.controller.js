@@ -139,6 +139,15 @@ const createEventNotification = (0, catchAsync_1.default)(async (req, res) => {
         data: null,
     });
 });
+const sendManualNotification = (0, catchAsync_1.default)(async (req, res) => {
+    const result = await notification_service_1.NotificationServices.sendManualNotification(req.body);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_codes_1.StatusCodes.OK,
+        success: true,
+        message: 'Manual notifications sent successfully',
+        data: result,
+    });
+});
 exports.NotificationController = {
     createNotification,
     getAllNotifications,
@@ -152,4 +161,5 @@ exports.NotificationController = {
     getNotificationStats,
     sendTestEmail,
     createEventNotification,
+    sendManualNotification,
 };

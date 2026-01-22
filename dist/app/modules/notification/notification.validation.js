@@ -4,6 +4,27 @@ exports.NotificationValidations = void 0;
 const zod_1 = require("zod");
 const notification_interface_1 = require("./notification.interface");
 exports.NotificationValidations = {
+    sendManual: zod_1.z.object({
+        body: zod_1.z.object({
+            targetAudience: zod_1.z.nativeEnum(notification_interface_1.TARGET_AUDIENCE),
+            title: zod_1.z.string().min(1, 'Title is required').max(200),
+            content: zod_1.z.string().min(1, 'Content is required'),
+            type: zod_1.z
+                .nativeEnum(notification_interface_1.NotificationType)
+                .optional()
+                .default(notification_interface_1.NotificationType.SYSTEM_ALERT),
+            channel: zod_1.z
+                .nativeEnum(notification_interface_1.NotificationChannel)
+                .optional()
+                .default(notification_interface_1.NotificationChannel.IN_APP),
+            priority: zod_1.z
+                .nativeEnum(notification_interface_1.NotificationPriority)
+                .optional()
+                .default(notification_interface_1.NotificationPriority.MEDIUM),
+            actionUrl: zod_1.z.string().url().optional(),
+            actionText: zod_1.z.string().max(50).optional(),
+        }),
+    }),
     create: zod_1.z.object({
         body: zod_1.z.object({
             userId: zod_1.z.string().optional(),

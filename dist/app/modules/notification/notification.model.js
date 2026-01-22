@@ -7,7 +7,12 @@ const notificationSchema = new mongoose_1.Schema({
     userId: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'User',
-        required: true,
+        required: false,
+        index: true,
+    },
+    targetAudience: {
+        type: String,
+        enum: Object.values(notification_interface_1.TARGET_AUDIENCE),
         index: true,
     },
     title: {
@@ -92,6 +97,7 @@ const notificationSchema = new mongoose_1.Schema({
 // Indexes for efficient querying
 notificationSchema.index({ userId: 1, isRead: 1, createdAt: -1 });
 notificationSchema.index({ userId: 1, type: 1, createdAt: -1 });
+notificationSchema.index({ targetAudience: 1, createdAt: -1 });
 notificationSchema.index({ status: 1, scheduledAt: 1 });
 notificationSchema.index({ createdAt: -1 });
 // Virtual populate for user details

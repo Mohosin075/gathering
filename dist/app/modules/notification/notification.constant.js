@@ -2,10 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EMAIL_SUBJECTS = exports.NOTIFICATION_CONFIG = exports.NOTIFICATION_TEMPLATES = exports.notificationFilterableFields = exports.notificationSearchableFields = void 0;
 const notification_interface_1 = require("./notification.interface");
-exports.notificationSearchableFields = ['title', 'content'];
+exports.notificationSearchableFields = ['title', 'content', 'targetAudience'];
 exports.notificationFilterableFields = [
     'searchTerm',
     'userId',
+    'targetAudience',
     'type',
     'channel',
     'status',

@@ -13,11 +13,12 @@ const mongoose_1 = require("mongoose");
 const activity_service_1 = require("../activity/activity.service");
 const geocodeAddress_1 = require("../../../utils/geocodeAddress");
 const createEvent = async (user, payload) => {
+    // console.log({payload})
     const location = await (0, geocodeAddress_1.geocodeAddress)(payload.address);
     if (!location) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Failed to create Event, please try again with valid data.');
     }
-    console.log(location.formattedAddress);
+    // console.log(location.formattedAddress)
     payload.location = {
         type: 'Point',
         coordinates: [location.lng, location.lat],

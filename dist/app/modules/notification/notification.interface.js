@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NotificationPriority = exports.NotificationStatus = exports.NotificationChannel = exports.NotificationType = void 0;
+exports.NotificationPriority = exports.NotificationStatus = exports.NotificationChannel = exports.NotificationType = exports.TARGET_AUDIENCE = void 0;
+const notification_1 = require("../../../enum/notification");
+Object.defineProperty(exports, "TARGET_AUDIENCE", { enumerable: true, get: function () { return notification_1.TARGET_AUDIENCE; } });
 var NotificationType;
 (function (NotificationType) {
     NotificationType["EVENT_REMINDER"] = "EVENT_REMINDER";
