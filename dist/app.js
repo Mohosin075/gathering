@@ -13,11 +13,8 @@ const passport_1 = __importDefault(require("./app/modules/auth/passport.auth/con
 const routes_1 = __importDefault(require("./routes"));
 const globalErrorHandler_1 = __importDefault(require("./app/middleware/globalErrorHandler"));
 const config_1 = __importDefault(require("./config"));
-const webhook_1 = __importDefault(require("./webhook"));
 const sendResponse_1 = __importDefault(require("./shared/sendResponse"));
 const app = (0, express_1.default)();
-// ⚠️ CRITICAL: Webhook MUST be before body parsers to receive raw body
-app.use(webhook_1.default);
 // -------------------- Middleware --------------------
 // Body parsers must come after webhook
 app.use(express_1.default.json());

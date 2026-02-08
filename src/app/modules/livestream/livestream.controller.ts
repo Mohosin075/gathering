@@ -163,23 +163,6 @@ const getLiveStreamByEventId = catchAsync(async (req: Request, res: Response) =>
   })
 })
 
-// Get Live Stream by Ticket ID
-const getLiveStreamByTicketId = catchAsync(async (req: Request, res: Response) => {
-  const { ticketId } = req.params
-  const user = req.user as JwtPayload
-  const result = await LiveStreamService.getLiveStreamByTicketIdFromDB(
-    ticketId,
-    user,
-  )
-
-  sendResponse(res, {
-    statusCode: StatusCodes.OK,
-    success: true,
-    message: 'Live stream retrieved successfully',
-    data: result,
-  })
-})
-
 export const LiveStreamController = {
   createLiveStream,
   getAgoraToken,
@@ -191,5 +174,4 @@ export const LiveStreamController = {
   startLiveStream,
   endLiveStream,
   getLiveStreamByEventId,
-  getLiveStreamByTicketId,
 }

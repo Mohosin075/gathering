@@ -102,14 +102,6 @@ class EmailProvider {
             actionText: 'Go to Dashboard',
         });
     }
-    async sendTicketConfirmation(to, eventTitle, ticketData) {
-        return this.sendTemplateEmail(to, 'ticket-confirmation', {
-            ...ticketData,
-            eventTitle,
-            actionUrl: `${config_1.default.clientUrl}/tickets/${ticketData.ticketId}`,
-            actionText: 'View Ticket',
-        });
-    }
     async sendEventReminder(to, eventData) {
         return this.sendTemplateEmail(to, 'event-reminder', {
             ...eventData,

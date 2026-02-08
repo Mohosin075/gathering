@@ -129,18 +129,6 @@ const getLiveStreamByEventId = (0, catchAsync_1.default)(async (req, res) => {
         data: result,
     });
 });
-// Get Live Stream by Ticket ID
-const getLiveStreamByTicketId = (0, catchAsync_1.default)(async (req, res) => {
-    const { ticketId } = req.params;
-    const user = req.user;
-    const result = await livestream_service_1.LiveStreamService.getLiveStreamByTicketIdFromDB(ticketId, user);
-    (0, sendResponse_1.default)(res, {
-        statusCode: http_status_codes_1.StatusCodes.OK,
-        success: true,
-        message: 'Live stream retrieved successfully',
-        data: result,
-    });
-});
 exports.LiveStreamController = {
     createLiveStream,
     getAgoraToken,
@@ -152,5 +140,4 @@ exports.LiveStreamController = {
     startLiveStream,
     endLiveStream,
     getLiveStreamByEventId,
-    getLiveStreamByTicketId,
 };

@@ -23,8 +23,6 @@ router.post('/', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER, user_1.USER_RO
 router.get('/:streamId/token', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.USER), livestream_controller_1.LiveStreamController.getAgoraToken);
 // Streamer's streams
 router.get('/my/streams', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.USER), livestream_controller_1.LiveStreamController.getMyLiveStreams);
-// Get stream by ticket ID
-router.get('/ticket/:ticketId', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.USER, user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ADMIN), livestream_controller_1.LiveStreamController.getLiveStreamByTicketId);
 // Stream management (Streamer only)
 router.patch('/:streamId', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.USER), (0, validateRequest_1.default)(livestream_validation_1.LiveStreamValidations.updateLiveStream), livestream_controller_1.LiveStreamController.updateLiveStream);
 router.delete('/:streamId', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.USER), livestream_controller_1.LiveStreamController.deleteLiveStream);

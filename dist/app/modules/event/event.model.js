@@ -42,8 +42,6 @@ const eventSchema = new mongoose_1.Schema({
     address: { type: String, required: true },
     meetingLink: { type: String },
     capacity: { type: Number, required: true },
-    ticketsSold: { type: Number, default: 0 },
-    ticketPrice: { type: Number, required: true },
     images: { type: [String], default: [] },
     gallery: { type: [String], default: [] },
     views: { type: Number, default: 0 },

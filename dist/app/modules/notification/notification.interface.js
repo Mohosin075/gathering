@@ -6,13 +6,9 @@ Object.defineProperty(exports, "TARGET_AUDIENCE", { enumerable: true, get: funct
 var NotificationType;
 (function (NotificationType) {
     NotificationType["EVENT_REMINDER"] = "EVENT_REMINDER";
-    NotificationType["TICKET_CONFIRMATION"] = "TICKET_CONFIRMATION";
-    NotificationType["PAYMENT_SUCCESS"] = "PAYMENT_SUCCESS";
-    NotificationType["PAYMENT_FAILED"] = "PAYMENT_FAILED";
     NotificationType["EVENT_CREATED"] = "EVENT_CREATED";
     NotificationType["EVENT_UPDATED"] = "EVENT_UPDATED";
     NotificationType["EVENT_CANCELLED"] = "EVENT_CANCELLED";
-    NotificationType["ATTENDEE_CHECKED_IN"] = "ATTENDEE_CHECKED_IN";
     NotificationType["NEW_MESSAGE"] = "NEW_MESSAGE";
     NotificationType["SYSTEM_ALERT"] = "SYSTEM_ALERT";
     NotificationType["PROMOTIONAL"] = "PROMOTIONAL";

@@ -64,7 +64,7 @@ const liveStreamSchema = new mongoose_1.Schema({
     // Stream Configuration
     streamType: {
         type: String,
-        enum: ['public', 'private', 'ticketed'],
+        enum: ['public', 'private'],
         default: 'public',
         required: true,
     },
@@ -99,7 +99,6 @@ const liveStreamSchema = new mongoose_1.Schema({
     recordingUrl: { type: String },
     thumbnail: { type: String },
     // Monetization & Access Control
-    isPaid: { type: Boolean, default: false },
     requiresApproval: { type: Boolean, default: false },
     streamPassword: { type: String },
     allowedEmails: [{ type: String }],
@@ -156,7 +155,7 @@ liveStreamSchema.statics.canViewStream = async function (streamId, userId) {
     // Public streams - anyone can view
     if (stream.streamType === 'public')
         return true;
-    // Need user ID for private/ticketed streams
+    // Need user ID for private streams
     if (!userId)
         return false;
     // Check if user is streamer
@@ -171,11 +170,6 @@ liveStreamSchema.statics.canViewStream = async function (streamId, userId) {
         if (user && ((_a = stream.allowedEmails) === null || _a === void 0 ? void 0 : _a.includes(user.email))) {
             return true;
         }
-        return false;
-    }
-    // Ticketed streams - check payment
-    if (stream.streamType === 'ticketed') {
-        // Implementation depends on your ticket/payment system
         return false;
     }
     return false;

@@ -2,7 +2,6 @@ export interface IRecentEvent {
   _id: string
   title: string
   startDate: string
-  ticketsSold: number
   status: string
 }
 
@@ -22,11 +21,7 @@ export interface IEventStats {
   upcomingEvents: number
   completedEvents: number
   cancelledEvents: number
-  totalRevenue: number
-  averageTicketPrice: number
-  ticketsSold: number
   totalCapacity: number
-  occupancyRate: number
   eventTrend: Array<{ month: string; count: number }>
   categoryDistribution: Array<{ category: string; count: number }>
 }
@@ -43,14 +38,7 @@ export interface IUserStats {
   monthlySignups: Array<{ month: string; count: number }>
 }
 
-export interface IRevenueStats {
-  totalRevenue: number
-  revenueGrowth: number
-  monthlyRevenue: Array<{ month: string; revenue: number }>
-  revenueByCategory: Array<{ category: string; revenue: number }>
-  averageTicketPrice: number
-  ticketsSold: number
-}
+
 
 export interface IEventStatusStats {
   pending: number
@@ -67,22 +55,16 @@ export interface IOrganizerStats {
   activeEvents: number
   eventsCreated: number
   totalFollowers: number
-  totalRevenue: number
   totalViews: number
   avgEngagement: number
   followersGrowth: number
   eventGrowth: number
   eventsCreatedGrowth: number
-  revenueGrowth: number
 }
 
 export interface IIndividualEventStats {
   totalViews: number
-  ticketsSold: number
   capacity: number
-  totalRevenue: number
-  averageTicketPrice: number
-  conversionRate: number
   address: string
   title: string
   startDate: string
@@ -91,23 +73,17 @@ export interface IIndividualEventStats {
     date: string
     dayName: string
     views: number
-    sales: number
-    revenue: number
   }>
 }
 
 export interface IEventAnalytics {
   totalViews: number
   totalEngagement: number
-  totalSales: number
-  totalRevenue: number
   dailyStats: Array<{
     date: string
     dayName: string
     views: number
     engagement: number
-    sales: number
-    revenue: number
   }>
 }
 

@@ -8,13 +8,12 @@ import passport from './app/modules/auth/passport.auth/config/passport'
 import router from './routes'
 import globalErrorHandler from './app/middleware/globalErrorHandler'
 import config from './config'
-import webhookApp from './webhook'
+
 import sendResponse from './shared/sendResponse'
 
 const app = express()
 
-// ⚠️ CRITICAL: Webhook MUST be before body parsers to receive raw body
-app.use(webhookApp)
+
 
 // -------------------- Middleware --------------------
 // Body parsers must come after webhook

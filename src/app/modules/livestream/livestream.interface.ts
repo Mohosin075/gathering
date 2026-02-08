@@ -22,7 +22,7 @@ export interface ILiveStream extends Document {
   playbackUrl?: string
 
   // Stream Configuration
-  streamType: 'public' | 'private' | 'ticketed'
+  streamType: 'public' | 'private'
   streamingMode: 'communication' | 'live'
   maxViewers: number
 
@@ -48,7 +48,7 @@ export interface ILiveStream extends Document {
   thumbnail?: string
 
   // Monetization & Access Control
-  isPaid: boolean
+
   requiresApproval: boolean
   streamPassword?: string
   allowedEmails: string[]
@@ -78,7 +78,7 @@ export interface ICreateLiveStreamDTO {
   eventId: string
   title: string
   description?: string
-  streamType: 'public' | 'private' | 'ticketed'
+  streamType: 'public' | 'private'
   scheduledStartTime?: string
   scheduledEndTime?: string
   maxViewers?: number
@@ -94,7 +94,7 @@ export interface ICreateLiveStreamDTO {
 export interface IUpdateLiveStreamDTO {
   title?: string
   description?: string
-  streamType?: 'public' | 'private' | 'ticketed'
+  streamType?: 'public' | 'private'
   scheduledStartTime?: string
   scheduledEndTime?: string
   maxViewers?: number
@@ -145,7 +145,7 @@ export interface ILiveStreamResponseDTO {
   isLive: boolean
   currentViewers: number
   maxViewers: number
-  streamType: 'public' | 'private' | 'ticketed'
+  streamType: 'public' | 'private'
   chatEnabled: boolean
   thumbnail?: string
   playbackUrl?: string
@@ -190,7 +190,7 @@ export interface IStreamListQueryDTO {
   page?: number
   limit?: number
   search?: string
-  streamType?: 'public' | 'private' | 'ticketed'
+  streamType?: 'public' | 'private'
   streamStatus?: 'scheduled' | 'live' | 'ended'
   isLive?: boolean
   tags?: string[]

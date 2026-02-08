@@ -6,14 +6,12 @@ import { SupportRoutes } from '../app/modules/support/support.route'
 import { UploadRoutes } from '../app/modules/upload/upload.route'
 import { EventRoutes } from '../app/modules/event/event.route'
 import { PromotionRoutes } from '../app/modules/promotion/promotion.route'
-import { TicketRoutes } from '../app/modules/ticket/ticket.route'
-import { PaymentRoutes } from '../app/modules/payment/payment.route'
+
 import { NotificationRoutes } from '../app/modules/notification/notification.routes'
 import { MessageRoutes } from '../app/modules/message/message.routes'
 import { ChatRoutes } from '../app/modules/chat/chat.routes'
 import { ReviewRoutes } from '../app/modules/review/review.route'
 import { SavedEventRoutes } from '../app/modules/savedEvent/savedEvent.route'
-import { AttendeeRoutes } from '../app/modules/attendee/attendee.route'
 import { MeetingRoutes } from '../app/modules/meeting/meeting.route'
 import { LiveStreamRoutes } from '../app/modules/livestream/livestream.route'
 import { ChatmessageRoutes } from '../app/modules/chatmessage/chatmessage.route'
@@ -31,14 +29,12 @@ const apiRoutes: { path: string; route: Router }[] = [
   { path: '/upload', route: UploadRoutes },
   { path: '/event', route: EventRoutes },
   { path: '/promotion', route: PromotionRoutes },
-  { path: '/ticket', route: TicketRoutes },
-  { path: '/payment', route: PaymentRoutes },
+
   { path: '/message', route: MessageRoutes },
   { path: '/chat', route: ChatRoutes },
   { path: '/stats', route: EventStatsRoutes },
   { path: '/review', route: ReviewRoutes },
   { path: '/saved', route: SavedEventRoutes },
-  { path: '/attendee', route: AttendeeRoutes },
   { path: '/meetings', route: MeetingRoutes },
   { path: '/livestream', route: LiveStreamRoutes },
   { path: '/chatmessage', route: ChatmessageRoutes },

@@ -674,7 +674,7 @@ const getLiveStreamByEventIdFromDB = async (
     throw new ApiError(StatusCodes.NOT_FOUND, 'Live stream not found for this event')
   }
 
-  // Check authorization for private/ticketed streams
+  // Check authorization for private streams
   const userId = user?.userId
   const canView = await LiveStream.canViewStream(stream._id.toString(), userId)
 
@@ -686,68 +686,6 @@ const getLiveStreamByEventIdFromDB = async (
   }
 
   // Proper transform for lean objects (mimicking the map in getAll)
-  return {
-    id: stream._id.toString(),
-    event: {
-      id: stream.event._id.toString(),
-      title: (stream.event as any).title,
-      description: (stream.event as any).description,
-    },
-    streamer: {
-      id: stream.streamer._id.toString(),
-      name: (stream.streamer as any).name,
-      email: (stream.streamer as any).email,
-      avatar: (stream.streamer as any).profile?.avatar,
-    },
-    title: stream.title,
-    description: stream.description,
-    channelName: stream.channelName,
-    streamStatus: stream.streamStatus,
-    isLive: stream.isLive,
-    currentViewers: stream.currentViewers,
-    maxViewers: stream.maxViewers,
-    streamType: stream.streamType,
-    chatEnabled: stream.chatEnabled,
-    thumbnail: stream.thumbnail,
-    playbackUrl: stream.playbackUrl,
-    hlsUrl: stream.hlsUrl,
-    scheduledStartTime: stream.scheduledStartTime,
-    liveStartedAt: stream.liveStartedAt,
-    createdAt: stream.createdAt,
-    updatedAt: stream.updatedAt,
-    isUpcoming: stream.streamStatus === 'scheduled' || stream.streamStatus === 'starting',
-    isActive: stream.streamStatus === 'starting' || stream.streamStatus === 'live',
-    requiresApproval: stream.requiresApproval,
-    tags: stream.tags,
-  }
-}
-
-// Get Live Stream by Ticket ID
-const getLiveStreamByTicketIdFromDB = async (
-  ticketId: string,
-  user: JwtPayload,
-): Promise<ILiveStreamResponseDTO> => {
-  const ticket = await (LiveStream as any).db.model('Ticket').findById(ticketId)
-
-  if (!ticket) {
-    throw new ApiError(StatusCodes.NOT_FOUND, 'Ticket not found')
-  }
-
-  // Check if ticket belongs to user
-  // if (String(ticket.attendeeId) !== String(user.authId)) {
-  //   throw new ApiError(StatusCodes.FORBIDDEN, 'Unauthorized access to this ticket')
-  // }
-
-  // Find livestream for the event associated with the ticket
-  const stream = await LiveStream.findOne({ event: ticket.eventId })
-    .populate('event', 'title description')
-    .populate('streamer', 'name email profile')
-    .lean()
-
-  if (!stream) {
-    throw new ApiError(StatusCodes.NOT_FOUND, 'Live stream not found for this ticketed event')
-  }
-
   return {
     id: stream._id.toString(),
     event: {
@@ -796,5 +734,4 @@ export const LiveStreamService = {
   endLiveStreamToDB,
   updateViewerCountToDB,
   getLiveStreamByEventIdFromDB,
-  getLiveStreamByTicketIdFromDB,
 }

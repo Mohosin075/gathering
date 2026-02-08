@@ -34,8 +34,6 @@ export const EventValidations = {
       address: z.string(),
       meetingLink: z.string().optional(),
       capacity: z.number(),
-      ticketsSold: z.number().default(0),
-      ticketPrice: z.number(),
       images: z.array(z.string()).optional(),
       gallery: z.array(z.string()).default([]),
       views: z.number().default(0),
@@ -69,7 +67,6 @@ export const EventValidations = {
         address: z.string().optional(),
         meetingLink: z.string().optional(),
         capacity: z.number().optional(),
-        ticketPrice: z.number().optional(),
         images: z.array(z.string()).optional(),
         favorites: z.number().optional(),
       })

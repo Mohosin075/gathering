@@ -14,9 +14,8 @@ const mongoose_1 = require("mongoose");
 const notification_providers_1 = require("./notification.providers");
 const user_model_1 = require("../user/user.model");
 const event_model_1 = require("../event/event.model");
-const ticket_model_1 = require("../ticket/ticket.model");
-const payment_model_1 = require("../payment/payment.model");
-const attendee_model_1 = require("../attendee/attendee.model");
+const savedEvent_model_1 = require("../savedEvent/savedEvent.model");
+const follow_model_1 = require("../follow/follow.model");
 const config_1 = __importDefault(require("../../../config"));
 const server_1 = require("../../../server");
 const createNotification = async (payload, sendEmail = false) => {
@@ -64,7 +63,7 @@ const createNotification = async (payload, sendEmail = false) => {
     }
 };
 const sendNotificationEmail = async (notification) => {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j;
+    var _a, _b, _c;
     try {
         const user = await user_model_1.User.findById(notification.userId);
         if (!user || !user.email) {
@@ -80,31 +79,9 @@ const sendNotificationEmail = async (notification) => {
         };
         // Map notification type to template and add specific data
         switch (notification.type) {
-            case notification_interface_1.NotificationType.TICKET_CONFIRMATION:
-                template = 'ticket-confirmation';
-                if ((_a = notification.metadata) === null || _a === void 0 ? void 0 : _a.ticketId) {
-                    const ticket = await ticket_model_1.Ticket.findById(notification.metadata.ticketId).populate('eventId', 'title startDate location venue');
-                    if (ticket) {
-                        const populatedEvent = ticket.eventId;
-                        templateData = {
-                            ...templateData,
-                            eventTitle: populatedEvent === null || populatedEvent === void 0 ? void 0 : populatedEvent.title,
-                            eventDate: (_b = populatedEvent === null || populatedEvent === void 0 ? void 0 : populatedEvent.startDate) === null || _b === void 0 ? void 0 : _b.toLocaleDateString(),
-                            eventTime: (_c = populatedEvent === null || populatedEvent === void 0 ? void 0 : populatedEvent.startDate) === null || _c === void 0 ? void 0 : _c.toLocaleTimeString(),
-                            eventLocation: (populatedEvent === null || populatedEvent === void 0 ? void 0 : populatedEvent.location) || (populatedEvent === null || populatedEvent === void 0 ? void 0 : populatedEvent.venue),
-                            ticketType: ticket.ticketType,
-                            quantity: ticket.quantity,
-                            orderId: ticket._id,
-                            amount: ticket.finalAmount,
-                            currency: ticket.currency,
-                            qrCodeUrl: `${config_1.default.clientUrl}/api/v1/tickets/${ticket._id}/qrcode`,
-                        };
-                    }
-                }
-                break;
             case notification_interface_1.NotificationType.EVENT_REMINDER:
                 template = 'event-reminder';
-                if ((_d = notification.metadata) === null || _d === void 0 ? void 0 : _d.eventId) {
+                if ((_a = notification.metadata) === null || _a === void 0 ? void 0 : _a.eventId) {
                     const event = (await event_model_1.Event.findById(notification.metadata.eventId).populate('organizerId', 'name email'));
                     if (event) {
                         const timeUntilEvent = Math.floor((new Date(event.startDate).getTime() - Date.now()) /
@@ -123,57 +100,20 @@ const sendNotificationEmail = async (notification) => {
                     }
                 }
                 break;
-            case notification_interface_1.NotificationType.PAYMENT_SUCCESS:
-                template = 'payment-success';
-                if ((_e = notification.metadata) === null || _e === void 0 ? void 0 : _e.paymentId) {
-                    const payment = await payment_model_1.Payment.findById(notification.metadata.paymentId);
-                    if (payment) {
-                        const event = await event_model_1.Event.findById(payment.eventId);
-                        templateData = {
-                            ...templateData,
-                            eventTitle: (event === null || event === void 0 ? void 0 : event.title) || 'Event',
-                            transactionId: payment._id,
-                            amount: payment.amount,
-                            currency: payment.currency,
-                            paymentMethod: payment.paymentMethod,
-                            paymentDate: payment.createdAt.toLocaleDateString(),
-                        };
-                    }
-                }
-                break;
             case notification_interface_1.NotificationType.WELCOME:
                 template = 'welcome';
                 break;
             case notification_interface_1.NotificationType.PASSWORD_RESET:
                 template = 'password-reset';
-                if ((_f = notification.metadata) === null || _f === void 0 ? void 0 : _f.resetCode) {
+                if ((_b = notification.metadata) === null || _b === void 0 ? void 0 : _b.resetCode) {
                     templateData.resetCode = notification.metadata.resetCode;
                     templateData.expiryMinutes = 30;
                 }
                 break;
             case notification_interface_1.NotificationType.ACCOUNT_VERIFICATION:
                 template = 'account-verification';
-                if ((_g = notification.metadata) === null || _g === void 0 ? void 0 : _g.verificationToken) {
+                if ((_c = notification.metadata) === null || _c === void 0 ? void 0 : _c.verificationToken) {
                     templateData.verificationUrl = `${config_1.default.clientUrl}/verify-email?token=${notification.metadata.verificationToken}`;
-                }
-                break;
-            case notification_interface_1.NotificationType.ATTENDEE_CHECKED_IN:
-                template = 'attendee-checked-in';
-                if ((_h = notification.metadata) === null || _h === void 0 ? void 0 : _h.attendeeId) {
-                    const attendee = await attendee_model_1.Attendee.findById(notification.metadata.attendeeId)
-                        .populate('eventId', 'title')
-                        .populate('checkInBy', 'name');
-                    if (attendee) {
-                        const eventInfo = attendee.eventId;
-                        const checkInByInfo = attendee.checkInBy;
-                        templateData = {
-                            ...templateData,
-                            eventTitle: eventInfo === null || eventInfo === void 0 ? void 0 : eventInfo.title,
-                            checkInTime: (_j = attendee.checkInTime) === null || _j === void 0 ? void 0 : _j.toLocaleString(),
-                            checkedInBy: (checkInByInfo === null || checkInByInfo === void 0 ? void 0 : checkInByInfo.name) || 'Organizer',
-                            ticketNumber: attendee._id.toString().slice(-8).toUpperCase(),
-                        };
-                    }
                 }
                 break;
             default:
@@ -197,39 +137,6 @@ const sendNotificationEmail = async (notification) => {
             },
         });
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, `Failed to send email notification: ${error.message}`);
-    }
-};
-const createNotificationForEvent = async (eventId, type, title, content, metadata) => {
-    try {
-        // Get all attendees for the event
-        const attendees = await attendee_model_1.Attendee.find({ eventId }).populate('userId', 'email name');
-        const notifications = attendees.map(attendee => {
-            var _a;
-            return ({
-                userId: ((_a = attendee.userId) === null || _a === void 0 ? void 0 : _a._id) || attendee.userId,
-                title,
-                content,
-                type,
-                channel: notification_interface_1.NotificationChannel.BOTH,
-                priority: notification_interface_1.NotificationPriority.MEDIUM,
-                metadata: {
-                    ...metadata,
-                    eventId,
-                    attendeeId: attendee._id,
-                },
-            });
-        });
-        // Create notifications in batches
-        const batchSize = 50;
-        for (let i = 0; i < notifications.length; i += batchSize) {
-            const batch = notifications.slice(i, i + batchSize);
-            await notification_model_1.Notification.insertMany(batch);
-        }
-        console.log(`Created ${notifications.length} notifications for event ${eventId}`);
-    }
-    catch (error) {
-        console.error('Failed to create event notifications:', error);
-        throw error;
     }
 };
 const getAllNotifications = async (user, filterables, pagination) => {
@@ -537,6 +444,62 @@ const sendTestEmail = async (to, template) => {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, `Failed to send test email: ${error.message}`);
     }
 };
+const createEventNotification = async (eventId, type, title, content, metadata = {}) => {
+    try {
+        // 1. Get the event to find the organizer
+        const event = await event_model_1.Event.findById(eventId).lean();
+        if (!event) {
+            throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Event not found');
+        }
+        // 2. Find users who saved this event
+        const savedEventUsers = await savedEvent_model_1.SavedEvent.find({ event: eventId }).select('user');
+        const savedUserIds = savedEventUsers.map(s => s.user.toString());
+        // 3. If it's a new event or reminder, maybe notify organizer's followers
+        let followerIds = [];
+        if ((type === notification_interface_1.NotificationType.EVENT_CREATED ||
+            type === notification_interface_1.NotificationType.EVENT_REMINDER) &&
+            event.organizerId) {
+            const followers = await follow_model_1.Follow.find({
+                following: event.organizerId,
+            }).select('follower');
+            followerIds = followers.map(f => f.follower.toString());
+        }
+        // Combine and unique user IDs
+        const uniqueUserIds = [...new Set([...savedUserIds, ...followerIds])];
+        if (uniqueUserIds.length === 0) {
+            return;
+        }
+        // 4. Create notifications for all these users
+        const notifications = uniqueUserIds.map(userId => ({
+            userId: new mongoose_1.Types.ObjectId(userId),
+            title,
+            content,
+            type,
+            channel: notification_interface_1.NotificationChannel.IN_APP,
+            priority: notification_interface_1.NotificationPriority.MEDIUM,
+            metadata: {
+                ...metadata,
+                eventId,
+            },
+        }));
+        // Batch create notifications
+        const createdNotifications = await notification_model_1.Notification.insertMany(notifications);
+        // 5. Emit socket events for real-time notifications
+        if (server_1.io) {
+            createdNotifications.forEach(notification => {
+                if (notification.userId) {
+                    server_1.io.to(notification.userId.toString()).emit('notification', {
+                        type: 'NEW_NOTIFICATION',
+                        data: notification,
+                    });
+                }
+            });
+        }
+    }
+    catch (error) {
+        throw new ApiError_1.default(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, `Failed to create event notifications: ${error.message}`);
+    }
+};
 const sendManualNotification = async (payload) => {
     try {
         // Create a single broadcast notification record
@@ -601,7 +564,6 @@ const sendManualNotification = async (payload) => {
 exports.NotificationServices = {
     createNotification,
     sendNotificationEmail,
-    createNotificationForEvent,
     getAllNotifications,
     getNotificationById,
     updateNotification,
@@ -612,5 +574,6 @@ exports.NotificationServices = {
     getNotificationStats,
     getMyNotifications,
     sendTestEmail,
+    createNotificationForEvent: createEventNotification,
     sendManualNotification,
 };

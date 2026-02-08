@@ -41,17 +41,7 @@ const getUserStats = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
-const getRevenueStats = catchAsync(async (req: Request, res: Response) => {
-  const months = parseInt(req.query.months as string) || 6
-  const result = await EventStatsServices.getRevenueStats(months)
 
-  sendResponse(res, {
-    statusCode: StatusCodes.OK,
-    success: true,
-    message: 'Revenue statistics fetched successfully',
-    data: result,
-  })
-})
 
 const getEventStatusStats = catchAsync(async (req: Request, res: Response) => {
   const result = await EventStatsServices.getEventStatusStats()
@@ -103,20 +93,7 @@ const getOrganizerEventStats = catchAsync(async (req: Request, res: Response) =>
   })
 })
 
-const getOrganizerRevenueStats = catchAsync(async (req: Request, res: Response) => {
-  const months = parseInt(req.query.months as string) || 6
-  const result = await EventStatsServices.getOrganizerRevenueStats(
-    (req.user as JwtPayload).authId,
-    months,
-  )
 
-  sendResponse(res, {
-    statusCode: StatusCodes.OK,
-    success: true,
-    message: 'Organizer revenue statistics fetched successfully',
-    data: result,
-  })
-})
 
 const getOrganizerEventStatusStats = catchAsync(async (req: Request, res: Response) => {
   const result = await EventStatsServices.getOrganizerEventStatusStats(
@@ -183,16 +160,7 @@ const getOrganizerPromotionStats = catchAsync(async (req: Request, res: Response
   })
 })
 
-const getTopThreeRevenueEvents = catchAsync(async (req: Request, res: Response) => {
-  const result = await EventStatsServices.getTopThreeRevenueEvents()
 
-  sendResponse(res, {
-    statusCode: StatusCodes.OK,
-    success: true,
-    message: 'Top three revenue events fetched successfully',
-    data: result,
-  })
-})
 
 const getOrganizerUpcomingEvents = catchAsync(async (req: Request, res: Response) => {
   const result = await EventStatsServices.getOrganizerUpcomingEvents(
@@ -248,18 +216,15 @@ export const EventStatsController = {
   getAdminDashboardStats,
   getEventStats,
   getUserStats,
-  getRevenueStats,
   getEventStatusStats,
   getAppSummary,
   getOrganizerDashboardStats,
   getOrganizerEventStats,
-  getOrganizerRevenueStats,
   getOrganizerEventStatusStats,
   getOrganizerAppSummary,
   getIndividualEventStats,
   getEventAnalytics,
   getOrganizerPromotionStats,
-  getTopThreeRevenueEvents,
   getOrganizerUpcomingEvents,
   getContentModerationStats,
   getWeeklyEventCreatedStats,

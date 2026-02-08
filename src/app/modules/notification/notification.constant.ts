@@ -27,15 +27,6 @@ export const NOTIFICATION_TEMPLATES = {
   EVENT_UPDATED: 'event-updated',
   EVENT_CANCELLED: 'event-cancelled',
 
-  // Ticket Templates
-  TICKET_CONFIRMATION: 'ticket-confirmation',
-  TICKET_REFUND: 'ticket-refund',
-
-  // Payment Templates
-  PAYMENT_SUCCESS: 'payment-success',
-  PAYMENT_FAILED: 'payment-failed',
-  PAYMENT_REFUNDED: 'payment-refunded',
-
   // User Templates
   WELCOME: 'welcome',
   PASSWORD_RESET: 'password-reset',
@@ -47,12 +38,7 @@ export const NOTIFICATION_TEMPLATES = {
   MAINTENANCE: 'maintenance',
   NEW_FEATURE: 'new-feature',
 
-  // Attendee Templates
-  ATTENDEE_CHECKED_IN: 'attendee-checked-in',
-  ATTENDEE_REMINDER: 'attendee-reminder',
-
   // Organizer Templates
-  NEW_ATTENDEE: 'new-attendee',
   EVENT_STATISTICS: 'event-statistics',
 }
 
@@ -91,14 +77,9 @@ export const NOTIFICATION_CONFIG = {
 
 export const EMAIL_SUBJECTS = {
   [NotificationType.EVENT_REMINDER]: 'Event Reminder: {eventTitle}',
-  [NotificationType.TICKET_CONFIRMATION]: 'Ticket Confirmation - {eventTitle}',
-  [NotificationType.PAYMENT_SUCCESS]: 'Payment Successful - {eventTitle}',
-  [NotificationType.PAYMENT_FAILED]: 'Payment Failed - {eventTitle}',
   [NotificationType.EVENT_CREATED]: 'New Event Created: {eventTitle}',
   [NotificationType.EVENT_UPDATED]: 'Event Updated: {eventTitle}',
   [NotificationType.EVENT_CANCELLED]: 'Event Cancelled: {eventTitle}',
-  [NotificationType.ATTENDEE_CHECKED_IN]:
-    'Check-in Confirmation - {eventTitle}',
   [NotificationType.WELCOME]: 'Welcome to EventHub!',
   [NotificationType.PASSWORD_RESET]: 'Password Reset Request',
   [NotificationType.ACCOUNT_VERIFICATION]: 'Verify Your Account',

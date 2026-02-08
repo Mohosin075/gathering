@@ -132,19 +132,6 @@ export class EmailProvider {
     })
   }
 
-  async sendTicketConfirmation(
-    to: string,
-    eventTitle: string,
-    ticketData: any,
-  ): Promise<boolean> {
-    return this.sendTemplateEmail(to, 'ticket-confirmation', {
-      ...ticketData,
-      eventTitle,
-      actionUrl: `${config.clientUrl}/tickets/${ticketData.ticketId}`,
-      actionText: 'View Ticket',
-    })
-  }
-
   async sendEventReminder(to: string, eventData: any): Promise<boolean> {
     return this.sendTemplateEmail(to, 'event-reminder', {
       ...eventData,

@@ -43,11 +43,6 @@ exports.default = {
         region: process.env.AWS_REGION,
         bucket_name: process.env.AWS_BUCKET_NAME,
     },
-    stripe: {
-        stripeSecretKey: process.env.STRIPE_API_SECRET,
-        webhookSecret: process.env.WEBHOOK_SECRET,
-        paymentSuccess: process.env.SUCCESS_URL,
-    },
     agora: {
         app_id: process.env.AGORA_APP_ID,
         app_certificate: process.env.AGORA_APP_CERTIFICATE,

@@ -11,14 +11,11 @@ const support_route_1 = require("../app/modules/support/support.route");
 const upload_route_1 = require("../app/modules/upload/upload.route");
 const event_route_1 = require("../app/modules/event/event.route");
 const promotion_route_1 = require("../app/modules/promotion/promotion.route");
-const ticket_route_1 = require("../app/modules/ticket/ticket.route");
-const payment_route_1 = require("../app/modules/payment/payment.route");
 const notification_routes_1 = require("../app/modules/notification/notification.routes");
 const message_routes_1 = require("../app/modules/message/message.routes");
 const chat_routes_1 = require("../app/modules/chat/chat.routes");
 const review_route_1 = require("../app/modules/review/review.route");
 const savedEvent_route_1 = require("../app/modules/savedEvent/savedEvent.route");
-const attendee_route_1 = require("../app/modules/attendee/attendee.route");
 const meeting_route_1 = require("../app/modules/meeting/meeting.route");
 const livestream_route_1 = require("../app/modules/livestream/livestream.route");
 const chatmessage_route_1 = require("../app/modules/chatmessage/chatmessage.route");
@@ -34,14 +31,11 @@ const apiRoutes = [
     { path: '/upload', route: upload_route_1.UploadRoutes },
     { path: '/event', route: event_route_1.EventRoutes },
     { path: '/promotion', route: promotion_route_1.PromotionRoutes },
-    { path: '/ticket', route: ticket_route_1.TicketRoutes },
-    { path: '/payment', route: payment_route_1.PaymentRoutes },
     { path: '/message', route: message_routes_1.MessageRoutes },
     { path: '/chat', route: chat_routes_1.ChatRoutes },
     { path: '/stats', route: stats_route_1.EventStatsRoutes },
     { path: '/review', route: review_route_1.ReviewRoutes },
     { path: '/saved', route: savedEvent_route_1.SavedEventRoutes },
-    { path: '/attendee', route: attendee_route_1.AttendeeRoutes },
     { path: '/meetings', route: meeting_route_1.MeetingRoutes },
     { path: '/livestream', route: livestream_route_1.LiveStreamRoutes },
     { path: '/chatmessage', route: chatmessage_route_1.ChatmessageRoutes },

@@ -36,8 +36,6 @@ exports.EventValidations = {
             address: zod_1.z.string(),
             meetingLink: zod_1.z.string().optional(),
             capacity: zod_1.z.number(),
-            ticketsSold: zod_1.z.number().default(0),
-            ticketPrice: zod_1.z.number(),
             images: zod_1.z.array(zod_1.z.string()).optional(),
             gallery: zod_1.z.array(zod_1.z.string()).default([]),
             views: zod_1.z.number().default(0),
@@ -70,7 +68,6 @@ exports.EventValidations = {
             address: zod_1.z.string().optional(),
             meetingLink: zod_1.z.string().optional(),
             capacity: zod_1.z.number().optional(),
-            ticketPrice: zod_1.z.number().optional(),
             images: zod_1.z.array(zod_1.z.string()).optional(),
             favorites: zod_1.z.number().optional(),
         })

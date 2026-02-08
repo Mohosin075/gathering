@@ -95,62 +95,6 @@ export class EmailTemplates {
       `,
     },
 
-    // Ticket Confirmation
-    [NOTIFICATION_TEMPLATES.TICKET_CONFIRMATION]: {
-      getTitle: (data: TemplateData) => `Ticket Confirmed!`,
-      getSubject: (data: TemplateData) =>
-        `Ticket Confirmation - ${data.eventTitle}`,
-      getBody: (data: TemplateData) => `
-        <h2>🎉 Your Ticket is Confirmed!</h2>
-        <p>Thank you for your purchase. Your ticket for <strong>${data.eventTitle}</strong> has been confirmed.</p>
-        
-        <div class="event-details">
-          <div class="info-row">
-            <span class="info-label">Event:</span>
-            <span class="info-value">${data.eventTitle}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Date & Time:</span>
-            <span class="info-value">${data.eventDate} at ${data.eventTime}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Location:</span>
-            <span class="info-value">${data.eventLocation}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Ticket Type:</span>
-            <span class="info-value">${data.ticketType}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Quantity:</span>
-            <span class="info-value">${data.quantity}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Order ID:</span>
-            <span class="info-value">${data.orderId}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Total Paid:</span>
-            <span class="info-value">${data.amount} ${data.currency}</span>
-          </div>
-        </div>
-
-        <div class="ticket-qr">
-          <p><strong>Your Ticket QR Code:</strong></p>
-          <img src="${data.qrCodeUrl}" alt="Ticket QR Code" class="qr-code" />
-          <p style="font-size: 12px; color: #666;">Show this QR code at the event entrance</p>
-        </div>
-
-        <p><strong>Important Information:</strong></p>
-        <ul>
-          <li>Please arrive at least 30 minutes before the event starts</li>
-          <li>Bring a valid ID that matches the ticket name</li>
-          <li>Keep this email accessible for check-in</li>
-          <li>Contact support if you have any questions</li>
-        </ul>
-      `,
-    },
-
     // Event Reminder
     [NOTIFICATION_TEMPLATES.EVENT_REMINDER]: {
       getTitle: (data: TemplateData) => `Event Reminder: ${data.eventTitle}`,
@@ -186,41 +130,6 @@ export class EmailTemplates {
         <p>${data.locationInstructions || 'Please check the event page for directions.'}</p>
 
         <p>We look forward to seeing you there!</p>
-      `,
-    },
-
-    // Payment Success
-    [NOTIFICATION_TEMPLATES.PAYMENT_SUCCESS]: {
-      getTitle: (data: TemplateData) => `Payment Successful!`,
-      getSubject: (data: TemplateData) =>
-        `Payment Successful - ${data.eventTitle}`,
-      getBody: (data: TemplateData) => `
-        <h2>✅ Payment Successful</h2>
-        <p>Your payment for <strong>${data.eventTitle}</strong> has been processed successfully.</p>
-        
-        <div class="event-details">
-          <div class="info-row">
-            <span class="info-label">Transaction ID:</span>
-            <span class="info-value">${data.transactionId}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Amount Paid:</span>
-            <span class="info-value">${data.amount} ${data.currency}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Payment Method:</span>
-            <span class="info-value">${data.paymentMethod}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Date:</span>
-            <span class="info-value">${data.paymentDate}</span>
-          </div>
-        </div>
-
-        <p>Your tickets have been confirmed and sent to your email. Check your inbox for the ticket confirmation email.</p>
-        
-        <p><strong>Need help?</strong></p>
-        <p>If you have any questions about your purchase, please contact our support team.</p>
       `,
     },
 
@@ -292,43 +201,6 @@ export class EmailTemplates {
         <p>You can edit your event details, ticket types, and settings anytime from your organizer dashboard.</p>
 
         <p>Good luck with your event! 🚀</p>
-      `,
-    },
-
-    // Attendee Checked In
-    [NOTIFICATION_TEMPLATES.ATTENDEE_CHECKED_IN]: {
-      getTitle: (data: TemplateData) => `Checked In Successfully!`,
-      getSubject: (data: TemplateData) =>
-        `Check-in Confirmation - ${data.eventTitle}`,
-      getBody: (data: TemplateData) => `
-        <h2>✅ Check-in Successful</h2>
-        <p>You have been successfully checked into <strong>${data.eventTitle}</strong>.</p>
-        
-        <div class="event-details">
-          <div class="info-row">
-            <span class="info-label">Check-in Time:</span>
-            <span class="info-value">${data.checkInTime}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Checked in by:</span>
-            <span class="info-value">${data.checkedInBy}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Ticket Number:</span>
-            <span class="info-value">${data.ticketNumber}</span>
-          </div>
-        </div>
-
-        <p><strong>Enjoy the event!</strong></p>
-        <p>We hope you have a fantastic time. Here are a few tips:</p>
-        <ul>
-          <li>Keep your phone handy for any event updates</li>
-          <li>Follow event rules and guidelines</li>
-          <li>Network with other attendees</li>
-          <li>Don't hesitate to ask organizers for help</li>
-        </ul>
-
-        <p>After the event, you'll receive a follow-up email where you can share your feedback.</p>
       `,
     },
 

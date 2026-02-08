@@ -5,110 +5,10 @@ import {
   NotificationChannel,
   NotificationPriority,
 } from './notification.interface'
-import { Ticket } from '../ticket/ticket.model'
-import { Payment } from '../payment/payment.model'
 import { Event } from '../event/event.model'
-import { Attendee } from '../attendee/attendee.model'
 import { User } from '../user/user.model'
 
 export class NotificationIntegration {
-  static async onTicketPurchase(
-    ticketId: Types.ObjectId | string,
-  ): Promise<void> {
-    try {
-      const ticket = (await Ticket.findById(ticketId)
-        .populate('eventId', 'title')
-        .populate('attendeeId', 'email name')) as any
-
-      if (!ticket || !ticket.attendeeId) return
-
-      // Create ticket confirmation notification
-      await NotificationServices.createNotification(
-        {
-          userId: ticket.attendeeId._id,
-          title: 'Ticket Purchase Confirmed',
-          content: `Your ticket for "${ticket.eventId.title}" has been confirmed.`,
-          type: NotificationType.TICKET_CONFIRMATION,
-          channel: NotificationChannel.BOTH,
-          priority: NotificationPriority.HIGH,
-          metadata: {
-            ticketId: ticket._id,
-            eventId: ticket.eventId._id,
-          },
-          actionUrl: `${process.env.CLIENT_URL}/tickets/${ticket._id}`,
-          actionText: 'View Ticket',
-        },
-        true,
-      )
-    } catch (error) {
-      console.error('Error creating ticket purchase notification:', error)
-    }
-  }
-
-  static async onPaymentSuccess(
-    paymentId: Types.ObjectId | string,
-  ): Promise<void> {
-    try {
-      const payment = (await Payment.findById(paymentId)
-        .populate('userId', 'email name')
-        .populate('eventId', 'title')) as any
-
-      if (!payment) return
-
-      await NotificationServices.createNotification(
-        {
-          userId: payment.userId._id,
-          title: 'Payment Successful',
-          content: `Your payment of ${payment.amount} ${payment.currency} for "${payment.eventId.title}" was successful.`,
-          type: NotificationType.PAYMENT_SUCCESS,
-          channel: NotificationChannel.BOTH,
-          priority: NotificationPriority.HIGH,
-          metadata: {
-            paymentId: payment._id,
-            eventId: payment.eventId._id,
-          },
-          actionUrl: `${process.env.CLIENT_URL}/payments/${payment._id}`,
-          actionText: 'View Receipt',
-        },
-        true,
-      )
-    } catch (error) {
-      console.error('Error creating payment success notification:', error)
-    }
-  }
-
-  static async onPaymentFailed(
-    paymentId: Types.ObjectId | string,
-  ): Promise<void> {
-    try {
-      const payment = (await Payment.findById(paymentId)
-        .populate('userId', 'email name')
-        .populate('eventId', 'title')) as any
-
-      if (!payment) return
-
-      await NotificationServices.createNotification(
-        {
-          userId: payment.userId._id,
-          title: 'Payment Failed',
-          content: `Your payment for "${payment.eventId.title}" failed. Please try again.`,
-          type: NotificationType.PAYMENT_FAILED,
-          channel: NotificationChannel.BOTH,
-          priority: NotificationPriority.URGENT,
-          metadata: {
-            paymentId: payment._id,
-            eventId: payment.eventId._id,
-          },
-          actionUrl: `${process.env.CLIENT_URL}/payments/${payment._id}/retry`,
-          actionText: 'Retry Payment',
-        },
-        true,
-      )
-    } catch (error) {
-      console.error('Error creating payment failed notification:', error)
-    }
-  }
-
   static async onEventCreated(eventId: Types.ObjectId | string): Promise<void> {
     try {
       const event = (await Event.findById(eventId).populate(
@@ -148,94 +48,11 @@ export class NotificationIntegration {
       const event = await Event.findById(eventId)
       if (!event) return
 
-      // Get all attendees for this event
-      const attendees = await Attendee.find({ eventId }).populate(
-        'userId',
-        'email name',
-      )
-
-      for (const attendee of attendees) {
-        await NotificationServices.createNotification(
-          {
-            userId: (attendee as any).userId._id,
-            title: 'Event Updated',
-            content: `"${event.title}" has been updated. Changes: ${changes.join(', ')}.`,
-            type: NotificationType.EVENT_UPDATED,
-            channel: NotificationChannel.BOTH,
-            priority: NotificationPriority.MEDIUM,
-            metadata: {
-              eventId: event._id,
-              attendeeId: attendee._id,
-              changes,
-            },
-            actionUrl: `${process.env.CLIENT_URL}/events/${event._id}`,
-            actionText: 'View Updates',
-          },
-          true,
-        )
-      }
+      // In a ticketing-free system, we might notify interested users or followers
+      // For now, we'll just log or notify the organizer
+      console.log(`Event ${event.title} updated: ${changes.join(', ')}`)
     } catch (error) {
       console.error('Error creating event updated notification:', error)
-    }
-  }
-
-  static async onAttendeeCheckIn(
-    attendeeId: Types.ObjectId | string,
-    checkedInBy: Types.ObjectId,
-  ): Promise<void> {
-    try {
-      const attendee = (await Attendee.findById(attendeeId)
-        .populate('userId', 'email name')
-        .populate('eventId', 'title')
-        .populate('checkInBy', 'name')) as any
-
-      if (!attendee) return
-
-      // Notify attendee
-      await NotificationServices.createNotification(
-        {
-          userId: attendee.userId._id,
-          title: 'Checked In Successfully',
-          content: `You have been checked in to "${attendee.eventId.title}".`,
-          type: NotificationType.ATTENDEE_CHECKED_IN,
-          channel: NotificationChannel.BOTH,
-          priority: NotificationPriority.MEDIUM,
-          metadata: {
-            attendeeId: attendee._id,
-            eventId: attendee.eventId?._id || attendee.eventId,
-            checkedInBy: checkedInBy,
-          },
-          actionUrl: `${process.env.CLIENT_URL}/tickets/${attendee.ticketId}`,
-          actionText: 'View Ticket',
-        },
-        true,
-      )
-
-      const event = (await Event.findById(
-        attendee.eventId?._id || attendee.eventId,
-      ).populate('organizerId', 'email name')) as any
-
-      if (
-        event &&
-        event.organizerId &&
-        event.organizerId._id.toString() !== checkedInBy.toString()
-      ) {
-        await NotificationServices.createNotification({
-          userId: event.organizerId._id,
-          title: 'Attendee Checked In',
-          content: `${attendee.userId?.name} has been checked in to "${event.title}".`,
-          type: NotificationType.ATTENDEE_CHECKED_IN,
-          channel: NotificationChannel.IN_APP,
-          priority: NotificationPriority.LOW,
-          metadata: {
-            attendeeId: attendee._id,
-            eventId: event._id,
-            checkedInBy: checkedInBy,
-          },
-        })
-      }
-    } catch (error) {
-      console.error('Error creating check-in notification:', error)
     }
   }
 

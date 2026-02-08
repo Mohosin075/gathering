@@ -37,8 +37,6 @@ export interface IEvent {
 
   meetingLink?: string
   capacity: number
-  ticketsSold?: number
-  ticketPrice: number
   images?: string[]
   gallery: string[]
   views?: number

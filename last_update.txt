@@ -1,0 +1,133 @@
+Gathering
+Real-Time Nightlife Discovery Platform
+________________________________________
+1. Overview: What Gathering Is
+Gathering is a real-time nightlife discovery platform designed to help users instantly decide where to go tonight by surfacing the most critical decision-making information before they leave.
+Key questions Gathering answers: - Where should I go right now? - What’s the vibe? - How busy is it? - How much is the cover? - Is it worth going? - How do I get there?
+The product is optimized for fast decisions, not long browsing.
+________________________________________
+2. Core Principle (Non‑Negotiable)
+Users must get value from Gathering even if nobody else is using the app yet.
+In early stages, Gathering behaves as: - A smart nightlife assistant - A curated city guide - A prediction engine, not a social network
+This ensures the app is useful from day one.
+________________________________________
+3. User Outcomes (Success Criteria)
+Within 30 seconds, a user should be able to: - Choose a venue - Understand expected cost - Understand expected crowd level - Understand the vibe / rating - Get directions
+If this is achieved, the product is working.
+________________________________________
+4. User Types
+Regular User
+People looking for nightlife options and quick decisions.
+Organizer / Venue Owner
+Venues promoting events, updating information, and attracting foot traffic.
+Admin (Gathering Team)
+Controls curation, quality, and early‑stage experience.
+________________________________________
+5. Product Structure
+Mobile App (Users)
+•	Home
+•	Map
+•	Create (for regular users)
+•	Chat
+•	Profile
+Web Dashboards
+•	Admin Dashboard
+•	Organizer / Venue Owner Dashboard
+________________________________________
+6. MVP Features (Phase 1 & 2)
+Venue Cards (List & Map Preview)
+Each venue card must show: - Venue name - Category (Bar, Club, Lounge) - Distance - Estimated cover range - Estimated busy status - Rating & review count - Open / close status
+________________________________________
+Venue Page (Decision Screen)
+Purpose: Enable fast, confident decisions.
+Required Sections
+1.	Header
+o	Venue photos
+o	Name
+o	Rating
+2.	Key Stats Row
+o	Estimated cover
+o	Busy status
+o	Vibe / rating
+3.	Info / About
+o	Hours
+o	Address
+o	Social links
+4.	Location Summary
+o	Mini map
+o	Perks (if any)
+5.	Reviews
+o	Horizontal scroll
+6.	Bottom Action Buttons
+o	Checked In
+o	Get Directions
+________________________________________
+7. Core App Screens
+Home
+Purpose: Provide value without relying on user-generated content.
+Sections: - Search bar - Category filters (All, Bars, Clubs, Lounges) - Tonight’s Picks (admin curated) - Trending Tonight (signal-based) - Near You (distance-based)
+________________________________________
+Map
+Purpose: Visual discovery that feels alive.
+Requirements: - Category-based pins - Tap pin → venue preview card - Preview card shows: - Venue name - Cover estimate - Busy estimate - Rating
+________________________________________
+Create
+Purpose: Allow regular users to create events inside Gathering.
+Think of this as: - A lightweight event creator - A way for regular users to host or create nightlife moments - Making user-created events feel as alive as official venue events
+________________________________________
+Chat
+Purpose: Communication hub for planning nights out.
+Enables users to: - Coordinate plans - Stay updated on venues - Chat around real-world plans before going out
+________________________________________
+Profile
+Purpose: The user’s nightlife identity.
+Reflects: - How they go out - Their interactions with nightlife - Their preferences
+This is not a noisy social feed.
+________________________________________
+8. Estimated Intelligence System
+Busy Estimation (Not Real-Time)
+Data Sources: - Google popularity signals - Day-of-week patterns - Venue category norms - Manual admin override
+Outputs: - Usually Busy Now - Usually Calm Now - Peak Time (e.g., 11:30 PM) - High Energy Nights (Fri–Sat)
+________________________________________
+Cover Estimation
+Primary Source: - Admin-set ranges
+Format Example: - Estimated cover: $20–$45 - Free before 11 PM
+________________________________________
+9. Revenue Model
+Sponsored Venues / Featured Placement (PRIMARY)
+This is Gathering’s #1 early revenue engine.
+How It Works
+Venues pay to: - Appear at the top of the map - Be labeled “Featured Tonight” - Get highlighted in “Popular Tonight” - Show enhanced venue cards (photos, cover, vibe)
+Why This Works
+•	Venues already spend on promotion
+•	Solves an immediate problem: bringing people in tonight
+•	No dependency on massive user activity
+•	Works even at early traction
+Early Pricing Idea
+•	$50–$150 / week per venue
+•	$300–$800 / month once traction builds
+This is the early revenue unlock.
+________________________________________
+Venue Subscriptions (B2B SaaS)
+Once venues see value, convert them to monthly plans.
+What Venues Get
+•	Control their venue page
+•	Update cover charges
+•	Post events
+•	View traffic insights (views, taps, directions)
+•	Pin themselves on peak nights
+Pricing
+•	Starter: $49 / month
+•	Pro: $99–$199 / month
+•	Premium (later): $299+ (advanced analytics, priority placement)
+Why This Scales: - Recurring revenue - Predictable cash flow - Investor-friendly model
+________________________________________
+10. MVP Acceptance Checklist
+•	Registration & login are stable
+•	Home feed is populated
+•	Map pins load correctly
+•	Venue pages always show cover & busy status
+•	Admin dashboard works without developer assistance
+•	No empty or dead screens
+________________________________________
+End of Document

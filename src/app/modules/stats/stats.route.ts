@@ -27,12 +27,7 @@ router.get(
   EventStatsController.getUserStats,
 )
 
-// GET /api/stats/admin/revenue - Revenue statistics with trend data
-router.get(
-  '/admin/revenue',
-  auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
-  EventStatsController.getRevenueStats,
-)
+
 
 // GET /api/stats/admin/event-status - Event status distribution
 router.get(
@@ -77,12 +72,7 @@ router.get(
   EventStatsController.getOrganizerEventStats,
 )
 
-// GET /api/stats/organizer/revenue - Organizer revenue statistics
-router.get(
-  '/organizer/revenue',
-  auth(USER_ROLES.ORGANIZER),
-  EventStatsController.getOrganizerRevenueStats,
-)
+
 
 // GET /api/stats/organizer/event-status - Organizer event status distribution
 router.get(
@@ -113,12 +103,7 @@ router.get(
 )
 
 // Shared Analytics Route
-// GET /api/stats/organizer/top-revenue-events - top three revenue events
-router.get(
-  '/organizer/top-revenue-events',
-  auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN, USER_ROLES.ORGANIZER),
-  EventStatsController.getTopThreeRevenueEvents,
-)
+
 
 // GET /api/stats/analytics/:eventId - detailed analytics for admin and organizer
 router.get(

@@ -37,16 +37,6 @@ const getUserStats = (0, catchAsync_1.default)(async (req, res) => {
         data: result,
     });
 });
-const getRevenueStats = (0, catchAsync_1.default)(async (req, res) => {
-    const months = parseInt(req.query.months) || 6;
-    const result = await stats_service_1.EventStatsServices.getRevenueStats(months);
-    (0, sendResponse_1.default)(res, {
-        statusCode: http_status_codes_1.StatusCodes.OK,
-        success: true,
-        message: 'Revenue statistics fetched successfully',
-        data: result,
-    });
-});
 const getEventStatusStats = (0, catchAsync_1.default)(async (req, res) => {
     const result = await stats_service_1.EventStatsServices.getEventStatusStats();
     (0, sendResponse_1.default)(res, {
@@ -81,16 +71,6 @@ const getOrganizerEventStats = (0, catchAsync_1.default)(async (req, res) => {
         statusCode: http_status_codes_1.StatusCodes.OK,
         success: true,
         message: 'Organizer event statistics fetched successfully',
-        data: result,
-    });
-});
-const getOrganizerRevenueStats = (0, catchAsync_1.default)(async (req, res) => {
-    const months = parseInt(req.query.months) || 6;
-    const result = await stats_service_1.EventStatsServices.getOrganizerRevenueStats(req.user.authId, months);
-    (0, sendResponse_1.default)(res, {
-        statusCode: http_status_codes_1.StatusCodes.OK,
-        success: true,
-        message: 'Organizer revenue statistics fetched successfully',
         data: result,
     });
 });
@@ -142,15 +122,6 @@ const getOrganizerPromotionStats = (0, catchAsync_1.default)(async (req, res) =>
         data: result,
     });
 });
-const getTopThreeRevenueEvents = (0, catchAsync_1.default)(async (req, res) => {
-    const result = await stats_service_1.EventStatsServices.getTopThreeRevenueEvents();
-    (0, sendResponse_1.default)(res, {
-        statusCode: http_status_codes_1.StatusCodes.OK,
-        success: true,
-        message: 'Top three revenue events fetched successfully',
-        data: result,
-    });
-});
 const getOrganizerUpcomingEvents = (0, catchAsync_1.default)(async (req, res) => {
     const result = await stats_service_1.EventStatsServices.getOrganizerUpcomingEvents(req.user.authId);
     (0, sendResponse_1.default)(res, {
@@ -191,18 +162,15 @@ exports.EventStatsController = {
     getAdminDashboardStats,
     getEventStats,
     getUserStats,
-    getRevenueStats,
     getEventStatusStats,
     getAppSummary,
     getOrganizerDashboardStats,
     getOrganizerEventStats,
-    getOrganizerRevenueStats,
     getOrganizerEventStatusStats,
     getOrganizerAppSummary,
     getIndividualEventStats,
     getEventAnalytics,
     getOrganizerPromotionStats,
-    getTopThreeRevenueEvents,
     getOrganizerUpcomingEvents,
     getContentModerationStats,
     getWeeklyEventCreatedStats,

@@ -15,8 +15,6 @@ router.get('/admin/dashboard', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user
 router.get('/admin/events', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), stats_controller_1.EventStatsController.getEventStats);
 // GET /api/stats/admin/users - User statistics with growth data
 router.get('/admin/users', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), stats_controller_1.EventStatsController.getUserStats);
-// GET /api/stats/admin/revenue - Revenue statistics with trend data
-router.get('/admin/revenue', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), stats_controller_1.EventStatsController.getRevenueStats);
 // GET /api/stats/admin/event-status - Event status distribution
 router.get('/admin/event-status', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), stats_controller_1.EventStatsController.getEventStatusStats);
 // GET /api/stats/admin/content-moderation - Content moderation status distribution
@@ -30,8 +28,6 @@ router.get('/organizer/dashboard', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZ
 router.get('/organizer/upcoming-events', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER), stats_controller_1.EventStatsController.getOrganizerUpcomingEvents);
 // GET /api/stats/organizer/events - Organizer event statistics
 router.get('/organizer/events', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER), stats_controller_1.EventStatsController.getOrganizerEventStats);
-// GET /api/stats/organizer/revenue - Organizer revenue statistics
-router.get('/organizer/revenue', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER), stats_controller_1.EventStatsController.getOrganizerRevenueStats);
 // GET /api/stats/organizer/event-status - Organizer event status distribution
 router.get('/organizer/event-status', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER), stats_controller_1.EventStatsController.getOrganizerEventStatusStats);
 // GET /api/stats/organizer/summary - All organizer statistics
@@ -41,8 +37,6 @@ router.get('/organizer/promotions', (0, auth_1.default)(user_1.USER_ROLES.ORGANI
 // GET /api/stats/organizer/event/:eventId - Individual event statistics
 router.get('/organizer/event/:eventId', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER), stats_controller_1.EventStatsController.getIndividualEventStats);
 // Shared Analytics Route
-// GET /api/stats/organizer/top-revenue-events - top three revenue events
-router.get('/organizer/top-revenue-events', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ORGANIZER), stats_controller_1.EventStatsController.getTopThreeRevenueEvents);
 // GET /api/stats/analytics/:eventId - detailed analytics for admin and organizer
 router.get('/analytics/:eventId', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ORGANIZER), stats_controller_1.EventStatsController.getEventAnalytics);
 // GET /api/stats/admin/events-this-week - admin event created this week. event count per day

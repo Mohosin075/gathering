@@ -36,13 +36,6 @@ router.get(
   LiveStreamController.getMyLiveStreams,
 )
 
-// Get stream by ticket ID
-router.get(
-  '/ticket/:ticketId',
-  auth(USER_ROLES.ORGANIZER, USER_ROLES.USER, USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
-  LiveStreamController.getLiveStreamByTicketId,
-)
-
 // Stream management (Streamer only)
 router.patch(
   '/:streamId',
