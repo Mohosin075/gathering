@@ -1,35 +1,26 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 export const ChatmessageValidations = {
-  create: z.object({
-    streamId: z.string(),
-    userId: z.string(),
-    userProfile: z.record(z.string(), z.any()),
-    name: z.string(),
-    avatar: z.string().optional(),
-    message: z.string(),
-    messageType: z.string(),
-    isDeleted: z.boolean(),
-    deletedAt: z.string().datetime().optional(),
-    likes: z.number(),
-    likedBy: z.string(),
-    createdAt: z.string().datetime(),
-    updatedAt: z.string().datetime(),
+  sendMessage: z.object({
+    body: z.object({
+      message: z
+        .string({
+          required_error: 'Message is required',
+        })
+        .min(1)
+        .max(500),
+      messageType: z.enum(['text', 'emoji']).optional(),
+    }),
   }),
 
-  update: z.object({
-    streamId: z.string().optional(),
-    userId: z.string().optional(),
-    userProfile: z.record(z.string(), z.any()).optional(),
-    name: z.string().optional(),
-    avatar: z.string().optional(),
-    message: z.string().optional(),
-    messageType: z.string().optional(),
-    isDeleted: z.boolean().optional(),
-    deletedAt: z.string().datetime().optional(),
-    likes: z.number().optional(),
-    likedBy: z.string().optional(),
-    createdAt: z.string().datetime().optional(),
-    updatedAt: z.string().datetime().optional(),
+  getMessages: z.object({
+    query: z.object({
+      page: z.coerce.number().int().positive().optional(),
+      limit: z.coerce.number().int().positive().optional(),
+      before: z
+        .string()
+        .datetime()
+        .optional(),
+    }),
   }),
-};
+}

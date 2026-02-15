@@ -9,8 +9,8 @@ import { IChatListQueryDTO } from './chatmessage.interface'
 // Send message to chat
 const sendMessage = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as JwtPayload
-  const { streamId } = req.params
-  const result = await ChatService.sendMessageToDB(user, streamId, req.body)
+  const { roomId } = req.params
+  const result = await ChatService.sendMessageToDB(user, roomId, req.body)
 
   sendResponse(res, {
     statusCode: StatusCodes.CREATED,
@@ -23,9 +23,10 @@ const sendMessage = catchAsync(async (req: Request, res: Response) => {
 // Get chat messages
 const getChatMessages = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as JwtPayload
-  const { streamId } = req.params
+  const { roomId } = req.params
   const query = req.query as unknown as IChatListQueryDTO
-  const result = await ChatService.getChatMessagesFromDB(user, streamId, query)
+
+  const result = await ChatService.getChatMessagesFromDB(user, roomId, query)
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
@@ -66,8 +67,8 @@ const deleteMessage = catchAsync(async (req: Request, res: Response) => {
 
 // Get chat participants
 const getChatParticipants = catchAsync(async (req: Request, res: Response) => {
-  const { streamId } = req.params
-  const result = await ChatService.getChatParticipantsFromDB(streamId)
+  const { roomId } = req.params
+  const result = await ChatService.getChatParticipantsFromDB(roomId)
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,

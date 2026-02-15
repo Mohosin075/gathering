@@ -3,30 +3,30 @@ import { IChatMessageResponseDTO } from './chatmessage.interface'
 
 const getIO = () => (global as any).io
 
-const broadcastMessage = (streamId: string, message: IChatMessageResponseDTO) => {
+const broadcastMessage = (roomId: string, message: IChatMessageResponseDTO) => {
   const io = getIO()
   if (io) {
-    console.log(`Broadcasting new-message to stream:${streamId}`)
-    io.to(`stream:${streamId}`).emit('new-message', message)
+    console.log(`Broadcasting new-message to room:${roomId}`)
+    io.to(`room:${roomId}`).emit('new-message', message)
   } else {
     console.error('Socket.io instance not found in global scope')
   }
 }
 
-const broadcastLike = (streamId: string, messageId: string, userId: string) => {
+const broadcastLike = (roomId: string, messageId: string, userId: string) => {
   const io = getIO()
   if (io) {
-    io.to(`stream:${streamId}`).emit('message-liked', {
+    io.to(`room:${roomId}`).emit('message-liked', {
       messageId,
       userId,
     })
   }
 }
 
-const broadcastDelete = (streamId: string, messageId: string) => {
+const broadcastDelete = (roomId: string, messageId: string) => {
   const io = getIO()
   if (io) {
-    io.to(`stream:${streamId}`).emit('message-deleted', {
+    io.to(`room:${roomId}`).emit('message-deleted', {
       messageId,
     })
   }

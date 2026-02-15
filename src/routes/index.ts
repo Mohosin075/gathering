@@ -13,7 +13,6 @@ import { ChatRoutes } from '../app/modules/chat/chat.routes'
 import { ReviewRoutes } from '../app/modules/review/review.route'
 import { SavedEventRoutes } from '../app/modules/savedEvent/savedEvent.route'
 import { MeetingRoutes } from '../app/modules/meeting/meeting.route'
-import { LiveStreamRoutes } from '../app/modules/livestream/livestream.route'
 import { ChatmessageRoutes } from '../app/modules/chatmessage/chatmessage.route'
 import { FollowRoutes } from '../app/modules/follow/follow.route'
 import { EventStatsRoutes } from '../app/modules/stats/stats.route'
@@ -36,7 +35,6 @@ const apiRoutes: { path: string; route: Router }[] = [
   { path: '/review', route: ReviewRoutes },
   { path: '/saved', route: SavedEventRoutes },
   { path: '/meetings', route: MeetingRoutes },
-  { path: '/livestream', route: LiveStreamRoutes },
   { path: '/chatmessage', route: ChatmessageRoutes },
   { path: '/follow', route: FollowRoutes },
 ]

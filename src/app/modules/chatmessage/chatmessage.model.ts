@@ -3,9 +3,8 @@ import { IChatMessage } from './chatmessage.interface'
 
 const chatMessageSchema = new Schema<IChatMessage>(
   {
-    streamId: {
-      type: Schema.Types.ObjectId,
-      ref: 'LiveStream',
+    roomId: {
+      type: String,
       required: true,
       index: true,
     },
@@ -44,8 +43,8 @@ const chatMessageSchema = new Schema<IChatMessage>(
 )
 
 // Index for faster chat retrieval
-chatMessageSchema.index({ streamId: 1, createdAt: -1 })
-chatMessageSchema.index({ streamId: 1, createdAt: 1 })
+chatMessageSchema.index({ roomId: 1, createdAt: -1 })
+chatMessageSchema.index({ roomId: 1, createdAt: 1 })
 
 // Add virtual for formatted time
 chatMessageSchema.virtual('formattedTime').get(function () {

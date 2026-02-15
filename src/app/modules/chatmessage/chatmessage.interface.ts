@@ -2,7 +2,7 @@ import { Document, Types } from 'mongoose'
 
 export interface IChatMessage extends Document {
   _id: Types.ObjectId
-  streamId: Types.ObjectId
+  roomId: string
   userId: Types.ObjectId
   userProfile: {
     name: string

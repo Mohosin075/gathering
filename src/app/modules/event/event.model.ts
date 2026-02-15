@@ -47,7 +47,7 @@ const eventSchema = new Schema<IEvent, EventModel>(
     views: { type: Number, default: 0 },
     favorites: { type: Number, default: 0 },
 
-    // Live Stream Reference
+    // Live Stream Reference (no longer used)
     hasLiveStream: {
       type: Boolean,
       default: false,

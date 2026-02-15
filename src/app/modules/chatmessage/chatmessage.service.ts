@@ -8,41 +8,16 @@ import {
   IChatListQueryDTO,
   IPaginatedResponse,
 } from './chatmessage.interface'
-import { LiveStream } from '../livestream/livestream.model'
 import { ChatMessage } from './chatmessage.model'
 import { USER_ROLES } from '../../../enum/user'
-import mongoose from 'mongoose'
 import { ChatSocketHelper } from './websocket.service'
 
 // Send message to chat
 const sendMessageToDB = async (
   user: JwtPayload,
-  streamId: string,
+  roomId: string,
   payload: ISendMessageDTO,
 ): Promise<IChatMessageResponseDTO> => {
-  // Check if stream exists and is live
-  const stream = await LiveStream.findById(streamId)
-  if (!stream) {
-    throw new ApiError(StatusCodes.NOT_FOUND, 'Stream not found')
-  }
-
-  // Check if chat is enabled
-  if (!stream.chatEnabled) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      'Chat is disabled for this stream',
-    )
-  }
-
-  // Check if user can view stream
-  const canView = await LiveStream.canViewStream(streamId, user.authId)
-  if (!canView) {
-    throw new ApiError(
-      StatusCodes.FORBIDDEN,
-      'Not authorized to participate in chat',
-    )
-  }
-
   // Get user profile
   const userProfile = await User.findById(user.authId).select('name profile')
   if (!userProfile) {
@@ -51,7 +26,7 @@ const sendMessageToDB = async (
 
   // Create chat message
   const chatMessage = await ChatMessage.create({
-    streamId,
+    roomId,
     userId: user.authId,
     userProfile: {
       name: userProfile.name,
@@ -62,7 +37,7 @@ const sendMessageToDB = async (
   })
 
   // Broadcast message
-  ChatSocketHelper.broadcastMessage(streamId, {
+  ChatSocketHelper.broadcastMessage(roomId, {
     id: chatMessage._id.toString(),
     userId: chatMessage.userId.toString(),
     userProfile: chatMessage.userProfile,
@@ -90,27 +65,15 @@ const sendMessageToDB = async (
 // Get chat messages
 const getChatMessagesFromDB = async (
   user: JwtPayload,
-  streamId: string,
+  roomId: string,
   query: IChatListQueryDTO,
 ): Promise<IPaginatedResponse<IChatMessageResponseDTO>> => {
   const { page = 1, limit = 50, before } = query
   const skip = (page - 1) * limit
 
-  // Check if stream exists
-  const stream = await LiveStream.findById(streamId)
-  if (!stream) {
-    throw new ApiError(StatusCodes.NOT_FOUND, 'Stream not found')
-  }
-
-  // Check if user can view stream
-  const canView = await LiveStream.canViewStream(streamId, user.authId)
-  if (!canView) {
-    throw new ApiError(StatusCodes.FORBIDDEN, 'Not authorized to view chat')
-  }
-
   // Build filter
   const filter: any = {
-    streamId,
+    roomId,
     isDeleted: false,
   }
 
@@ -140,7 +103,9 @@ const getChatMessagesFromDB = async (
       minute: '2-digit',
     }),
     likes: message.likes,
-    hasLiked: message.likedBy?.includes(user.authId) || false,
+    hasLiked: message.likedBy?.some(
+      id => id.toString() === user.authId,
+    ) || false,
     createdAt: message.createdAt,
   }))
 
@@ -172,7 +137,9 @@ const likeMessageToDB = async (
   }
 
   // Check if user has already liked
-  const hasLiked = message.likedBy?.includes(user.authId)
+  const hasLiked = message.likedBy?.some(
+    id => id.toString() === user.authId,
+  )
 
   if (hasLiked) {
     // Unlike
@@ -190,7 +157,7 @@ const likeMessageToDB = async (
 
   // Broadcast like update
   ChatSocketHelper.broadcastLike(
-    message.streamId.toString(),
+    message.roomId.toString(),
     messageId,
     user.authId
   )
@@ -231,7 +198,7 @@ const deleteMessageToDB = async (
   await message.save()
 
   // Broadcast delete
-  ChatSocketHelper.broadcastDelete(message.streamId.toString(), messageId)
+  ChatSocketHelper.broadcastDelete(message.roomId.toString(), messageId)
 
   return {
     id: messageId,
@@ -241,7 +208,7 @@ const deleteMessageToDB = async (
 
 // Get chat participants
 const getChatParticipantsFromDB = async (
-  streamId: string,
+  roomId: string,
 ): Promise<{
   total: number
   participants: Array<{ id: string; name: string; avatar?: string }>
@@ -250,7 +217,7 @@ const getChatParticipantsFromDB = async (
   const participants = await ChatMessage.aggregate([
     {
       $match: {
-        streamId: new mongoose.Types.ObjectId(streamId),
+        roomId,
         isDeleted: false,
       },
     },
