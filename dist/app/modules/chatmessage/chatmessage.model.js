@@ -3,9 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatMessage = void 0;
 const mongoose_1 = require("mongoose");
 const chatMessageSchema = new mongoose_1.Schema({
-    streamId: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'LiveStream',
+    roomId: {
+        type: String,
         required: true,
         index: true,
     },
@@ -41,8 +40,8 @@ const chatMessageSchema = new mongoose_1.Schema({
     },
 });
 // Index for faster chat retrieval
-chatMessageSchema.index({ streamId: 1, createdAt: -1 });
-chatMessageSchema.index({ streamId: 1, createdAt: 1 });
+chatMessageSchema.index({ roomId: 1, createdAt: -1 });
+chatMessageSchema.index({ roomId: 1, createdAt: 1 });
 // Add virtual for formatted time
 chatMessageSchema.virtual('formattedTime').get(function () {
     return this.createdAt.toLocaleTimeString([], {

@@ -12,12 +12,13 @@ export interface IUserevent {
   description: string;
   venueId: Types.ObjectId;
   createdBy: Types.ObjectId;
+  startDate: Date;
   startTime: Date;
-  endTime: Date;
   vibeTags: string[];
   visibility: boolean;
   goingCount: number;
   location: Record<string, any>;
+  address: string;
   images?: string[];
 }
 

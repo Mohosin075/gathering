@@ -44,6 +44,7 @@ app.use((0, cors_1.default)({
         'http://10.10.7.11:5173',
         'http://localhost:60851',
         'http://localhost:5173',
+        'https://pia-campbell-dashboard.vercel.app',
         'https://buddi-script-server.vercel.app',
         'https://buddi-script.vercel.app',
         'https://your-frontend.vercel.app',

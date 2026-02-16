@@ -17,10 +17,10 @@ const chat_routes_1 = require("../app/modules/chat/chat.routes");
 const review_route_1 = require("../app/modules/review/review.route");
 const savedEvent_route_1 = require("../app/modules/savedEvent/savedEvent.route");
 const meeting_route_1 = require("../app/modules/meeting/meeting.route");
-const livestream_route_1 = require("../app/modules/livestream/livestream.route");
 const chatmessage_route_1 = require("../app/modules/chatmessage/chatmessage.route");
 const follow_route_1 = require("../app/modules/follow/follow.route");
 const stats_route_1 = require("../app/modules/stats/stats.route");
+const userevent_route_1 = require("../app/modules/userevent/userevent.route");
 const router = express_1.default.Router();
 const apiRoutes = [
     { path: '/user', route: user_route_1.UserRoutes },
@@ -37,9 +37,9 @@ const apiRoutes = [
     { path: '/review', route: review_route_1.ReviewRoutes },
     { path: '/saved', route: savedEvent_route_1.SavedEventRoutes },
     { path: '/meetings', route: meeting_route_1.MeetingRoutes },
-    { path: '/livestream', route: livestream_route_1.LiveStreamRoutes },
     { path: '/chatmessage', route: chatmessage_route_1.ChatmessageRoutes },
     { path: '/follow', route: follow_route_1.FollowRoutes },
+    { path: '/userevent', route: userevent_route_1.UsereventRoutes }
 ];
 apiRoutes.forEach(route => {
     router.use(route.path, route.route);

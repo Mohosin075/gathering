@@ -232,6 +232,31 @@ const deleteEvent = async (id, user) => {
     });
     return result;
 };
+const getEventLocations = async (address) => {
+    const pipeline = [];
+    if (address && address.trim() !== '') {
+        pipeline.push({
+            $match: {
+                address: { $regex: address.trim(), $options: 'i' },
+            },
+        });
+    }
+    pipeline.push({
+        $group: {
+            _id: '$location.coordinates',
+            // location: { $first: '$location' },
+            address: { $first: '$address' },
+        },
+    }, {
+        $project: {
+            _id: 0,
+            location: 1,
+            address: 1,
+        },
+    });
+    const result = await event_model_1.Event.aggregate(pipeline);
+    return result;
+};
 const getNearbyEvents = async (user, filterables, pagination, data) => {
     var _a;
     // ... (existing implementation of getNearbyEvents remains unchanged)
@@ -342,5 +367,6 @@ exports.EventServices = {
     updateEvent,
     deleteEvent,
     getMyEvents,
+    getEventLocations,
     getNearbyEvents,
 };

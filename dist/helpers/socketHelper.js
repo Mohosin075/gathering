@@ -8,18 +8,18 @@ const colors_1 = __importDefault(require("colors"));
 const socket = (io) => {
     io.on('connection', socket => {
         console.log(colors_1.default.blue('A user connected'), socket.id);
-        // Join stream room
-        socket.on('join-stream', (streamId) => {
-            if (streamId) {
-                socket.join(`stream:${streamId}`);
-                console.log(colors_1.default.green(`User ${socket.id} joined stream:${streamId}`));
+        // Join chat room
+        socket.on('join-room', (roomId) => {
+            if (roomId) {
+                socket.join(`room:${roomId}`);
+                console.log(colors_1.default.green(`User ${socket.id} joined room:${roomId}`));
             }
         });
-        // Leave stream room
-        socket.on('leave-stream', (streamId) => {
-            if (streamId) {
-                socket.leave(`stream:${streamId}`);
-                console.log(colors_1.default.yellow(`User ${socket.id} left stream:${streamId}`));
+        // Leave chat room
+        socket.on('leave-room', (roomId) => {
+            if (roomId) {
+                socket.leave(`room:${roomId}`);
+                console.log(colors_1.default.yellow(`User ${socket.id} left room:${roomId}`));
             }
         });
         //disconnect

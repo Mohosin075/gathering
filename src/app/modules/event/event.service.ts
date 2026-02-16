@@ -310,6 +310,39 @@ const deleteEvent = async (id: string, user: JwtPayload): Promise<IEvent> => {
   return result
 }
 
+const getEventLocations = async (address?: string) => {
+  const pipeline: any[] = []
+
+  if (address && address.trim() !== '') {
+    pipeline.push({
+      $match: {
+        address: { $regex: address.trim(), $options: 'i' },
+      },
+    })
+  }
+
+  pipeline.push(
+    {
+      $group: {
+        _id: '$location.coordinates',
+        location: { $first: '$location' },
+        address: { $first: '$address' },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        location: 1,
+        address: 1,
+      },
+    },
+  )
+
+  const result = await Event.aggregate(pipeline)
+
+  return result
+}
+
 const getNearbyEvents = async (
   user: JwtPayload,
   filterables: IEventFilterables,
@@ -442,5 +475,6 @@ export const EventServices = {
   updateEvent,
   deleteEvent,
   getMyEvents,
+  getEventLocations,
   getNearbyEvents,
 }

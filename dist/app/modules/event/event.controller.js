@@ -96,6 +96,16 @@ const getNearbyEvents = (0, catchAsync_1.default)(async (req, res) => {
         data: result,
     });
 });
+const getEventLocations = (0, catchAsync_1.default)(async (req, res) => {
+    const address = typeof req.query.address === 'string' ? req.query.address : undefined;
+    const result = await event_service_1.EventServices.getEventLocations(address);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_codes_1.StatusCodes.OK,
+        success: true,
+        message: 'Event locations retrieved successfully',
+        data: result,
+    });
+});
 exports.EventController = {
     createEvent,
     updateEvent,
@@ -103,5 +113,6 @@ exports.EventController = {
     getAllEvents,
     deleteEvent,
     getMyEvents,
+    getEventLocations,
     getNearbyEvents,
 };

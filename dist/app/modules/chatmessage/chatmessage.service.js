@@ -7,27 +7,11 @@ exports.ChatService = void 0;
 const http_status_codes_1 = require("http-status-codes");
 const ApiError_1 = __importDefault(require("../../../errors/ApiError"));
 const user_model_1 = require("../user/user.model");
-const livestream_model_1 = require("../livestream/livestream.model");
 const chatmessage_model_1 = require("./chatmessage.model");
 const user_1 = require("../../../enum/user");
-const mongoose_1 = __importDefault(require("mongoose"));
 const websocket_service_1 = require("./websocket.service");
 // Send message to chat
-const sendMessageToDB = async (user, streamId, payload) => {
-    // Check if stream exists and is live
-    const stream = await livestream_model_1.LiveStream.findById(streamId);
-    if (!stream) {
-        throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Stream not found');
-    }
-    // Check if chat is enabled
-    if (!stream.chatEnabled) {
-        throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Chat is disabled for this stream');
-    }
-    // Check if user can view stream
-    const canView = await livestream_model_1.LiveStream.canViewStream(streamId, user.authId);
-    if (!canView) {
-        throw new ApiError_1.default(http_status_codes_1.StatusCodes.FORBIDDEN, 'Not authorized to participate in chat');
-    }
+const sendMessageToDB = async (user, roomId, payload) => {
     // Get user profile
     const userProfile = await user_model_1.User.findById(user.authId).select('name profile');
     if (!userProfile) {
@@ -35,7 +19,7 @@ const sendMessageToDB = async (user, streamId, payload) => {
     }
     // Create chat message
     const chatMessage = await chatmessage_model_1.ChatMessage.create({
-        streamId,
+        roomId,
         userId: user.authId,
         userProfile: {
             name: userProfile.name,
@@ -45,7 +29,7 @@ const sendMessageToDB = async (user, streamId, payload) => {
         messageType: payload.messageType || 'text',
     });
     // Broadcast message
-    websocket_service_1.ChatSocketHelper.broadcastMessage(streamId, {
+    websocket_service_1.ChatSocketHelper.broadcastMessage(roomId, {
         id: chatMessage._id.toString(),
         userId: chatMessage.userId.toString(),
         userProfile: chatMessage.userProfile,
@@ -69,22 +53,12 @@ const sendMessageToDB = async (user, streamId, payload) => {
     };
 };
 // Get chat messages
-const getChatMessagesFromDB = async (user, streamId, query) => {
+const getChatMessagesFromDB = async (user, roomId, query) => {
     const { page = 1, limit = 50, before } = query;
     const skip = (page - 1) * limit;
-    // Check if stream exists
-    const stream = await livestream_model_1.LiveStream.findById(streamId);
-    if (!stream) {
-        throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Stream not found');
-    }
-    // Check if user can view stream
-    const canView = await livestream_model_1.LiveStream.canViewStream(streamId, user.authId);
-    if (!canView) {
-        throw new ApiError_1.default(http_status_codes_1.StatusCodes.FORBIDDEN, 'Not authorized to view chat');
-    }
     // Build filter
     const filter = {
-        streamId,
+        roomId,
         isDeleted: false,
     };
     if (before) {
@@ -113,7 +87,7 @@ const getChatMessagesFromDB = async (user, streamId, query) => {
                 minute: '2-digit',
             }),
             likes: message.likes,
-            hasLiked: ((_a = message.likedBy) === null || _a === void 0 ? void 0 : _a.includes(user.authId)) || false,
+            hasLiked: ((_a = message.likedBy) === null || _a === void 0 ? void 0 : _a.some(id => id.toString() === user.authId)) || false,
             createdAt: message.createdAt,
         });
     });
@@ -140,7 +114,7 @@ const likeMessageToDB = async (user, messageId) => {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Message not found');
     }
     // Check if user has already liked
-    const hasLiked = (_a = message.likedBy) === null || _a === void 0 ? void 0 : _a.includes(user.authId);
+    const hasLiked = (_a = message.likedBy) === null || _a === void 0 ? void 0 : _a.some(id => id.toString() === user.authId);
     if (hasLiked) {
         // Unlike
         message.likes = Math.max(0, message.likes - 1);
@@ -153,7 +127,7 @@ const likeMessageToDB = async (user, messageId) => {
     }
     await message.save();
     // Broadcast like update
-    websocket_service_1.ChatSocketHelper.broadcastLike(message.streamId.toString(), messageId, user.authId);
+    websocket_service_1.ChatSocketHelper.broadcastLike(message.roomId.toString(), messageId, user.authId);
     return {
         likes: message.likes,
         hasLiked: !hasLiked,
@@ -178,19 +152,19 @@ const deleteMessageToDB = async (user, messageId) => {
     message.deletedAt = new Date();
     await message.save();
     // Broadcast delete
-    websocket_service_1.ChatSocketHelper.broadcastDelete(message.streamId.toString(), messageId);
+    websocket_service_1.ChatSocketHelper.broadcastDelete(message.roomId.toString(), messageId);
     return {
         id: messageId,
         deleted: true,
     };
 };
 // Get chat participants
-const getChatParticipantsFromDB = async (streamId) => {
+const getChatParticipantsFromDB = async (roomId) => {
     // Get distinct users who sent messages
     const participants = await chatmessage_model_1.ChatMessage.aggregate([
         {
             $match: {
-                streamId: new mongoose_1.default.Types.ObjectId(streamId),
+                roomId,
                 isDeleted: false,
             },
         },

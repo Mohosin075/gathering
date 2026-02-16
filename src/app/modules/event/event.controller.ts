@@ -123,6 +123,20 @@ const getNearbyEvents = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
+const getEventLocations = catchAsync(async (req: Request, res: Response) => {
+  const address =
+    typeof req.query.address === 'string' ? req.query.address : undefined
+
+  const result = await EventServices.getEventLocations(address)
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Event locations retrieved successfully',
+    data: result,
+  })
+})
+
 export const EventController = {
   createEvent,
   updateEvent,
@@ -130,5 +144,6 @@ export const EventController = {
   getAllEvents,
   deleteEvent,
   getMyEvents,
+  getEventLocations,
   getNearbyEvents,
 }

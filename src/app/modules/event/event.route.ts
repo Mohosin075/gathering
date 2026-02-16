@@ -13,6 +13,7 @@ router.get(
   // auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER),
   EventController.getAllEvents,
 )
+router.get('/locations', EventController.getEventLocations)
 router.get(
   '/my-events',
   auth(USER_ROLES.ORGANIZER),

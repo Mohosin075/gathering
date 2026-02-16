@@ -1,0 +1,20 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.UsereventRoutes = void 0;
+const express_1 = __importDefault(require("express"));
+const userevent_controller_1 = require("./userevent.controller");
+const userevent_validation_1 = require("./userevent.validation");
+const validateRequest_1 = __importDefault(require("../../middleware/validateRequest"));
+const auth_1 = __importDefault(require("../../middleware/auth"));
+const user_1 = require("../../../enum/user");
+const processReqBody_1 = require("../../middleware/processReqBody");
+const router = express_1.default.Router();
+router.get('/', (0, auth_1.default)(user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ADMIN), userevent_controller_1.UsereventController.getAllUserevents);
+router.get('/:id', (0, auth_1.default)(user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ADMIN), userevent_controller_1.UsereventController.getSingleUserevent);
+router.post('/', (0, auth_1.default)(user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ADMIN), (0, processReqBody_1.fileAndBodyProcessorUsingDiskStorage)(), (0, validateRequest_1.default)(userevent_validation_1.UsereventValidations.create), userevent_controller_1.UsereventController.createUserevent);
+router.patch('/:id', (0, auth_1.default)(user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ADMIN), (0, processReqBody_1.fileAndBodyProcessorUsingDiskStorage)(), (0, validateRequest_1.default)(userevent_validation_1.UsereventValidations.update), userevent_controller_1.UsereventController.updateUserevent);
+router.delete('/:id', (0, auth_1.default)(user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ADMIN), userevent_controller_1.UsereventController.deleteUserevent);
+exports.UsereventRoutes = router;

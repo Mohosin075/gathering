@@ -6,12 +6,13 @@ const usereventSchema = new Schema<IUserevent, UsereventModel>({
   description: { type: String },
   venueId: { type: Schema.Types.ObjectId, ref: 'Venue' },
   createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
+  startDate: { type: Date },
   startTime: { type: Date },
-  endTime: { type: Date },
   vibeTags: { type: [String] },
   visibility: { type: Boolean, default: true },
   goingCount: { type: Number, default: 0 },
   location: { type: Schema.Types.Mixed },
+  address: { type: String },
   images: { type: [String], default: [] },
 }, {
   timestamps: true

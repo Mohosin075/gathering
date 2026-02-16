@@ -11,8 +11,8 @@ const chatmessage_service_1 = require("./chatmessage.service");
 // Send message to chat
 const sendMessage = (0, catchAsync_1.default)(async (req, res) => {
     const user = req.user;
-    const { streamId } = req.params;
-    const result = await chatmessage_service_1.ChatService.sendMessageToDB(user, streamId, req.body);
+    const { roomId } = req.params;
+    const result = await chatmessage_service_1.ChatService.sendMessageToDB(user, roomId, req.body);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_codes_1.StatusCodes.CREATED,
         success: true,
@@ -23,9 +23,9 @@ const sendMessage = (0, catchAsync_1.default)(async (req, res) => {
 // Get chat messages
 const getChatMessages = (0, catchAsync_1.default)(async (req, res) => {
     const user = req.user;
-    const { streamId } = req.params;
+    const { roomId } = req.params;
     const query = req.query;
-    const result = await chatmessage_service_1.ChatService.getChatMessagesFromDB(user, streamId, query);
+    const result = await chatmessage_service_1.ChatService.getChatMessagesFromDB(user, roomId, query);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_codes_1.StatusCodes.OK,
         success: true,
@@ -60,8 +60,8 @@ const deleteMessage = (0, catchAsync_1.default)(async (req, res) => {
 });
 // Get chat participants
 const getChatParticipants = (0, catchAsync_1.default)(async (req, res) => {
-    const { streamId } = req.params;
-    const result = await chatmessage_service_1.ChatService.getChatParticipantsFromDB(streamId);
+    const { roomId } = req.params;
+    const result = await chatmessage_service_1.ChatService.getChatParticipantsFromDB(roomId);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_codes_1.StatusCodes.OK,
         success: true,

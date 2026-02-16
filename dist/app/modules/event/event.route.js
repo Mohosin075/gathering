@@ -15,6 +15,7 @@ const router = express_1.default.Router();
 router.get('/', 
 // auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER),
 event_controller_1.EventController.getAllEvents);
+router.get('/locations', event_controller_1.EventController.getEventLocations);
 router.get('/my-events', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER), event_controller_1.EventController.getMyEvents);
 router.get('/nearby', (0, auth_1.default)(user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.ORGANIZER), 
 // validateRequest(nearbySchema),

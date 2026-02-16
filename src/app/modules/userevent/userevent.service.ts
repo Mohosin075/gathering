@@ -72,7 +72,7 @@ const getAllUserevents = async (
       .find(whereConditions)
       .skip(skip)
       .limit(limit)
-      .sort({ [sortBy]: sortOrder }).populate('venueId').populate('createdBy'),
+      .sort({ [sortBy]: sortOrder }).populate({path: 'createdBy', select: 'name email'}),
     Userevent.countDocuments(whereConditions),
   ]);
 
