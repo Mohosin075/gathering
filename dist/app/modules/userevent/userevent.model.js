@@ -13,6 +13,7 @@ const usereventSchema = new mongoose_1.Schema({
     visibility: { type: Boolean, default: true },
     goingCount: { type: Number, default: 0 },
     location: { type: mongoose_1.Schema.Types.Mixed },
+    address: { type: String },
     images: { type: [String], default: [] },
 }, {
     timestamps: true

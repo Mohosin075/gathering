@@ -13,6 +13,7 @@ exports.UsereventValidations = {
             vibeTags: zod_1.z.array(zod_1.z.string()),
             visibility: zod_1.z.boolean(),
             location: zod_1.z.record(zod_1.z.string(), zod_1.z.any()),
+            address: zod_1.z.string(),
             images: zod_1.z.array(zod_1.z.string()).optional(),
         })
     }),
@@ -28,6 +29,7 @@ exports.UsereventValidations = {
             visibility: zod_1.z.boolean().optional(),
             goingCount: zod_1.z.number().optional(),
             location: zod_1.z.record(zod_1.z.string(), zod_1.z.any()).optional(),
+            address: zod_1.z.string().optional(),
             images: zod_1.z.array(zod_1.z.string()).optional(),
         })
     }),
