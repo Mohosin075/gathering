@@ -324,7 +324,7 @@ const getEventLocations = async (address?: string) => {
   pipeline.push(
     {
       $group: {
-        _id: '$location.coordinates',
+        _id: '$address',
         location: { $first: '$location' },
         address: { $first: '$address' },
       },
