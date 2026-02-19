@@ -10,6 +10,7 @@ const usereventSchema = new Schema<IUserevent, UsereventModel>({
   startTime: { type: Date },
   vibeTags: { type: [String] },
   visibility: { type: Boolean, default: true },
+  rsvp: { type: String, enum: ['18+', '21+'], default: '18+' },
   goingCount: { type: Number, default: 0 },
   location: { type: Schema.Types.Mixed },
   address: { type: String },

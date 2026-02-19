@@ -11,6 +11,7 @@ const usereventSchema = new mongoose_1.Schema({
     startTime: { type: Date },
     vibeTags: { type: [String] },
     visibility: { type: Boolean, default: true },
+    rsvp: { type: String, enum: ['18+', '21+'], default: '18+' },
     goingCount: { type: Number, default: 0 },
     location: { type: mongoose_1.Schema.Types.Mixed },
     address: { type: String },

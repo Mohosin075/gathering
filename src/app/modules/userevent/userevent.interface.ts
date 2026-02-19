@@ -16,6 +16,7 @@ export interface IUserevent {
   startTime: Date;
   vibeTags: string[];
   visibility: boolean;
+  rsvp: '18+' | '21+';
   goingCount: number;
   location: Record<string, any>;
   address: string;

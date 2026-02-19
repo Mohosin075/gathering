@@ -12,9 +12,9 @@ const validateRequest_1 = __importDefault(require("../../middleware/validateRequ
 const chatmessage_validation_1 = require("./chatmessage.validation");
 const router = express_1.default.Router();
 // Chat routes (Protected - requires authentication)
-router.post('/:roomId/messages', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.USER), (0, validateRequest_1.default)(chatmessage_validation_1.ChatmessageValidations.sendMessage), chatmessage_controller_1.ChatController.sendMessage);
-router.get('/:roomId/messages', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.USER), (0, validateRequest_1.default)(chatmessage_validation_1.ChatmessageValidations.getMessages), chatmessage_controller_1.ChatController.getChatMessages);
-router.post('/messages/:messageId/like', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.USER), chatmessage_controller_1.ChatController.likeMessage);
-router.delete('/messages/:messageId', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.USER), chatmessage_controller_1.ChatController.deleteMessage);
-router.get('/:roomId/participants', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.USER), chatmessage_controller_1.ChatController.getChatParticipants);
+router.post('/:roomId/messages', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.USER, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), (0, validateRequest_1.default)(chatmessage_validation_1.ChatmessageValidations.sendMessage), chatmessage_controller_1.ChatController.sendMessage);
+router.get('/:roomId/messages', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.USER, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), (0, validateRequest_1.default)(chatmessage_validation_1.ChatmessageValidations.getMessages), chatmessage_controller_1.ChatController.getChatMessages);
+router.post('/messages/:messageId/like', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.USER, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), chatmessage_controller_1.ChatController.likeMessage);
+router.delete('/messages/:messageId', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.USER, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), chatmessage_controller_1.ChatController.deleteMessage);
+router.get('/:roomId/participants', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.USER, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), chatmessage_controller_1.ChatController.getChatParticipants);
 exports.ChatmessageRoutes = router;
