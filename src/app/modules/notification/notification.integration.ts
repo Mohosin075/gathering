@@ -25,7 +25,7 @@ export class NotificationIntegration {
           title: 'Event Published Successfully',
           content: `Your event "${event.title}" is now live and visible to attendees.`,
           type: NotificationType.EVENT_CREATED,
-          channel: NotificationChannel.BOTH,
+          channel: NotificationChannel.ALL,
           priority: NotificationPriority.MEDIUM,
           metadata: {
             eventId: event._id,
@@ -67,8 +67,8 @@ export class NotificationIntegration {
         title: 'New Message',
         content: `You have a new message: "${message.substring(0, 100)}..."`,
         type: NotificationType.NEW_MESSAGE,
-        channel: NotificationChannel.IN_APP,
-        priority: NotificationPriority.MEDIUM,
+        channel: NotificationChannel.ALL,
+        priority: NotificationPriority.HIGH,
         metadata: {
           senderId,
           messagePreview: message.substring(0, 100),

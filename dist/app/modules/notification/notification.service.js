@@ -18,6 +18,7 @@ const savedEvent_model_1 = require("../savedEvent/savedEvent.model");
 const follow_model_1 = require("../follow/follow.model");
 const config_1 = __importDefault(require("../../../config"));
 const server_1 = require("../../../server");
+const pushnotificationHelper_1 = require("../../../helpers/pushnotificationHelper");
 const createNotification = async (payload, sendEmail = false) => {
     try {
         const notificationData = {
@@ -36,25 +37,37 @@ const createNotification = async (payload, sendEmail = false) => {
             notificationData.status = notification_interface_1.NotificationStatus.PENDING;
         }
         const notification = await notification_model_1.Notification.create(notificationData);
-        // Send real-time notification via socket
-        if (notification.channel !== notification_interface_1.NotificationChannel.EMAIL && notification.userId) {
-            // Emit socket event for real-time notification
-            if (server_1.io) {
-                server_1.io.to(notification.userId.toString()).emit('notification', {
-                    type: 'NEW_NOTIFICATION',
-                    data: notification,
-                });
-            }
+        const channel = notification.channel;
+        // Determine which channels to send to
+        const shouldSendInApp = [
+            notification_interface_1.NotificationChannel.IN_APP,
+            notification_interface_1.NotificationChannel.BOTH,
+            notification_interface_1.NotificationChannel.ALL,
+        ].includes(channel);
+        const shouldSendEmail = sendEmail ||
+            [
+                notification_interface_1.NotificationChannel.EMAIL,
+                notification_interface_1.NotificationChannel.BOTH,
+                notification_interface_1.NotificationChannel.ALL,
+            ].includes(channel);
+        const shouldSendPush = [
+            notification_interface_1.NotificationChannel.PUSH,
+            notification_interface_1.NotificationChannel.ALL,
+        ].includes(channel);
+        // 1. Send real-time notification via socket (In-App)
+        if (shouldSendInApp && notification.userId && server_1.io) {
+            server_1.io.to(notification.userId.toString()).emit('notification', {
+                type: 'NEW_NOTIFICATION',
+                data: notification,
+            });
         }
-        // Send email if requested
-        if (sendEmail && notification.channel !== notification_interface_1.NotificationChannel.IN_APP) {
-            // Ensure notification.userId exists before sending email
-            if (notification.userId) {
-                await sendNotificationEmail(notification);
-            }
-            else {
-                console.warn('Cannot send email for notification without userId:', notification._id);
-            }
+        // 2. Send email
+        if (shouldSendEmail && notification.userId) {
+            await sendNotificationEmail(notification);
+        }
+        // 3. Send push notification
+        if (shouldSendPush && notification.userId) {
+            await sendNotificationPush(notification);
         }
         return notification;
     }
@@ -137,6 +150,31 @@ const sendNotificationEmail = async (notification) => {
             },
         });
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, `Failed to send email notification: ${error.message}`);
+    }
+};
+const sendNotificationPush = async (notification) => {
+    var _a;
+    try {
+        const user = await user_model_1.User.findById(notification.userId);
+        if (!user || !user.deviceToken) {
+            return;
+        }
+        // Check user settings for push notification
+        if (((_a = user.settings) === null || _a === void 0 ? void 0 : _a.pushNotification) === false) {
+            return;
+        }
+        await (0, pushnotificationHelper_1.sendPushNotification)(user.deviceToken, notification.title, notification.content, notification.metadata ? notification.metadata : {});
+        // Update notification status if not already sent by email
+        if (notification.status !== notification_interface_1.NotificationStatus.SENT) {
+            await notification_model_1.Notification.findByIdAndUpdate(notification._id, {
+                status: notification_interface_1.NotificationStatus.SENT,
+                sentAt: new Date(),
+            });
+        }
+    }
+    catch (error) {
+        console.error('Failed to send push notification:', error);
+        // We don't fail the entire process if push fails
     }
 };
 const getAllNotifications = async (user, filterables, pagination) => {
@@ -516,23 +554,18 @@ const sendManualNotification = async (payload) => {
             sentAt: new Date(),
         };
         const notification = await notification_model_1.Notification.create(notificationData);
-        // Emit broadcast socket event based on target audience
-        if (payload.channel !== notification_interface_1.NotificationChannel.EMAIL) {
+        // 1. Emit broadcast socket event based on target audience
+        if (payload.channel !== notification_interface_1.NotificationChannel.EMAIL && payload.channel !== notification_interface_1.NotificationChannel.PUSH) {
             if (server_1.io) {
-                // We can emit to specific rooms based on role if needed, 
-                // but for now, we'll use a generic broadcast or specific room logic.
                 let eventName = 'notification';
-                let roomName = null;
                 switch (payload.targetAudience) {
                     case notification_interface_1.TARGET_AUDIENCE.ALL_USER:
-                        // Broadcast to everyone
                         server_1.io.emit(eventName, {
                             type: 'BROADCAST_NOTIFICATION',
                             data: notification,
                         });
                         break;
                     case notification_interface_1.TARGET_AUDIENCE.ACTIVE_USER:
-                        // This would require users to join an 'active' room on connection
                         server_1.io.to('active_users').emit(eventName, {
                             type: 'BROADCAST_NOTIFICATION',
                             data: notification,
@@ -552,6 +585,22 @@ const sendManualNotification = async (payload) => {
                 }
             }
         }
+        // 2. Send broadcast push notification if channel includes PUSH or ALL
+        if (payload.channel === notification_interface_1.NotificationChannel.PUSH || payload.channel === notification_interface_1.NotificationChannel.ALL) {
+            let topic = 'all_users';
+            switch (payload.targetAudience) {
+                case notification_interface_1.TARGET_AUDIENCE.ORGANIZER:
+                    topic = 'organizers';
+                    break;
+                case notification_interface_1.TARGET_AUDIENCE.ACTIVE_USER:
+                    topic = 'active_users';
+                    break;
+                case notification_interface_1.TARGET_AUDIENCE.ADMIN:
+                    topic = 'admins';
+                    break;
+            }
+            await (0, pushnotificationHelper_1.sendPushNotification)(topic, notification.title, notification.content, notification.metadata || {}, undefined, true);
+        }
         // Note: Email delivery for 10k users would still need batching in the background scheduler
         // For now, we set the status to SENT for the broadcast record.
         console.log(`Broadcast notification created for audience: ${payload.targetAudience}`);
@@ -564,6 +613,7 @@ const sendManualNotification = async (payload) => {
 exports.NotificationServices = {
     createNotification,
     sendNotificationEmail,
+    sendNotificationPush,
     getAllNotifications,
     getNotificationById,
     updateNotification,

@@ -56,7 +56,6 @@ export class NotificationScheduler {
       const pendingNotifications = await Notification.find({
         status: NotificationStatus.PENDING,
         scheduledAt: { $lte: new Date() },
-        channel: { $ne: 'IN_APP' },
       }).limit(50)
 
       console.log(
@@ -65,7 +64,35 @@ export class NotificationScheduler {
 
       for (const notification of pendingNotifications) {
         try {
-          await NotificationServices.sendNotificationEmail(notification)
+          const channel = notification.channel
+
+          const shouldSendEmail = [
+            NotificationChannel.EMAIL,
+            NotificationChannel.BOTH,
+            NotificationChannel.ALL,
+          ].includes(channel)
+
+          const shouldSendPush = [
+            NotificationChannel.PUSH,
+            NotificationChannel.ALL,
+          ].includes(channel)
+
+          if (shouldSendEmail && notification.userId) {
+            await NotificationServices.sendNotificationEmail(notification)
+          }
+
+          if (shouldSendPush && notification.userId) {
+            await NotificationServices.sendNotificationPush(notification)
+          }
+
+          // If it was only IN_APP and we somehow got here (scheduled),
+          // we should still mark it as SENT
+          if (channel === NotificationChannel.IN_APP) {
+            await Notification.findByIdAndUpdate(notification._id, {
+              status: NotificationStatus.SENT,
+              sentAt: new Date(),
+            })
+          }
         } catch (error: any) {
           console.error(
             `Failed to process notification ${notification._id}:`,
@@ -120,7 +147,7 @@ export class NotificationScheduler {
               title: 'Welcome to EventHub!',
               content: `Welcome aboard, ${user.name}! We're excited to have you join our community.`,
               type: NotificationType.WELCOME,
-              channel: NotificationChannel.BOTH,
+              channel: NotificationChannel.ALL,
               priority: NotificationPriority.MEDIUM,
               metadata: {
                 welcomeEmailSent: true,

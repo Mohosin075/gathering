@@ -25,6 +25,7 @@ import { SavedEvent } from '../savedEvent/savedEvent.model'
 import { Follow } from '../follow/follow.model'
 import config from '../../../config'
 import { io } from '../../../server'
+import { sendPushNotification } from '../../../helpers/pushnotificationHelper'
 
 const createNotification = async (
   payload: CreateNotificationDto,
@@ -50,25 +51,44 @@ const createNotification = async (
 
     const notification = await Notification.create(notificationData)
 
-    // Send real-time notification via socket
-    if (notification.channel !== NotificationChannel.EMAIL && notification.userId) {
-      // Emit socket event for real-time notification
-      if (io) {
-        io.to(notification.userId.toString()).emit('notification', {
-          type: 'NEW_NOTIFICATION',
-          data: notification,
-        })
-      }
+    const channel = notification.channel
+
+    // Determine which channels to send to
+    const shouldSendInApp = [
+      NotificationChannel.IN_APP,
+      NotificationChannel.BOTH,
+      NotificationChannel.ALL,
+    ].includes(channel)
+
+    const shouldSendEmail =
+      sendEmail ||
+      [
+        NotificationChannel.EMAIL,
+        NotificationChannel.BOTH,
+        NotificationChannel.ALL,
+      ].includes(channel)
+
+    const shouldSendPush = [
+      NotificationChannel.PUSH,
+      NotificationChannel.ALL,
+    ].includes(channel)
+
+    // 1. Send real-time notification via socket (In-App)
+    if (shouldSendInApp && notification.userId && io) {
+      io.to(notification.userId.toString()).emit('notification', {
+        type: 'NEW_NOTIFICATION',
+        data: notification,
+      })
     }
 
-    // Send email if requested
-    if (sendEmail && notification.channel !== NotificationChannel.IN_APP) {
-      // Ensure notification.userId exists before sending email
-      if (notification.userId) {
-        await sendNotificationEmail(notification)
-      } else {
-        console.warn('Cannot send email for notification without userId:', notification._id)
-      }
+    // 2. Send email
+    if (shouldSendEmail && notification.userId) {
+      await sendNotificationEmail(notification)
+    }
+
+    // 3. Send push notification
+    if (shouldSendPush && notification.userId) {
+      await sendNotificationPush(notification)
     }
 
     return notification
@@ -178,6 +198,40 @@ const sendNotificationEmail = async (
       StatusCodes.INTERNAL_SERVER_ERROR,
       `Failed to send email notification: ${error.message}`,
     )
+  }
+}
+
+const sendNotificationPush = async (
+  notification: INotification,
+): Promise<void> => {
+  try {
+    const user = await User.findById(notification.userId)
+    if (!user || !user.deviceToken) {
+      return
+    }
+
+    // Check user settings for push notification
+    if (user.settings?.pushNotification === false) {
+      return
+    }
+
+    await sendPushNotification(
+      user.deviceToken,
+      notification.title,
+      notification.content,
+      notification.metadata ? (notification.metadata as any) : {},
+    )
+
+    // Update notification status if not already sent by email
+    if (notification.status !== NotificationStatus.SENT) {
+      await Notification.findByIdAndUpdate(notification._id, {
+        status: NotificationStatus.SENT,
+        sentAt: new Date(),
+      })
+    }
+  } catch (error: any) {
+    console.error('Failed to send push notification:', error)
+    // We don't fail the entire process if push fails
   }
 }
 
@@ -675,25 +729,18 @@ const sendManualNotification = async (
 
     const notification = await Notification.create(notificationData)
 
-    // Emit broadcast socket event based on target audience
-    if (payload.channel !== NotificationChannel.EMAIL) {
+    // 1. Emit broadcast socket event based on target audience
+    if (payload.channel !== NotificationChannel.EMAIL && payload.channel !== NotificationChannel.PUSH) {
       if (io) {
-        // We can emit to specific rooms based on role if needed, 
-        // but for now, we'll use a generic broadcast or specific room logic.
-        
         let eventName = 'notification'
-        let roomName: string | null = null
-
         switch (payload.targetAudience) {
           case TARGET_AUDIENCE.ALL_USER:
-            // Broadcast to everyone
             io.emit(eventName, {
               type: 'BROADCAST_NOTIFICATION',
               data: notification,
             })
             break
           case TARGET_AUDIENCE.ACTIVE_USER:
-            // This would require users to join an 'active' room on connection
             io.to('active_users').emit(eventName, {
               type: 'BROADCAST_NOTIFICATION',
               data: notification,
@@ -714,6 +761,31 @@ const sendManualNotification = async (
       }
     }
 
+    // 2. Send broadcast push notification if channel includes PUSH or ALL
+    if (payload.channel === NotificationChannel.PUSH || payload.channel === NotificationChannel.ALL) {
+      let topic = 'all_users'
+      switch (payload.targetAudience) {
+        case TARGET_AUDIENCE.ORGANIZER:
+          topic = 'organizers'
+          break
+        case TARGET_AUDIENCE.ACTIVE_USER:
+          topic = 'active_users'
+          break
+        case TARGET_AUDIENCE.ADMIN:
+          topic = 'admins'
+          break
+      }
+
+      await sendPushNotification(
+        topic,
+        notification.title,
+        notification.content,
+        notification.metadata || {},
+        undefined,
+        true, // isTopic
+      )
+    }
+
     // Note: Email delivery for 10k users would still need batching in the background scheduler
     // For now, we set the status to SENT for the broadcast record.
 
@@ -732,6 +804,7 @@ const sendManualNotification = async (
 export const NotificationServices = {
   createNotification,
   sendNotificationEmail,
+  sendNotificationPush,
   getAllNotifications,
   getNotificationById,
   updateNotification,

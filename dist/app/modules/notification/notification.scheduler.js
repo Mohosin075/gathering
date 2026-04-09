@@ -46,12 +46,34 @@ class NotificationScheduler {
             const pendingNotifications = await notification_model_1.Notification.find({
                 status: notification_interface_1.NotificationStatus.PENDING,
                 scheduledAt: { $lte: new Date() },
-                channel: { $ne: 'IN_APP' },
             }).limit(50);
             console.log(`📧 Processing ${pendingNotifications.length} pending notifications...`);
             for (const notification of pendingNotifications) {
                 try {
-                    await notification_service_1.NotificationServices.sendNotificationEmail(notification);
+                    const channel = notification.channel;
+                    const shouldSendEmail = [
+                        notification_interface_1.NotificationChannel.EMAIL,
+                        notification_interface_1.NotificationChannel.BOTH,
+                        notification_interface_1.NotificationChannel.ALL,
+                    ].includes(channel);
+                    const shouldSendPush = [
+                        notification_interface_1.NotificationChannel.PUSH,
+                        notification_interface_1.NotificationChannel.ALL,
+                    ].includes(channel);
+                    if (shouldSendEmail && notification.userId) {
+                        await notification_service_1.NotificationServices.sendNotificationEmail(notification);
+                    }
+                    if (shouldSendPush && notification.userId) {
+                        await notification_service_1.NotificationServices.sendNotificationPush(notification);
+                    }
+                    // If it was only IN_APP and we somehow got here (scheduled),
+                    // we should still mark it as SENT
+                    if (channel === notification_interface_1.NotificationChannel.IN_APP) {
+                        await notification_model_1.Notification.findByIdAndUpdate(notification._id, {
+                            status: notification_interface_1.NotificationStatus.SENT,
+                            sentAt: new Date(),
+                        });
+                    }
                 }
                 catch (error) {
                     console.error(`Failed to process notification ${notification._id}:`, error);
@@ -100,7 +122,7 @@ class NotificationScheduler {
                         title: 'Welcome to EventHub!',
                         content: `Welcome aboard, ${user.name}! We're excited to have you join our community.`,
                         type: notification_interface_1.NotificationType.WELCOME,
-                        channel: notification_interface_1.NotificationChannel.BOTH,
+                        channel: notification_interface_1.NotificationChannel.ALL,
                         priority: notification_interface_1.NotificationPriority.MEDIUM,
                         metadata: {
                             welcomeEmailSent: true,

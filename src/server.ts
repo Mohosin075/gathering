@@ -9,6 +9,7 @@ import { Server as SocketServer } from 'socket.io'
 import { UserServices } from './app/modules/user/user.service'
 import { socketHelper } from './helpers/socketHelper'
 import { geocodeAddress } from './utils/geocodeAddress'
+import { notificationScheduler } from './app/modules/notification/notification.scheduler'
 
 // Uncaught exceptions
 process.on('uncaughtException', error => {

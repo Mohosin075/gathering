@@ -41,7 +41,9 @@ export enum NotificationType {
 export enum NotificationChannel {
   IN_APP = 'IN_APP',
   EMAIL = 'EMAIL',
-  BOTH = 'BOTH',
+  PUSH = 'PUSH',
+  BOTH = 'BOTH', // Represents IN_APP and EMAIL
+  ALL = 'ALL',  // Represents IN_APP, EMAIL, and PUSH
 }
 
 export enum NotificationStatus {
