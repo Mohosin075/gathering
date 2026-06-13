@@ -35,7 +35,7 @@ router.get(
 
 router.post(
   '/',
-  auth(USER_ROLES.ORGANIZER),
+  auth(USER_ROLES.ORGANIZER, USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
 
   fileAndBodyProcessorUsingDiskStorage(),
 
