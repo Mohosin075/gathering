@@ -49,6 +49,7 @@ app.use((0, cors_1.default)({
         'https://buddi-script-server.vercel.app',
         'https://buddi-script.vercel.app',
         'https://your-frontend.vercel.app',
+        'http://195.35.6.13:4173'
     ],
     credentials: true,
 }));

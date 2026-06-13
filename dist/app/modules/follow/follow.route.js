@@ -11,6 +11,8 @@ const user_1 = require("../../../enum/user");
 const validateRequest_1 = __importDefault(require("../../middleware/validateRequest"));
 const follow_validation_1 = require("./follow.validation");
 const router = express_1.default.Router();
+// Friend Activity Feed
+router.get('/friend-activity', (0, auth_1.default)(...Object.values(user_1.USER_ROLES)), follow_controller_1.FollowController.getFriendActivity);
 // Follow/Unfollow routes
 router.post('/:userId', (0, auth_1.default)(...Object.values(user_1.USER_ROLES)), (0, validateRequest_1.default)(follow_validation_1.followUserSchema), follow_controller_1.FollowController.followUser);
 router.delete('/:userId/unfollow', (0, auth_1.default)(...Object.values(user_1.USER_ROLES)), (0, validateRequest_1.default)(follow_validation_1.unfollowUserSchema), follow_controller_1.FollowController.unfollowUser);

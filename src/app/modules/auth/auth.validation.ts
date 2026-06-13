@@ -169,6 +169,13 @@ const socialLoginZodSchema = z.object({
   }),
 })
 
+const googleLoginTokenZodSchema = z.object({
+  body: z.object({
+    idToken: z.string({ required_error: 'ID token is required' }),
+    deviceToken: z.string({ required_error: 'Device token is required' }),
+  }),
+})
+
 export const AuthValidations = {
   verifyEmailOrPhoneOtpZodSchema,
   forgetPasswordZodSchema,
@@ -180,4 +187,6 @@ export const AuthValidations = {
   createUserZodSchema,
   deleteAccount,
   socialLoginZodSchema,
+  googleLoginTokenZodSchema,
 }
+

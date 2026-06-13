@@ -11,11 +11,17 @@ const geocodeAddress = async (location) => {
     try {
         const agent = new https_1.default.Agent({ family: 4 });
         const API_KEY = config_1.default.server_map_api_key;
+        const trimmedLoc = location.trim();
+        const isCoordinates = /^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(trimmedLoc);
+        const params = { key: API_KEY };
+        if (isCoordinates) {
+            params.latlng = trimmedLoc;
+        }
+        else {
+            params.address = trimmedLoc;
+        }
         const response = await axios_1.default.get("https://maps.googleapis.com/maps/api/geocode/json", {
-            params: {
-                address: location.trim(),
-                key: API_KEY,
-            },
+            params,
             httpsAgent: agent,
         });
         if (response.data.status === "OK" && response.data.results.length > 0) {

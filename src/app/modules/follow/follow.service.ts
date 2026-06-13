@@ -7,6 +7,7 @@ import { IPaginationOptions } from '../../../interfaces/pagination'
 import { User } from '../user/user.model'
 import { FollowStatus, FollowStats } from './follow.interface'
 import { Follow } from './follow.model'
+import { Activity } from '../activity/activity.model'
 
 export const FollowServices = {
   // Follow a user
@@ -574,6 +575,59 @@ export const FollowServices = {
         totalPage: Math.ceil((total[0]?.total || 0) / limit),
       },
       data: suggestions,
+    }
+  },
+
+  async getFriendActivity(
+    user: JwtPayload,
+    paginationOptions: IPaginationOptions,
+  ) {
+    const followerId = new Types.ObjectId(user.authId)
+    const { page, limit, skip } = paginationHelper.calculatePagination(paginationOptions)
+
+    // Find all users followed by current user
+    const followedUsers = await Follow.find({
+      follower: followerId,
+      status: FollowStatus.ACCEPTED,
+    }).select('following')
+
+    const followedUserIds = followedUsers.map(f => f.following)
+
+    if (followedUserIds.length === 0) {
+      return {
+        meta: {
+          page,
+          limit,
+          total: 0,
+          totalPage: 0,
+        },
+        data: [],
+      }
+    }
+
+    const query = {
+      userId: { $in: followedUserIds },
+    }
+
+    const [activities, total] = await Promise.all([
+      Activity.find(query)
+        .sort({ timestamp: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('userId', 'name profile')
+        .populate('resourceId', 'title address location locationType startTime startDate')
+        .lean(),
+      Activity.countDocuments(query),
+    ])
+
+    return {
+      meta: {
+        page,
+        limit,
+        total,
+        totalPage: Math.ceil(total / limit),
+      },
+      data: activities,
     }
   },
 

@@ -10,12 +10,21 @@ const paginationHelper_1 = require("../../../helpers/paginationHelper");
 const mongoose_1 = require("mongoose");
 const savedEvent_model_1 = require("./savedEvent.model");
 const savedEvent_constants_1 = require("./savedEvent.constants");
+const activity_service_1 = require("../activity/activity.service");
 const createSavedEvent = async (user, payload) => {
     try {
         const result = await savedEvent_model_1.SavedEvent.create({ ...payload, user: user.authId });
         if (!result) {
             throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Failed to create SavedEvent, please try again with valid data.');
         }
+        await activity_service_1.ActivityServices.logActivity({
+            action: 'EVENT_SAVE',
+            description: `saved the event`,
+            userId: new mongoose_1.Types.ObjectId(user.authId),
+            role: 'user',
+            resourceId: new mongoose_1.Types.ObjectId(payload.event),
+            resourceType: 'Event',
+        });
         return result;
     }
     catch (error) {

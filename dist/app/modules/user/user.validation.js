@@ -39,6 +39,9 @@ exports.updateUserSchema = zod_1.z.object({
         location: pointSchema.optional(),
         appId: zod_1.z.string().optional(),
         deviceToken: zod_1.z.string().optional(),
+        bio: zod_1.z.string().optional(),
+        neighborhood: zod_1.z.string().optional(),
+        favoriteSpots: zod_1.z.array(zod_1.z.string()).optional(),
     })
 });
 exports.STAFF_SPECIALTY = zod_1.z.enum([

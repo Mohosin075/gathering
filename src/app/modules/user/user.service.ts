@@ -12,6 +12,7 @@ import { IPaginationOptions } from '../../../interfaces/pagination'
 import { S3Helper } from '../../../helpers/image/s3helper'
 import config from '../../../config'
 import { userFilterableFields } from './user.constants'
+import { Attendance } from '../attendance/attendance.model'
 
 const updateProfile = async (user: JwtPayload, payload: Partial<IUser>) => {
   console.log({ payload })
@@ -249,14 +250,17 @@ const getUserById = async (userId: string): Promise<any> => {
   }
 
   // Fetch user data and stats in parallel for performance
-  const [user, eventsCount, followersCount, followingCount] = await Promise.all([
+  const [user, eventsCount, followersCount, followingCount, nightsOutCount] = await Promise.all([
     User.findOne({
       _id: userId,
       status: { $nin: [USER_STATUS.DELETED] },
-    }).select('-password -authentication -__v'),
+    })
+      .select('-password -authentication -__v')
+      .populate('favoriteSpots'),
     Event.countDocuments({ organizerId: userId }),
     Follow.countDocuments({ following: userId }),
     Follow.countDocuments({ follower: userId }),
+    Attendance.countDocuments({ user: userId, status: 'checked-in' }),
   ])
 
   return {
@@ -265,6 +269,7 @@ const getUserById = async (userId: string): Promise<any> => {
       events: eventsCount,
       followers: followersCount,
       following: followingCount,
+      nightsOutCount: nightsOutCount,
     },
   }
 }
@@ -293,16 +298,32 @@ const updateUserStatus = async (userId: string, status: USER_STATUS) => {
 
 export const getProfile = async (user: JwtPayload) => {
   // --- Fetch user ---
-  const isUserExist = await User.findOne({
-    _id: user.authId,
-    status: { $nin: [USER_STATUS.DELETED] },
-  }).select('-authentication -password -__v')
+  const [userDoc, eventsCount, followersCount, followingCount, nightsOutCount] = await Promise.all([
+    User.findOne({
+      _id: user.authId,
+      status: { $nin: [USER_STATUS.DELETED] },
+    })
+      .select('-authentication -password -__v')
+      .populate('favoriteSpots'),
+    Event.countDocuments({ organizerId: user.authId }),
+    Follow.countDocuments({ following: user.authId }),
+    Follow.countDocuments({ follower: user.authId }),
+    Attendance.countDocuments({ user: user.authId, status: 'checked-in' }),
+  ])
 
-  if (!isUserExist) {
+  if (!userDoc) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'User not found.')
   }
 
-  return isUserExist
+  return {
+    ...userDoc.toObject(),
+    stats: {
+      events: eventsCount,
+      followers: followersCount,
+      following: followingCount,
+      nightsOutCount: nightsOutCount,
+    },
+  }
 }
 
 const addUserInterest = async (

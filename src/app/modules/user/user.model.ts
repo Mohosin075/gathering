@@ -52,6 +52,9 @@ const UserSchema = new Schema<IUser, UserModel>(
     deviceToken: { type: String },
     timezone: { type: String, default: 'UTC' },
     isOnboardingComplete: { type: Boolean, default: false },
+    bio: { type: String },
+    neighborhood: { type: String },
+    favoriteSpots: [{ type: Schema.Types.ObjectId, ref: 'Event' }],
 
     settings: {
       pushNotification: { type: Boolean, default: true },

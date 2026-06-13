@@ -43,6 +43,9 @@ export const updateUserSchema = z.object({
       appId: z.string().optional(),
       deviceToken: z.string().optional(),
 
+      bio: z.string().optional(),
+      neighborhood: z.string().optional(),
+      favoriteSpots: z.array(z.string()).optional(),
     })
 })
 

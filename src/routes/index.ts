@@ -17,6 +17,7 @@ import { ChatmessageRoutes } from '../app/modules/chatmessage/chatmessage.route'
 import { FollowRoutes } from '../app/modules/follow/follow.route'
 import { EventStatsRoutes } from '../app/modules/stats/stats.route'
 import { UsereventRoutes } from '../app/modules/userevent/userevent.route'
+import { AttendanceRoutes } from '../app/modules/attendance/attendance.route'
 
 const router = express.Router()
 
@@ -38,7 +39,8 @@ const apiRoutes: { path: string; route: Router }[] = [
   { path: '/meetings', route: MeetingRoutes },
   { path: '/chatmessage', route: ChatmessageRoutes },
   { path: '/follow', route: FollowRoutes },
-  { path: '/userevent', route: UsereventRoutes }]
+  { path: '/userevent', route: UsereventRoutes },
+  { path: '/attendance', route: AttendanceRoutes }]
 
 apiRoutes.forEach(route => {
   router.use(route.path, route.route)

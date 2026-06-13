@@ -122,6 +122,17 @@ const getFollowSuggestions = (0, catchAsync_1.default)(async (req, res) => {
         data: result,
     });
 });
+const getFriendActivity = (0, catchAsync_1.default)(async (req, res) => {
+    const user = req.user;
+    const paginationOptions = (0, pick_1.default)(req.query, pagination_1.paginationFields);
+    const result = await follow_service_1.FollowServices.getFriendActivity(user, paginationOptions);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_codes_1.StatusCodes.OK,
+        success: true,
+        message: 'Friend activities retrieved successfully',
+        data: result,
+    });
+});
 exports.FollowController = {
     followUser,
     unfollowUser,
@@ -134,4 +145,5 @@ exports.FollowController = {
     checkFollowStatus,
     getMutualFollowers,
     getFollowSuggestions,
+    getFriendActivity,
 };

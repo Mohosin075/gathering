@@ -47,6 +47,19 @@ export interface IEvent {
   liveStreamId?: Types.ObjectId
   isStreamingActive: boolean
 
+  // Client updates
+  dressCode?: string
+  ageRequirement?: string
+  parkingInfo?: string
+  coverCharge?: string | number
+  capacityLimit?: number
+  endTime?: string
+  endDate?: string
+  perks?: string[]
+  goingCount?: number
+  interestedCount?: number
+  checkedInCount?: number
+
   createdAt?: Date
   updatedAt?: Date
 }

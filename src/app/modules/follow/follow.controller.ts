@@ -147,6 +147,19 @@ const getFollowSuggestions = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
+const getFriendActivity = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user!
+  const paginationOptions = pick(req.query, paginationFields)
+  const result = await FollowServices.getFriendActivity(user, paginationOptions)
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Friend activities retrieved successfully',
+    data: result,
+  })
+})
+
 export const FollowController = {
   followUser,
   unfollowUser,
@@ -159,4 +172,5 @@ export const FollowController = {
   checkFollowStatus,
   getMutualFollowers,
   getFollowSuggestions,
+  getFriendActivity,
 }

@@ -44,6 +44,7 @@ const paginationHelper_1 = require("../../../helpers/paginationHelper");
 const user_model_1 = require("../user/user.model");
 const follow_interface_1 = require("./follow.interface");
 const follow_model_1 = require("./follow.model");
+const activity_model_1 = require("../activity/activity.model");
 exports.FollowServices = {
     // Follow a user
     // Follow a user
@@ -532,6 +533,49 @@ exports.FollowServices = {
                 totalPage: Math.ceil((((_b = total[0]) === null || _b === void 0 ? void 0 : _b.total) || 0) / limit),
             },
             data: suggestions,
+        };
+    },
+    async getFriendActivity(user, paginationOptions) {
+        const followerId = new mongoose_1.Types.ObjectId(user.authId);
+        const { page, limit, skip } = paginationHelper_1.paginationHelper.calculatePagination(paginationOptions);
+        // Find all users followed by current user
+        const followedUsers = await follow_model_1.Follow.find({
+            follower: followerId,
+            status: follow_interface_1.FollowStatus.ACCEPTED,
+        }).select('following');
+        const followedUserIds = followedUsers.map(f => f.following);
+        if (followedUserIds.length === 0) {
+            return {
+                meta: {
+                    page,
+                    limit,
+                    total: 0,
+                    totalPage: 0,
+                },
+                data: [],
+            };
+        }
+        const query = {
+            userId: { $in: followedUserIds },
+        };
+        const [activities, total] = await Promise.all([
+            activity_model_1.Activity.find(query)
+                .sort({ timestamp: -1 })
+                .skip(skip)
+                .limit(limit)
+                .populate('userId', 'name profile')
+                .populate('resourceId', 'title address location locationType startTime startDate')
+                .lean(),
+            activity_model_1.Activity.countDocuments(query),
+        ]);
+        return {
+            meta: {
+                page,
+                limit,
+                total,
+                totalPage: Math.ceil(total / limit),
+            },
+            data: activities,
         };
     },
     // Private method to update user stats

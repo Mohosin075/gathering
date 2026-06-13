@@ -29,5 +29,6 @@ router.post('/change-password', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, use
 router.delete('/delete-account', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.USER), (0, validateRequest_1.default)(auth_validation_1.AuthValidations.deleteAccount), custom_auth_controller_1.CustomAuthController.deleteAccount);
 router.post('/refresh-token', custom_auth_controller_1.CustomAuthController.getRefreshToken);
 router.post('/social-login', (0, validateRequest_1.default)(auth_validation_1.AuthValidations.socialLoginZodSchema), custom_auth_controller_1.CustomAuthController.socialLogin);
+router.post('/google-login-token', (0, validateRequest_1.default)(auth_validation_1.AuthValidations.googleLoginTokenZodSchema), custom_auth_controller_1.CustomAuthController.googleLoginToken);
 router.post('/logout', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.USER), custom_auth_controller_1.CustomAuthController.logout);
 exports.AuthRoutes = router;

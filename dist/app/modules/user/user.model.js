@@ -51,6 +51,9 @@ const UserSchema = new mongoose_1.Schema({
     deviceToken: { type: String },
     timezone: { type: String, default: 'UTC' },
     isOnboardingComplete: { type: Boolean, default: false },
+    bio: { type: String },
+    neighborhood: { type: String },
+    favoriteSpots: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'Event' }],
     settings: {
         pushNotification: { type: Boolean, default: true },
         emailNotification: { type: Boolean, default: true },

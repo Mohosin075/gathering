@@ -89,6 +89,12 @@ router.post(
 )
 
 router.post(
+  '/google-login-token',
+  validateRequest(AuthValidations.googleLoginTokenZodSchema),
+  CustomAuthController.googleLoginToken,
+)
+
+router.post(
   '/logout',
   auth(USER_ROLES.ADMIN, USER_ROLES.USER),
   CustomAuthController.logout,

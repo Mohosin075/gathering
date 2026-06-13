@@ -47,6 +47,18 @@ const eventSchema = new Schema<IEvent, EventModel>(
     views: { type: Number, default: 0 },
     favorites: { type: Number, default: 0 },
 
+    dressCode: { type: String },
+    ageRequirement: { type: String },
+    parkingInfo: { type: String },
+    coverCharge: { type: Schema.Types.Mixed },
+    capacityLimit: { type: Number },
+    endTime: { type: String },
+    endDate: { type: String },
+    perks: { type: [String], default: [] },
+    goingCount: { type: Number, default: 0 },
+    interestedCount: { type: Number, default: 0 },
+    checkedInCount: { type: Number, default: 0 },
+
     // Live Stream Reference (no longer used)
     hasLiveStream: {
       type: Boolean,

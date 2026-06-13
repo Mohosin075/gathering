@@ -1,0 +1,251 @@
+# API Integration Guide for Flutter Developers
+
+This document details the newly added and updated backend endpoints, payload structures, and changes required to sync the Flutter app with the updated backend.
+
+---
+
+## 1. Authentication (Google Login only)
+
+### **Google Token Verification Endpoint**
+Instead of redirecting users to a webview, the Flutter app should perform native Google Sign-In, obtain the `idToken` from Google, and send it to the following endpoint.
+
+* **Route**: `POST /auth/google-login-token`
+* **Request Headers**: `Content-Type: application/json`
+* **Request Body**:
+  ```json
+  {
+    "idToken": "GOOGLE_ID_TOKEN_STRING_FROM_FLUTTER_GOOGLE_SIGN_IN",
+    "deviceToken": "PUSH_NOTIFICATION_FCM_TOKEN"
+  }
+  ```
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "statusCode": 200,
+    "message": "Welcome back User Name",
+    "data": {
+      "accessToken": "JWT_ACCESS_TOKEN",
+      "refreshToken": "JWT_REFRESH_TOKEN",
+      "role": "user"
+    }
+  }
+  ```
+
+---
+
+## 2. Event Model & Creation Updates
+
+### **New Event Fields**
+The main Event model now accepts new nightlife and scheduling parameters. The Zod validator and model have been updated to support these optional fields.
+
+* **Fields added**:
+  * `dressCode` (String): e.g. "Upscale", "Casual"
+  * `ageRequirement` (String): e.g. "21+", "18+"
+  * `parkingInfo` (String): e.g. "Valet & Street Parking available"
+  * `coverCharge` (String or Number): e.g. 20 or "TBA"
+  * `capacityLimit` (Number): e.g. 250
+  * `endTime` (String): End time format (matches `startTime` style)
+  * `endDate` (String): End date format (matches `startDate` style)
+  * `perks` (Array of Strings): e.g. `["Free Drink before 10PM", "VIP Entry Line"]`
+  * `goingCount` (Number): Auto-incremented field representing RSVPs
+  * `interestedCount` (Number): Auto-incremented field representing Interested RSVPs
+  * `checkedInCount` (Number): Auto-incremented field representing checked-in users
+
+* **Coordinates Geocoding Auto-Resolution**:
+  If the Flutter app sends raw coordinates in the `address` field (format: `latitude, longitude` e.g., `"32.9537, -96.8191"`), the backend will **automatically reverse geocode** it into a human-readable street address or neighborhood name and store it in `address` while updating `location.coordinates` accordingly.
+
+---
+
+## 3. Event Attendance (RSVP & Check-in)
+
+We have created a unified `Attendance` system to handle RSVPs and physical check-ins.
+
+### **A. RSVP (Going / Interested)**
+Allows users to express intent to go or show interest in an event. This updates the RSVP counter on the main event card.
+* **Route**: `POST /attendance/:eventId/rsvp`
+* **Headers**: `Authorization: Bearer <accessToken>`
+* **Request Body**:
+  ```json
+  {
+    "status": "going" 
+  }
+  ```
+  *(Note: status can be `"going"` or `"interested"`. Sending the same status again toggles/removes the RSVP).*
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "statusCode": 200,
+    "message": "RSVP updated successfully",
+    "data": {
+      "attendanceStatus": "going" // or null if toggled off
+    }
+  }
+  ```
+
+### **B. Physical Check-in**
+Requires the user's coordinates to be within **200 meters** of the event venue coordinates.
+* **Route**: `POST /attendance/:eventId/check-in`
+* **Headers**: `Authorization: Bearer <accessToken>`
+* **Request Body**:
+  ```json
+  {
+    "lat": 32.9537,
+    "lng": -96.8191
+  }
+  ```
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "statusCode": 200,
+    "message": "Checked in successfully",
+    "data": {
+      "success": true,
+      "message": "Checked-in successfully"
+    }
+  }
+  ```
+
+### **C. Get Attendance Stats & Participants**
+Gets RSVP/Check-in counts and a list of attendees' profiles for an event.
+* **Route**: `GET /attendance/:eventId`
+* **Headers**: `Authorization: Bearer <accessToken>`
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "statusCode": 200,
+    "message": "Attendance statistics retrieved successfully",
+    "data": {
+      "goingCount": 12,
+      "interestedCount": 34,
+      "checkedInCount": 5,
+      "currentUserStatus": "going", // "going" | "interested" | "checked-in" | null
+      "participants": [
+        {
+          "user": {
+            "_id": "USER_ID",
+            "name": "Jane Doe",
+            "profile": "/images/avatar.jpg"
+          },
+          "status": "going"
+        }
+      ]
+    }
+  }
+  ```
+
+---
+
+## 4. Tonight's Chat Access Control (Lurk Mode)
+
+We have updated the chatroom message logic to keep the chat highly engaging while retaining privacy.
+* **Reading Messages (`GET /chatmessage/:roomId/messages`)**:
+  * **Open to all logged-in users** (Lurk Mode enabled). Users can lurk and read chat history to decide whether they want to attend.
+* **Sending Messages (`POST /chatmessage/:roomId/messages`)**:
+  * **Locked behind physical presence**. If a user tries to send a message but is NOT checked in (`checked-in` status in the Attendance collection) for that event/venue, the backend will reject the write request.
+  * **Response on Denied Send (403 Forbidden)**:
+    ```json
+    {
+      "success": false,
+      "statusCode": 403,
+      "message": "Tonight's Chat is locked! You must physically check-in at the venue/event first to join the conversation."
+    }
+    ```
+
+---
+
+## 5. User Profile Updates & Statistics
+
+### **New Profile Fields**
+The `User` model now contains fields for building a nightlife identity:
+* `bio` (String)
+* `neighborhood` (String)
+* `favoriteSpots` (Array of Event ObjectIds)
+
+These can be updated via the existing `PATCH /user/profile` endpoint.
+
+### **Profile Details with Stats**
+Both the current user profile (`GET /user/profile`) and user-by-id details (`GET /user/:userId`) now return populated statistics.
+
+* **Response Format**:
+  ```json
+  {
+    "success": true,
+    "statusCode": 200,
+    "message": "Profile retrieved successfully",
+    "data": {
+      "_id": "USER_ID",
+      "name": "Alex Mercer",
+      "email": "alex@example.com",
+      "bio": "Ready for the weekend!",
+      "neighborhood": "Uptown",
+      "favoriteSpots": [
+        {
+          "_id": "EVENT_ID",
+          "title": "Neon Nights Friday",
+          "address": "123 Uptown St"
+        }
+      ],
+      "stats": {
+        "events": 4,          // Number of events created (if organizer)
+        "followers": 150,     // Total followers
+        "following": 98,      // Total following
+        "nightsOutCount": 18  // Total checked-in attendances
+      }
+    }
+  }
+  ```
+
+---
+
+## 6. Friend Activity Feed
+
+Retrieves real-time activities (RSVPs, Check-ins, Event Saves) performed by the users whom the current user follows. This should populate the feed screen.
+
+* **Route**: `GET /follow/friend-activity?page=1&limit=10`
+* **Headers**: `Authorization: Bearer <accessToken>`
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "statusCode": 200,
+    "message": "Friend activities retrieved successfully",
+    "data": {
+      "meta": {
+        "page": 1,
+        "limit": 10,
+        "total": 1,
+        "totalPage": 1
+      },
+      "data": [
+        {
+          "_id": "ACTIVITY_ID",
+          "action": "EVENT_CHECKIN", // "EVENT_RSVP" | "EVENT_CHECKIN" | "EVENT_SAVE"
+          "description": "checked in to event",
+          "userId": {
+            "_id": "FRIEND_USER_ID",
+            "name": "Sarah Miller",
+            "profile": "/images/sarah.jpg"
+          },
+          "resourceType": "Event",
+          "resourceId": {
+            "_id": "EVENT_ID",
+            "title": "Rooftop Sessions",
+            "address": "Sunset Lounge, Dallas",
+            "location": {
+              "type": "Point",
+              "coordinates": [-96.8088, 32.7767]
+            },
+            "locationType": "physical",
+            "startDate": "2026-06-15",
+            "startTime": "21:00"
+          },
+          "timestamp": "2026-06-13T00:51:30.000Z"
+        }
+      ]
+    }
+  }
+  ```

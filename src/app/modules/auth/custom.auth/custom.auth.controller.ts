@@ -200,6 +200,24 @@ const logout = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
+const googleLoginToken = catchAsync(async (req: Request, res: Response) => {
+  const { idToken, deviceToken } = req.body
+  const result = await CustomAuthServices.googleLoginToken(idToken, deviceToken)
+  const { status, message, accessToken, refreshToken, role } = result
+
+  res.cookie('refreshToken', refreshToken, {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+  })
+
+  sendResponse(res, {
+    statusCode: status,
+    success: true,
+    message: message,
+    data: { accessToken, refreshToken, role },
+  })
+})
+
 export const CustomAuthController = {
   forgetPassword,
   resetPassword,
@@ -212,5 +230,6 @@ export const CustomAuthController = {
   deleteAccount,
   adminLogin,
   socialLogin,
+  googleLoginToken,
   logout,
 }

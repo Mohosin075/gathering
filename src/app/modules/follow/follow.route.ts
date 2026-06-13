@@ -19,6 +19,13 @@ import {
 
 const router = express.Router()
 
+// Friend Activity Feed
+router.get(
+  '/friend-activity',
+  auth(...Object.values(USER_ROLES)),
+  FollowController.getFriendActivity,
+)
+
 // Follow/Unfollow routes
 router.post(
   '/:userId',

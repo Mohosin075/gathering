@@ -157,6 +157,12 @@ const socialLoginZodSchema = zod_1.z.object({
         deviceToken: zod_1.z.string({ required_error: 'Device token is required' }),
     }),
 });
+const googleLoginTokenZodSchema = zod_1.z.object({
+    body: zod_1.z.object({
+        idToken: zod_1.z.string({ required_error: 'ID token is required' }),
+        deviceToken: zod_1.z.string({ required_error: 'Device token is required' }),
+    }),
+});
 exports.AuthValidations = {
     verifyEmailOrPhoneOtpZodSchema,
     forgetPasswordZodSchema,
@@ -168,4 +174,5 @@ exports.AuthValidations = {
     createUserZodSchema,
     deleteAccount,
     socialLoginZodSchema,
+    googleLoginTokenZodSchema,
 };

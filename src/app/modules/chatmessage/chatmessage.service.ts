@@ -2,6 +2,9 @@ import { StatusCodes } from 'http-status-codes'
 import { JwtPayload } from 'jsonwebtoken'
 import ApiError from '../../../errors/ApiError'
 import { User } from '../user/user.model'
+import { Event } from '../event/event.model'
+import { Attendance } from '../attendance/attendance.model'
+import { Types } from 'mongoose'
 import {
   ISendMessageDTO,
   IChatMessageResponseDTO,
@@ -18,6 +21,25 @@ const sendMessageToDB = async (
   roomId: string,
   payload: ISendMessageDTO,
 ): Promise<IChatMessageResponseDTO> => {
+  // Check if roomId is an Event ID and requires check-in
+  if (Types.ObjectId.isValid(roomId)) {
+    const isEventExist = await Event.findById(roomId).select('_id')
+    if (isEventExist) {
+      const userCheckIn = await Attendance.findOne({
+        user: new Types.ObjectId(user.authId),
+        event: new Types.ObjectId(roomId),
+        status: 'checked-in',
+      })
+
+      if (!userCheckIn) {
+        throw new ApiError(
+          StatusCodes.FORBIDDEN,
+          "Tonight's Chat is locked! You must physically check-in at the venue/event first to join the conversation.",
+        )
+      }
+    }
+  }
+
   // Get user profile
   const userProfile = await User.findById(user.authId).select('name profile')
   if (!userProfile) {

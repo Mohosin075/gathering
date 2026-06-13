@@ -3,6 +3,7 @@ import { User } from '../../user/user.model'
 import { AuthHelper } from '../auth.helper'
 import ApiError from '../../../../errors/ApiError'
 import { USER_ROLES, USER_STATUS } from '../../../../enum/user'
+import axios from 'axios'
 import config from '../../../../config'
 import { Token } from '../../token/token.model'
 import { IAuthResponse, IResetPassword } from '../auth.interface'
@@ -619,6 +620,80 @@ const resendOtp = async (
   return 'OTP sent successfully.'
 }
 
+const googleLoginToken = async (
+  idToken: string,
+  deviceToken: string,
+): Promise<IAuthResponse> => {
+  try {
+    const response = await axios.get(
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`,
+    )
+
+    if (!response.data || response.data.error_description) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Google ID Token')
+    }
+
+    const { email, name, picture, sub } = response.data
+    if (!email) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        'Google ID Token is missing email profile scope',
+      )
+    }
+
+    const lowercaseEmail = email.toLowerCase().trim()
+    let user = await User.findOne({
+      email: lowercaseEmail,
+      status: { $nin: [USER_STATUS.DELETED] },
+    })
+
+    if (!user) {
+      // Create user
+      user = await User.create({
+        email: lowercaseEmail,
+        name: name || lowercaseEmail.split('@')[0],
+        profile: picture || '/images/1767048629458-l94gk7.jpg',
+        verified: true,
+        status: USER_STATUS.ACTIVE,
+        appId: sub,
+        provider: 'google',
+        deviceToken,
+        password: crypto.randomUUID(), // placeholder password for social-only users
+      })
+    } else {
+      // Update deviceToken if provided
+      await User.findByIdAndUpdate(user._id, {
+        $set: {
+          deviceToken,
+          appId: sub,
+          provider: 'google',
+        },
+      })
+    }
+
+    const tokens = AuthHelper.createToken(
+      user._id,
+      user.role,
+      user.name,
+      user.email,
+    )
+
+    return authResponse(
+      StatusCodes.OK,
+      `Welcome back ${user.name}`,
+      user.role,
+      tokens.accessToken,
+      tokens.refreshToken,
+    )
+  } catch (error: any) {
+    if (error instanceof ApiError) throw error
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      error.message || 'Failed to authenticate Google token',
+    )
+  }
+}
+
 const changePassword = async (
   user: JwtPayload,
   currentPassword: string,
@@ -659,6 +734,7 @@ const changePassword = async (
   return { message: 'Password changed successfully' }
 }
 
+
 export const CustomAuthServices = {
   adminLogin,
   forgetPassword,
@@ -667,6 +743,7 @@ export const CustomAuthServices = {
   customLogin,
   getRefreshToken,
   socialLogin,
+  googleLoginToken,
   resendOtpToPhoneOrEmail,
   deleteAccount,
   resendOtp,

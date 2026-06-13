@@ -159,6 +159,21 @@ const logout = (0, catchAsync_1.default)(async (req, res) => {
         data: result,
     });
 });
+const googleLoginToken = (0, catchAsync_1.default)(async (req, res) => {
+    const { idToken, deviceToken } = req.body;
+    const result = await custom_auth_service_1.CustomAuthServices.googleLoginToken(idToken, deviceToken);
+    const { status, message, accessToken, refreshToken, role } = result;
+    res.cookie('refreshToken', refreshToken, {
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+    });
+    (0, sendResponse_1.default)(res, {
+        statusCode: status,
+        success: true,
+        message: message,
+        data: { accessToken, refreshToken, role },
+    });
+});
 exports.CustomAuthController = {
     forgetPassword,
     resetPassword,
@@ -171,5 +186,6 @@ exports.CustomAuthController = {
     deleteAccount,
     adminLogin,
     socialLogin,
+    googleLoginToken,
     logout,
 };

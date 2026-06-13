@@ -8,6 +8,7 @@ import { ISavedEvent } from './savedEvent.interface'
 import { SavedEvent } from './savedEvent.model'
 import { savedEventSearchableFields } from './savedEvent.constants'
 import { ISavedEventFilterables } from './savedEvent.interface'
+import { ActivityServices } from '../activity/activity.service'
 
 const createSavedEvent = async (
   user: JwtPayload,
@@ -21,6 +22,15 @@ const createSavedEvent = async (
         'Failed to create SavedEvent, please try again with valid data.',
       )
     }
+
+    await ActivityServices.logActivity({
+      action: 'EVENT_SAVE',
+      description: `saved the event`,
+      userId: new Types.ObjectId(user.authId),
+      role: 'user',
+      resourceId: new Types.ObjectId(payload.event),
+      resourceType: 'Event',
+    })
 
     return result
   } catch (error: any) {

@@ -89,7 +89,7 @@ const getAllEvents = async (user, filterables, pagination) => {
     else if (filterConditions.length > 0) {
         whereConditions = { $and: filterConditions };
     }
-    const [result, total] = await Promise.all([
+    let [result, total] = await Promise.all([
         event_model_1.Event.find(whereConditions)
             .skip(skip)
             .limit(limit)
@@ -97,6 +97,23 @@ const getAllEvents = async (user, filterables, pagination) => {
             .populate('organizerId'),
         event_model_1.Event.countDocuments(whereConditions),
     ]);
+    // Fallback logic for Trending section if it has no data
+    if (total === 0 && (sortBy === 'views' || sortBy === 'favorites')) {
+        const fallbackConditions = {
+            status: 'approved',
+            visibility: 'public',
+        };
+        const [fallbackResult, fallbackTotal] = await Promise.all([
+            event_model_1.Event.find(fallbackConditions)
+                .skip(skip)
+                .limit(limit)
+                .sort({ startDate: 'asc' })
+                .populate('organizerId'),
+            event_model_1.Event.countDocuments(fallbackConditions),
+        ]);
+        result = fallbackResult;
+        total = fallbackTotal;
+    }
     return {
         meta: {
             page,

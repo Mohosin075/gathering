@@ -7,11 +7,28 @@ exports.ChatService = void 0;
 const http_status_codes_1 = require("http-status-codes");
 const ApiError_1 = __importDefault(require("../../../errors/ApiError"));
 const user_model_1 = require("../user/user.model");
+const event_model_1 = require("../event/event.model");
+const attendance_model_1 = require("../attendance/attendance.model");
+const mongoose_1 = require("mongoose");
 const chatmessage_model_1 = require("./chatmessage.model");
 const user_1 = require("../../../enum/user");
 const websocket_service_1 = require("./websocket.service");
 // Send message to chat
 const sendMessageToDB = async (user, roomId, payload) => {
+    // Check if roomId is an Event ID and requires check-in
+    if (mongoose_1.Types.ObjectId.isValid(roomId)) {
+        const isEventExist = await event_model_1.Event.findById(roomId).select('_id');
+        if (isEventExist) {
+            const userCheckIn = await attendance_model_1.Attendance.findOne({
+                user: new mongoose_1.Types.ObjectId(user.authId),
+                event: new mongoose_1.Types.ObjectId(roomId),
+                status: 'checked-in',
+            });
+            if (!userCheckIn) {
+                throw new ApiError_1.default(http_status_codes_1.StatusCodes.FORBIDDEN, "Tonight's Chat is locked! You must physically check-in at the venue/event first to join the conversation.");
+            }
+        }
+    }
     // Get user profile
     const userProfile = await user_model_1.User.findById(user.authId).select('name profile');
     if (!userProfile) {

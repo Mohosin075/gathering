@@ -13,11 +13,18 @@ export const geocodeAddress = async (location: string): Promise<GeocodingResult 
         const agent = new https.Agent({ family: 4 });
         const API_KEY = config.server_map_api_key
 
+        const trimmedLoc = location.trim();
+        const isCoordinates = /^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(trimmedLoc);
+
+        const params: any = { key: API_KEY };
+        if (isCoordinates) {
+            params.latlng = trimmedLoc;
+        } else {
+            params.address = trimmedLoc;
+        }
+
         const response = await axios.get("https://maps.googleapis.com/maps/api/geocode/json", {
-            params: {
-                address: location.trim(),
-                key: API_KEY,
-            },
+            params,
             httpsAgent: agent,
         });
 

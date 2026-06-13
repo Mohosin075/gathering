@@ -58,6 +58,9 @@ export interface IUser {
   timezone: string
   subscribe: boolean
   isOnboardingComplete: boolean
+  bio?: string
+  neighborhood?: string
+  favoriteSpots?: Types.ObjectId[]
   // membership: Membership
   eventCount?: number
   settings?: {

@@ -11,6 +11,7 @@ const user_1 = require("../../../enum/user");
 const paginationHelper_1 = require("../../../helpers/paginationHelper");
 const config_1 = __importDefault(require("../../../config"));
 const user_constants_1 = require("./user.constants");
+const attendance_model_1 = require("../attendance/attendance.model");
 const updateProfile = async (user, payload) => {
     console.log({ payload });
     const isUserExist = await user_model_1.User.findOne({
@@ -193,14 +194,17 @@ const getUserById = async (userId) => {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'User not found.');
     }
     // Fetch user data and stats in parallel for performance
-    const [user, eventsCount, followersCount, followingCount] = await Promise.all([
+    const [user, eventsCount, followersCount, followingCount, nightsOutCount] = await Promise.all([
         user_model_1.User.findOne({
             _id: userId,
             status: { $nin: [user_1.USER_STATUS.DELETED] },
-        }).select('-password -authentication -__v'),
+        })
+            .select('-password -authentication -__v')
+            .populate('favoriteSpots'),
         event_model_1.Event.countDocuments({ organizerId: userId }),
         follow_model_1.Follow.countDocuments({ following: userId }),
         follow_model_1.Follow.countDocuments({ follower: userId }),
+        attendance_model_1.Attendance.countDocuments({ user: userId, status: 'checked-in' }),
     ]);
     return {
         ...user === null || user === void 0 ? void 0 : user.toObject(),
@@ -208,6 +212,7 @@ const getUserById = async (userId) => {
             events: eventsCount,
             followers: followersCount,
             following: followingCount,
+            nightsOutCount: nightsOutCount,
         },
     };
 };
@@ -227,14 +232,30 @@ const updateUserStatus = async (userId, status) => {
 };
 const getProfile = async (user) => {
     // --- Fetch user ---
-    const isUserExist = await user_model_1.User.findOne({
-        _id: user.authId,
-        status: { $nin: [user_1.USER_STATUS.DELETED] },
-    }).select('-authentication -password -__v');
-    if (!isUserExist) {
+    const [userDoc, eventsCount, followersCount, followingCount, nightsOutCount] = await Promise.all([
+        user_model_1.User.findOne({
+            _id: user.authId,
+            status: { $nin: [user_1.USER_STATUS.DELETED] },
+        })
+            .select('-authentication -password -__v')
+            .populate('favoriteSpots'),
+        event_model_1.Event.countDocuments({ organizerId: user.authId }),
+        follow_model_1.Follow.countDocuments({ following: user.authId }),
+        follow_model_1.Follow.countDocuments({ follower: user.authId }),
+        attendance_model_1.Attendance.countDocuments({ user: user.authId, status: 'checked-in' }),
+    ]);
+    if (!userDoc) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'User not found.');
     }
-    return isUserExist;
+    return {
+        ...userDoc.toObject(),
+        stats: {
+            events: eventsCount,
+            followers: followersCount,
+            following: followingCount,
+            nightsOutCount: nightsOutCount,
+        },
+    };
 };
 exports.getProfile = getProfile;
 const addUserInterest = async (userId, interest) => {

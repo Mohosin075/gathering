@@ -42,6 +42,7 @@ const user_model_1 = require("../../user/user.model");
 const auth_helper_1 = require("../auth.helper");
 const ApiError_1 = __importDefault(require("../../../../errors/ApiError"));
 const user_1 = require("../../../../enum/user");
+const axios_1 = __importDefault(require("axios"));
 const config_1 = __importDefault(require("../../../../config"));
 const token_model_1 = require("../../token/token.model");
 const emailTemplate_1 = require("../../../../shared/emailTemplate");
@@ -409,6 +410,54 @@ const resendOtp = async (email, authType) => {
     }
     return 'OTP sent successfully.';
 };
+const googleLoginToken = async (idToken, deviceToken) => {
+    try {
+        const response = await axios_1.default.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+        if (!response.data || response.data.error_description) {
+            throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Invalid Google ID Token');
+        }
+        const { email, name, picture, sub } = response.data;
+        if (!email) {
+            throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Google ID Token is missing email profile scope');
+        }
+        const lowercaseEmail = email.toLowerCase().trim();
+        let user = await user_model_1.User.findOne({
+            email: lowercaseEmail,
+            status: { $nin: [user_1.USER_STATUS.DELETED] },
+        });
+        if (!user) {
+            // Create user
+            user = await user_model_1.User.create({
+                email: lowercaseEmail,
+                name: name || lowercaseEmail.split('@')[0],
+                profile: picture || '/images/1767048629458-l94gk7.jpg',
+                verified: true,
+                status: user_1.USER_STATUS.ACTIVE,
+                appId: sub,
+                provider: 'google',
+                deviceToken,
+                password: crypto.randomUUID(), // placeholder password for social-only users
+            });
+        }
+        else {
+            // Update deviceToken if provided
+            await user_model_1.User.findByIdAndUpdate(user._id, {
+                $set: {
+                    deviceToken,
+                    appId: sub,
+                    provider: 'google',
+                },
+            });
+        }
+        const tokens = auth_helper_1.AuthHelper.createToken(user._id, user.role, user.name, user.email);
+        return (0, common_1.authResponse)(http_status_codes_1.StatusCodes.OK, `Welcome back ${user.name}`, user.role, tokens.accessToken, tokens.refreshToken);
+    }
+    catch (error) {
+        if (error instanceof ApiError_1.default)
+            throw error;
+        throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, error.message || 'Failed to authenticate Google token');
+    }
+};
 const changePassword = async (user, currentPassword, newPassword) => {
     // Find the user with password field
     const isUserExist = await user_model_1.User.findById(user.authId)
@@ -436,6 +485,7 @@ exports.CustomAuthServices = {
     customLogin,
     getRefreshToken,
     socialLogin,
+    googleLoginToken,
     resendOtpToPhoneOrEmail,
     deleteAccount,
     resendOtp,
