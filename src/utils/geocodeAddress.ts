@@ -39,6 +39,12 @@ export const geocodeAddress = async (location: string): Promise<GeocodingResult 
             };
         }
 
+        if (response.data.status !== "OK" && response.data.status !== "ZERO_RESULTS") {
+            console.error(
+                `Geocoding API error: ${response.data.status} - ${response.data.error_message || "No error message provided"}`
+            );
+        }
+
         console.log("No coordinates found for:", location);
         return null;
     } catch (error) {

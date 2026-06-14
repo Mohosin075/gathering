@@ -33,23 +33,13 @@ app.use(passport_1.default.session());
 app.use((0, cors_1.default)({
     origin: [
         '*',
-        'http://167.71.254.250:3000',
-        'http://195.35.6.13:3005',
-        'http://10.10.7.13:3001',
         'http://localhost:3000',
         'http://localhost:3001',
         'http://localhost:3002',
         'http://localhost:3003',
         'http://localhost:3004',
         'http://localhost:3005',
-        'http://10.10.7.11:5173',
-        'http://localhost:60851',
-        'http://localhost:5173',
-        'https://pia-campbell-dashboard.vercel.app',
-        'https://buddi-script-server.vercel.app',
-        'https://buddi-script.vercel.app',
-        'https://your-frontend.vercel.app',
-        'http://195.35.6.13:4173'
+        'http://10.10.26.172:3000',
     ],
     credentials: true,
 }));

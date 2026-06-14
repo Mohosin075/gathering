@@ -18,21 +18,18 @@ const createEvent = async (
   // console.log({payload})
   const location = await geocodeAddress(payload.address);
 
-
   if (!location) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      'Failed to create Event, please try again with valid data.',
-    )
+    payload.location = {
+      type: 'Point',
+      coordinates: [0, 0],
+    }
+  } else {
+    payload.location = {
+      type: 'Point',
+      coordinates: [location.lng, location.lat],
+    }
+    payload.address = location.formattedAddress
   }
-
-  // console.log(location.formattedAddress)
-
-  payload.location = {
-    type: 'Point',
-    coordinates: [location.lng, location.lat],
-  }
-  payload.address = location.formattedAddress
 
 
   try {
@@ -255,17 +252,17 @@ const updateEvent = async (
     const location = await geocodeAddress(payload.address)
 
     if (!location) {
-      throw new ApiError(
-        StatusCodes.BAD_REQUEST,
-        'Failed to update Event, please try again with valid address.',
-      )
+      payload.location = {
+        type: 'Point',
+        coordinates: [0, 0],
+      }
+    } else {
+      payload.location = {
+        type: 'Point',
+        coordinates: [location.lng, location.lat],
+      }
+      payload.address = location.formattedAddress
     }
-
-    payload.location = {
-      type: 'Point',
-      coordinates: [location.lng, location.lat],
-    }
-    payload.address = location.formattedAddress
   }
 
   const result = await Event.findByIdAndUpdate(

@@ -23,7 +23,7 @@ event_controller_1.EventController.getNearbyEvents);
 router.get('/:id', 
 // auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.ORGANIZER),
 event_controller_1.EventController.getSingleEvent);
-router.post('/', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ADMIN), (0, processReqBody_1.fileAndBodyProcessorUsingDiskStorage)(), (0, validateRequest_1.default)(event_validation_1.EventValidations.create), event_controller_1.EventController.createEvent);
+router.post('/', (0, auth_1.default)(user_1.USER_ROLES.ORGANIZER, user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.USER), (0, processReqBody_1.fileAndBodyProcessorUsingDiskStorage)(), (0, validateRequest_1.default)(event_validation_1.EventValidations.create), event_controller_1.EventController.createEvent);
 router.patch('/:id', (0, auth_1.default)(user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.ORGANIZER), (0, processReqBody_1.fileAndBodyProcessorUsingDiskStorage)(), (0, validateRequest_1.default)(event_validation_1.EventValidations.update), event_controller_1.EventController.updateEvent);
 router.delete('/:id', (0, auth_1.default)(user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.ORGANIZER), event_controller_1.EventController.deleteEvent);
 exports.EventRoutes = router;
