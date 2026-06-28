@@ -1,36 +1,16 @@
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 import { StatusCodes } from 'http-status-codes'
 import config from '../../../config'
 import ApiError from '../../../errors/ApiError'
 import { EmailNotificationData } from './notification.interface'
 import { EmailTemplates } from './notification.templates'
-import SMTPTransport from 'nodemailer/lib/smtp-transport'
 
 export class EmailProvider {
-  private transporter: nodemailer.Transporter
+  private resend: Resend
   private static instance: EmailProvider
 
   private constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: config.email.host,
-      port: config.email.port,
-      secure: false, // false for TLS, true for SSL
-      auth: {
-        user: config.email.user,
-        pass: config.email.pass,
-      },
-      // For development, bypass SSL verification
-      tls: {
-        rejectUnauthorized: false,
-      },
-      // Connection settings
-      pool: true,
-      maxConnections: 5,
-      maxMessages: 100,
-    } as SMTPTransport.Options)
-
-    // Initialize asynchronously
-    // this.initialize()
+    this.resend = new Resend(config.email.resend_api_key)
   }
 
   static getInstance(): EmailProvider {
@@ -40,19 +20,6 @@ export class EmailProvider {
     return EmailProvider.instance
   }
 
-  private async verifyConnection(): Promise<void> {
-    try {
-      await this.transporter.verify()
-      console.log('✅ Email server connection verified')
-    } catch (error: any) {
-      console.error('❌ Email server connection failed:', error.message)
-      throw new ApiError(
-        StatusCodes.SERVICE_UNAVAILABLE,
-        'Email service is currently unavailable',
-      )
-    }
-  }
-
   async sendEmail(data: EmailNotificationData): Promise<boolean> {
     try {
       const { subject, html } = EmailTemplates.getTemplate(
@@ -60,18 +27,25 @@ export class EmailProvider {
         data.data,
       )
 
-      const mailOptions: nodemailer.SendMailOptions = {
-        from: `EventHub <${config.email.from}>`,
-        to: Array.isArray(data.to) ? data.to.join(',') : data.to,
+      const to = Array.isArray(data.to) ? data.to : [data.to]
+
+      const { data: result, error } = await this.resend.emails.send({
+        from: `gathering <${config.email.from}>`,
+        to,
         subject,
         html,
-        attachments: data.attachments,
+      })
+
+      if (error) {
+        console.error('❌ Resend email error:', error)
+        throw new ApiError(
+          StatusCodes.INTERNAL_SERVER_ERROR,
+          `Failed to send email: ${error.message}`,
+        )
       }
 
-      const info = await this.transporter.sendMail(mailOptions)
-
-      console.log(`📧 Email sent: ${info.messageId}`)
-      console.log(`   To: ${mailOptions.to}`)
+      console.log(`📧 Email sent: ${result?.id}`)
+      console.log(`   To: ${to.join(', ')}`)
       console.log(`   Subject: ${subject}`)
 
       return true
