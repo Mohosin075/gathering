@@ -137,6 +137,26 @@ const getEventLocations = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
+const getLocationAutocomplete = catchAsync(async (req: Request, res: Response) => {
+  const query = typeof req.query.query === 'string' ? req.query.query : ''
+  const sessionToken =
+    typeof req.query.sessionToken === 'string'
+      ? req.query.sessionToken
+      : undefined
+
+  const result = await EventServices.getLocationAutocomplete(
+    query,
+    sessionToken,
+  )
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Location autocomplete suggestions retrieved successfully',
+    data: result,
+  })
+})
+
 export const EventController = {
   createEvent,
   updateEvent,
@@ -146,4 +166,5 @@ export const EventController = {
   getMyEvents,
   getEventLocations,
   getNearbyEvents,
+  getLocationAutocomplete,
 }

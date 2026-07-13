@@ -10,6 +10,7 @@ import { Types } from 'mongoose'
 
 import { ActivityServices } from '../activity/activity.service'
 import { geocodeAddress } from '../../../utils/geocodeAddress'
+import { googlePlacesAutocomplete } from '../../../utils/googlePlacesAutocomplete'
 
 const createEvent = async (
   user: JwtPayload,
@@ -483,6 +484,13 @@ const getNearbyEvents = async (
   }
 }
 
+const getLocationAutocomplete = async (query: string, sessionToken?: string) => {
+  if (!query || query.trim() === '') {
+    return []
+  }
+  return await googlePlacesAutocomplete(query, sessionToken)
+}
+
 export const EventServices = {
   createEvent,
   getAllEvents,
@@ -492,4 +500,5 @@ export const EventServices = {
   getMyEvents,
   getEventLocations,
   getNearbyEvents,
+  getLocationAutocomplete,
 }

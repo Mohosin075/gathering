@@ -14,6 +14,7 @@ router.get(
   EventController.getAllEvents,
 )
 router.get('/locations', EventController.getEventLocations)
+router.get('/autocomplete', EventController.getLocationAutocomplete)
 router.get(
   '/my-events',
   auth(USER_ROLES.ORGANIZER),
