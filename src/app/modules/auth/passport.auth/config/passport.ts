@@ -44,7 +44,11 @@ passport.use(
 passport.use(
   new GoogleStrategy(
     {
-      clientID: config.google.client_id!,
+      // Passport needs a single web client ID (not comma-separated list)
+      clientID: String(config.google.client_id || '')
+        .split(',')
+        .map(id => id.trim())
+        .filter(Boolean)[0]!,
       clientSecret: config.google.client_secret!,
       callbackURL: config.google.callback_url,
       passReqToCallback: true,
