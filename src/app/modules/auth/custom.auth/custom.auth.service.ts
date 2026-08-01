@@ -16,6 +16,7 @@ import { jwtHelper } from '../../../../helpers/jwtHelper'
 import { JwtPayload } from 'jsonwebtoken'
 import { IUser } from '../../user/user.interface'
 import { emailHelper } from '../../../../helpers/emailHelper'
+import appleSigninAuth from 'apple-signin-auth'
 // import { emailQueue } from '../../../../helpers/bull-mq-producer'
 
 const createUser = async (payload: IUser) => {
@@ -382,24 +383,31 @@ const verifyAccount = async (
 
 const getRefreshToken = async (token: string) => {
   try {
+    if (!token) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'Refresh token is required')
+    }
+
     const decodedToken = jwtHelper.verifyToken(
       token,
       config.jwt.jwt_refresh_secret as string,
     )
 
-    const { userId, role } = decodedToken
+    // JWT payload uses authId (see AuthHelper.createToken)
+    const authId = decodedToken.authId || decodedToken.userId
+    const { role, name, email } = decodedToken
 
-    const tokens = AuthHelper.createToken(
-      userId,
-      role,
-      decodedToken.name,
-      decodedToken.email,
-    )
+    if (!authId || !role) {
+      throw new ApiError(StatusCodes.FORBIDDEN, 'Invalid Refresh Token')
+    }
+
+    const tokens = AuthHelper.createToken(authId, role, name, email)
 
     return {
       accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
     }
   } catch (error) {
+    if (error instanceof ApiError) throw error
     if (error instanceof Error && error.name === 'TokenExpiredError') {
       throw new ApiError(StatusCodes.UNAUTHORIZED, 'Refresh Token has expired')
     }
@@ -620,55 +628,238 @@ const resendOtp = async (
   return 'OTP sent successfully.'
 }
 
+const socialConflictError = () =>
+  new ApiError(
+    StatusCodes.CONFLICT,
+    'An account with this email already exists with another sign-in method.',
+  )
+
+/** Prevent overwriting a different social identity (including legacy users missing provider). */
+const assertCanBindSocialProvider = (
+  user: { provider?: string; appId?: string },
+  provider: 'google' | 'apple',
+  sub: string,
+) => {
+  if (user.provider && user.provider !== provider) {
+    throw socialConflictError()
+  }
+  if (user.appId && user.appId !== sub) {
+    throw socialConflictError()
+  }
+}
+
+/** Match password-login restriction behavior for inactive social users. */
+const assertSocialLoginAllowed = (user: {
+  status: USER_STATUS
+  authentication?: { restrictionLeftAt?: Date | null }
+}) => {
+  if (user.status !== USER_STATUS.INACTIVE) return
+
+  const restrictionLeftAt = user.authentication?.restrictionLeftAt
+  if (restrictionLeftAt && new Date(restrictionLeftAt) > new Date()) {
+    const remainingMinutes = Math.ceil(
+      (new Date(restrictionLeftAt).getTime() - Date.now()) / 60000,
+    )
+    throw new ApiError(
+      StatusCodes.TOO_MANY_REQUESTS,
+      `You are restricted to login for ${remainingMinutes} minutes`,
+    )
+  }
+}
+
+const getGoogleAllowedAudiences = (): string[] =>
+  [
+    ...String(config.google.client_id || '')
+      .split(',')
+      .map(id => id.trim())
+      .filter(Boolean),
+    config.google.ios_client_id,
+    config.google.android_client_id,
+  ].filter(Boolean) as string[]
+
+const getAppleAudiences = (): string[] =>
+  String(config.apple.client_id || '')
+    .split(',')
+    .map(id => id.trim())
+    .filter(Boolean)
+
+/** Google idToken aud may be string|string[]; mobile tokens often put app client in azp. */
+const matchesGoogleAudience = (
+  tokenPayload: Record<string, any>,
+  allowedAudiences: string[],
+): boolean => {
+  const candidates = [
+    ...(Array.isArray(tokenPayload.aud)
+      ? tokenPayload.aud
+      : [tokenPayload.aud]),
+    tokenPayload.azp,
+  ]
+    .filter(Boolean)
+    .map(String)
+
+  return candidates.some(value => allowedAudiences.includes(value))
+}
+
+const DEFAULT_SOCIAL_PROFILE = '/images/1767048629458-l94gk7.jpg'
+
+const findActiveSocialUser = async (sub: string, email?: string) => {
+  let user = await User.findOne({
+    appId: sub,
+    status: { $nin: [USER_STATUS.DELETED] },
+  })
+
+  if (!user && email) {
+    user = await User.findOne({
+      email,
+      status: { $nin: [USER_STATUS.DELETED] },
+    })
+  }
+
+  return user
+}
+
+const restoreDeletedSocialUser = async (params: {
+  sub: string
+  provider: 'google' | 'apple'
+  deviceToken: string
+  email?: string
+  name?: string
+  profile?: string
+}) => {
+  const { sub, provider, deviceToken, email, name, profile } = params
+
+  const deletedUser = await User.findOne({
+    status: USER_STATUS.DELETED,
+    $or: [{ appId: sub }, ...(email ? [{ email }] : [])],
+  })
+
+  if (!deletedUser) return null
+
+  const update: Record<string, unknown> = {
+    status: USER_STATUS.ACTIVE,
+    provider,
+    appId: sub,
+    deviceToken,
+    verified: true,
+    'authentication.restrictionLeftAt': null,
+    'authentication.wrongLoginAttempts': 0,
+  }
+
+  if (email) update.email = email
+  if (name) update.name = name
+  if (profile) update.profile = profile
+
+  return User.findByIdAndUpdate(deletedUser._id, { $set: update }, { new: true })
+}
+
 const googleLoginToken = async (
   idToken: string,
   deviceToken: string,
 ): Promise<IAuthResponse> => {
   try {
-    const response = await axios.get(
-      `https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`,
-    )
+    const allowedAudiences = getGoogleAllowedAudiences()
 
-    if (!response.data || response.data.error_description) {
+    if (!allowedAudiences.length) {
+      throw new ApiError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Google Sign In is not configured',
+      )
+    }
+
+    let tokenPayload: Record<string, any>
+    try {
+      const response = await axios.get(
+        `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`,
+      )
+      tokenPayload = response.data
+    } catch {
       throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Google ID Token')
     }
 
-    const { email, name, picture, sub } = response.data
+    if (!tokenPayload || tokenPayload.error_description) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Google ID Token')
+    }
+
+    const issuer = String(tokenPayload.iss || '')
+    const validIssuers = ['accounts.google.com', 'https://accounts.google.com']
+    if (!validIssuers.includes(issuer)) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Google ID Token issuer')
+    }
+
+    if (!matchesGoogleAudience(tokenPayload, allowedAudiences)) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Google ID Token audience')
+    }
+
+    const { email, name, picture, sub, email_verified } = tokenPayload
     if (!email) {
       throw new ApiError(
         StatusCodes.BAD_REQUEST,
         'Google ID Token is missing email profile scope',
       )
     }
+    if (!sub) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Google ID Token')
+    }
+
+    if (email_verified !== true && email_verified !== 'true') {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        'Google email is not verified',
+      )
+    }
 
     const lowercaseEmail = email.toLowerCase().trim()
-    let user = await User.findOne({
-      email: lowercaseEmail,
-      status: { $nin: [USER_STATUS.DELETED] },
-    })
+    const resolvedName = name || lowercaseEmail.split('@')[0]
+    const resolvedProfile = picture || DEFAULT_SOCIAL_PROFILE
+
+    let user = await findActiveSocialUser(sub, lowercaseEmail)
 
     if (!user) {
-      // Create user
+      user = await restoreDeletedSocialUser({
+        sub,
+        provider: 'google',
+        deviceToken,
+        email: lowercaseEmail,
+        name: resolvedName,
+        profile: resolvedProfile,
+      })
+    }
+
+    if (!user) {
       user = await User.create({
         email: lowercaseEmail,
-        name: name || lowercaseEmail.split('@')[0],
-        profile: picture || '/images/1767048629458-l94gk7.jpg',
+        name: resolvedName,
+        profile: resolvedProfile,
         verified: true,
         status: USER_STATUS.ACTIVE,
         appId: sub,
         provider: 'google',
         deviceToken,
-        password: crypto.randomUUID(), // placeholder password for social-only users
+        password: crypto.randomUUID(),
       })
     } else {
-      // Update deviceToken if provided
-      await User.findByIdAndUpdate(user._id, {
-        $set: {
-          deviceToken,
-          appId: sub,
-          provider: 'google',
-        },
-      })
+      assertSocialLoginAllowed(user)
+      assertCanBindSocialProvider(user, 'google', sub)
+
+      const update: Record<string, unknown> = {
+        deviceToken,
+        appId: sub,
+        provider: 'google',
+        verified: true,
+        status: USER_STATUS.ACTIVE,
+        'authentication.restrictionLeftAt': null,
+        'authentication.wrongLoginAttempts': 0,
+      }
+
+      user = await User.findByIdAndUpdate(
+        user._id,
+        { $set: update },
+        { new: true },
+      )
+
+      if (!user) {
+        throw new ApiError(StatusCodes.NOT_FOUND, 'User not found')
+      }
     }
 
     const tokens = AuthHelper.createToken(
@@ -687,9 +878,176 @@ const googleLoginToken = async (
     )
   } catch (error: any) {
     if (error instanceof ApiError) throw error
+    if (error?.code === 11000) {
+      throw new ApiError(
+        StatusCodes.CONFLICT,
+        'An account with this email already exists.',
+      )
+    }
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
       error.message || 'Failed to authenticate Google token',
+    )
+  }
+}
+
+const appleLoginToken = async (
+  identityToken: string,
+  deviceToken: string,
+  fullName?: string,
+  email?: string,
+): Promise<IAuthResponse> => {
+  try {
+    const appleAudiences = getAppleAudiences()
+    if (!appleAudiences.length) {
+      throw new ApiError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Apple Sign In is not configured',
+      )
+    }
+
+    let payload
+    try {
+      payload = await appleSigninAuth.verifyIdToken(identityToken, {
+        audience:
+          appleAudiences.length === 1 ? appleAudiences[0] : appleAudiences,
+      })
+    } catch {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Apple identity token')
+    }
+
+    const { sub } = payload
+    if (!sub) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Apple identity token')
+    }
+
+    const appleEmail = payload.email?.toLowerCase().trim() || undefined
+    const clientEmail = email?.toLowerCase().trim() || undefined
+
+    if (
+      appleEmail &&
+      payload.email_verified !== undefined &&
+      payload.email_verified !== true &&
+      payload.email_verified !== 'true'
+    ) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        'Apple email is not verified',
+      )
+    }
+
+    let user = await findActiveSocialUser(sub, appleEmail)
+
+    if (!user) {
+      const emailForRestore = appleEmail || clientEmail
+      const resolvedName =
+        fullName?.trim() ||
+        (emailForRestore ? emailForRestore.split('@')[0] : undefined) ||
+        'Apple User'
+
+      user = await restoreDeletedSocialUser({
+        sub,
+        provider: 'apple',
+        deviceToken,
+        email: emailForRestore,
+        name: resolvedName,
+        profile: DEFAULT_SOCIAL_PROFILE,
+      })
+    }
+
+    if (!user) {
+      const emailForCreate = appleEmail || clientEmail
+      if (!emailForCreate) {
+        throw new ApiError(
+          StatusCodes.BAD_REQUEST,
+          'Email is required for first-time Apple Sign In. Send the email from the Apple credential.',
+        )
+      }
+
+      if (!appleEmail && clientEmail) {
+        const emailTaken = await User.findOne({
+          email: clientEmail,
+          status: { $nin: [USER_STATUS.DELETED] },
+        })
+        if (emailTaken) {
+          throw new ApiError(
+            StatusCodes.CONFLICT,
+            'An account with this email already exists. Please sign in with your existing method.',
+          )
+        }
+      }
+
+      const resolvedName =
+        fullName?.trim() || emailForCreate.split('@')[0] || 'Apple User'
+
+      user = await User.create({
+        email: emailForCreate,
+        name: resolvedName,
+        profile: DEFAULT_SOCIAL_PROFILE,
+        verified: true,
+        status: USER_STATUS.ACTIVE,
+        appId: sub,
+        provider: 'apple',
+        deviceToken,
+        password: crypto.randomUUID(),
+      })
+    } else {
+      assertSocialLoginAllowed(user)
+      assertCanBindSocialProvider(user, 'apple', sub)
+
+      const update: Record<string, unknown> = {
+        deviceToken,
+        appId: sub,
+        provider: 'apple',
+        verified: true,
+        status: USER_STATUS.ACTIVE,
+        'authentication.restrictionLeftAt': null,
+        'authentication.wrongLoginAttempts': 0,
+      }
+
+      if (appleEmail && !user.email) {
+        update.email = appleEmail
+      }
+      if (fullName?.trim() && (!user.name || user.name === 'Apple User')) {
+        update.name = fullName.trim()
+      }
+
+      user = await User.findByIdAndUpdate(
+        user._id,
+        { $set: update },
+        { new: true },
+      )
+
+      if (!user) {
+        throw new ApiError(StatusCodes.NOT_FOUND, 'User not found')
+      }
+    }
+
+    const tokens = AuthHelper.createToken(
+      user._id,
+      user.role,
+      user.name,
+      user.email,
+    )
+
+    return authResponse(
+      StatusCodes.OK,
+      `Welcome back ${user.name}`,
+      user.role,
+      tokens.accessToken,
+      tokens.refreshToken,
+    )
+  } catch (error: any) {
+    if (error instanceof ApiError) throw error
+    if (error?.code === 11000) {
+      throw new ApiError(
+        StatusCodes.CONFLICT,
+        'An account with this email already exists.',
+      )
+    }
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      error.message || 'Failed to authenticate Apple token',
     )
   }
 }
@@ -744,6 +1102,7 @@ export const CustomAuthServices = {
   getRefreshToken,
   socialLogin,
   googleLoginToken,
+  appleLoginToken,
   resendOtpToPhoneOrEmail,
   deleteAccount,
   resendOtp,

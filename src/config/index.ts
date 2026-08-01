@@ -16,6 +16,11 @@ export default {
     client_id: process.env.GOOGLE_CLIENT_ID,
     client_secret: process.env.GOOGLE_CLIENT_SECRET,
     callback_url: process.env.GOOGLE_CALLBACK_URL,
+    ios_client_id: process.env.GOOGLE_IOS_CLIENT_ID,
+    android_client_id: process.env.GOOGLE_ANDROID_CLIENT_ID,
+  },
+  apple: {
+    client_id: process.env.APPLE_CLIENT_ID,
   },
   facebook: {
     app_id: process.env.FACEBOOK_APP_ID,

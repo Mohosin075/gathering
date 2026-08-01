@@ -101,8 +101,17 @@ const verifyAccount = catchAsync(async (req: Request, res: Response) => {
 })
 
 const getRefreshToken = catchAsync(async (req: Request, res: Response) => {
-  const { refreshToken } = req.cookies
+  // Mobile: send refreshToken in body. Web may rely on httpOnly cookie.
+  const refreshToken = req.body?.refreshToken || req.cookies?.refreshToken
   const result = await CustomAuthServices.getRefreshToken(refreshToken)
+
+  if (result.refreshToken) {
+    res.cookie('refreshToken', result.refreshToken, {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+    })
+  }
+
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
@@ -218,6 +227,29 @@ const googleLoginToken = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
+const appleLoginToken = catchAsync(async (req: Request, res: Response) => {
+  const { identityToken, deviceToken, fullName, email } = req.body
+  const result = await CustomAuthServices.appleLoginToken(
+    identityToken,
+    deviceToken,
+    fullName,
+    email,
+  )
+  const { status, message, accessToken, refreshToken, role } = result
+
+  res.cookie('refreshToken', refreshToken, {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+  })
+
+  sendResponse(res, {
+    statusCode: status,
+    success: true,
+    message: message,
+    data: { accessToken, refreshToken, role },
+  })
+})
+
 export const CustomAuthController = {
   forgetPassword,
   resetPassword,
@@ -231,5 +263,6 @@ export const CustomAuthController = {
   adminLogin,
   socialLogin,
   googleLoginToken,
+  appleLoginToken,
   logout,
 }

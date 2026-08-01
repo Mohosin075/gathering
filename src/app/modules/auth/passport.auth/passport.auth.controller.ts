@@ -5,12 +5,13 @@ import { IUser } from '../../user/user.interface'
 import { ILoginResponse } from '../../../../interfaces/response'
 import { PassportAuthServices } from './passport.auth.service'
 import { AuthCommonServices } from '../common'
+import config from '../../../../config'
+import ApiError from '../../../../errors/ApiError'
+import { StatusCodes } from 'http-status-codes'
 
 const login = catchAsync(async (req: Request, res: Response) => {
   const user = req.user
   const { deviceToken, password } = req.body
-
-  console.log({ deviceToken, password })
 
   const result = await AuthCommonServices.handleLoginLogic(
     { deviceToken: deviceToken, password: password },
@@ -35,11 +36,23 @@ const googleAuthCallback = catchAsync(async (req: Request, res: Response) => {
   const result = await PassportAuthServices.handleGoogleLogin(
     req.user as IUser & { profile: any },
   )
-  const { status, message, accessToken, refreshToken, role } = result
+  const { accessToken, refreshToken, role } = result
 
-  return res.redirect(
-    `https://buddi-script.vercel.app/auth/login?accessToken=${accessToken}&refreshToken=${refreshToken}&role=user`,
-  )
+  const frontendBase = (config.clientUrl || '').replace(/\/$/, '')
+  if (!frontendBase) {
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      'clientUrl is not configured',
+    )
+  }
+
+  const params = new URLSearchParams({
+    accessToken: accessToken || '',
+    refreshToken: refreshToken || '',
+    role: String(role || 'user'),
+  })
+
+  return res.redirect(`${frontendBase}/auth/login?${params.toString()}`)
 })
 
 export const PassportAuthController = {

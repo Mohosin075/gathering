@@ -171,8 +171,26 @@ const socialLoginZodSchema = z.object({
 
 const googleLoginTokenZodSchema = z.object({
   body: z.object({
-    idToken: z.string({ required_error: 'ID token is required' }),
-    deviceToken: z.string({ required_error: 'Device token is required' }),
+    idToken: z.string({ required_error: 'ID token is required' }).min(1),
+    deviceToken: z.string({ required_error: 'Device token is required' }).min(1),
+  }),
+})
+
+const appleLoginTokenZodSchema = z.object({
+  body: z.object({
+    identityToken: z
+      .string({ required_error: 'Identity token is required' })
+      .min(1),
+    deviceToken: z.string({ required_error: 'Device token is required' }).min(1),
+    fullName: z.preprocess(
+      val => (typeof val === 'string' && val.trim() ? val.trim() : undefined),
+      z.string().optional(),
+    ),
+    // Mobile may send "" / null when Apple hid email after first login
+    email: z.preprocess(
+      val => (typeof val === 'string' && val.trim() ? val.trim() : undefined),
+      z.string().email().optional(),
+    ),
   }),
 })
 
@@ -188,5 +206,6 @@ export const AuthValidations = {
   deleteAccount,
   socialLoginZodSchema,
   googleLoginTokenZodSchema,
+  appleLoginTokenZodSchema,
 }
 

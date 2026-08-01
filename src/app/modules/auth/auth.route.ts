@@ -95,6 +95,12 @@ router.post(
 )
 
 router.post(
+  '/apple-login-token',
+  validateRequest(AuthValidations.appleLoginTokenZodSchema),
+  CustomAuthController.appleLoginToken,
+)
+
+router.post(
   '/logout',
   auth(USER_ROLES.ADMIN, USER_ROLES.USER),
   CustomAuthController.logout,
